@@ -3,15 +3,32 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tm_dashboard/screens/calendar/widgets/week_row.dart';
 
 import '../../../bloc/calendar_state.dart';
-import '../models/day_card_model.dart';
+import '../../../models/day_model.dart';
+import '../../../services/day_service.dart';
 import 'dashed_border.dart';
 
 class MonthGrid extends StatelessWidget {
+  final DayService _dayService = DayService();
+  Map<int, DayModel> daysMap = {};
+
+  MonthGrid({super.key});
+
+  Future<void> _loadData() async {
+    List<DayModel> daysList = await _dayService.getAll();
+    for (var dayObj in daysList) {
+      daysMap[dayObj.date.day] = dayObj;
+    }
+
+    print(daysMap);
+  }
+
   @override
   Widget build(BuildContext context) {
+    _loadData();
+
     return BlocBuilder<CalendarCubit, CalendarState>(
       builder: (context, state) {
-        final days = state.days.values.toList();
+        List<DayModel> days = state.days.values.toList();
         final firstWeekday = DateTime(
           state.currentMonth.year,
           state.currentMonth.month,
@@ -19,7 +36,16 @@ class MonthGrid extends StatelessWidget {
         ).weekday;
         final placeholderCount = (firstWeekday - 1) % 7;
 
-        final rows = <List<DayCardModel>>[];
+        final rows = <List<DayModel>>[];
+
+        for (var i = 0; i < days.length; i += 1) {
+          print(days[i].date.day);
+          print(daysMap);
+          if (daysMap[days[i].date.day] != null) {
+            days[i] = daysMap[days[i].date.day]!;
+          }
+        }
+
         for (var i = 0; i < days.length; i += 7) {
           rows.add(days.sublist(i, i + 7 > days.length ? days.length : i + 7));
         }

@@ -1,17 +1,17 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tm_dashboard/enums/day_of_week_enum.dart';
 
-import '../screens/calendar/models/day_card_model.dart';
+import '../models/day_model.dart';
 
 class CalendarState {
   final DateTime currentMonth;
-  final Map<DateTime, DayCardModel> days;
+  final Map<DateTime, DayModel> days;
 
   CalendarState({required this.currentMonth, required this.days});
 
   CalendarState copyWith({
     DateTime? currentMonth,
-    Map<DateTime, DayCardModel>? days,
+    Map<DateTime, DayModel>? days,
   }) {
     return CalendarState(
       currentMonth: currentMonth ?? this.currentMonth,
@@ -44,17 +44,19 @@ class CalendarCubit extends Cubit<CalendarState> {
     );
     final today = DateTime.now();
 
-    Map<DateTime, DayCardModel> map = {};
+    Map<DateTime, DayModel> map = {};
     for (var i = 0; i < lastDay.day; i++) {
       final day = DateTime(
         state.currentMonth.year,
         state.currentMonth.month,
         i + 1,
       );
-      map[day] = DayCardModel(
+      map[day] = DayModel(
+        id: -1, // todo: fix
         date: day,
         dayOfWeek: DayOfWeekEnum.fromValue(today.weekday),
-        isEnded: day.isBefore(DateTime(today.year, today.month, today.day)),
+        ended:
+            false, //day.isBefore(DateTime(today.year, today.month, today.day)),
       );
     }
     emit(state.copyWith(days: map));
@@ -78,7 +80,7 @@ class CalendarCubit extends Cubit<CalendarState> {
     _generateDays();
   }
 
-  void updateDay(DayCardModel day) {
+  void updateDay(DayModel day) {
     final newDays = {...state.days};
     newDays[day.date] = day;
     emit(state.copyWith(days: newDays));

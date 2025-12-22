@@ -1,12 +1,12 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../../bloc/calendar_state.dart';
-import '../../../models/day_model.dart';
+import '../models/day_card_model.dart';
 
 class DayEditDialog extends StatefulWidget {
-  final DayModel day;
+  final DayCardModel day;
   final CalendarCubit cubit;
+
   const DayEditDialog({super.key, required this.day, required this.cubit});
 
   @override
@@ -39,14 +39,20 @@ class _DayEditDialogState extends State<DayEditDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text("Done:"),
-                Switch(value: isDone, onChanged: (v) => setState(() => isDone = v)),
+                Switch(
+                  value: isDone,
+                  onChanged: (v) => setState(() => isDone = v),
+                ),
               ],
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text("Skip Day:"),
-                Checkbox(value: isSkipDay, onChanged: (v) => setState(() => isSkipDay = v ?? false)),
+                Checkbox(
+                  value: isSkipDay,
+                  onChanged: (v) => setState(() => isSkipDay = v ?? false),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -70,9 +76,18 @@ class _DayEditDialogState extends State<DayEditDialog> {
                   value: icon,
                   hint: const Text("Select"),
                   items: const [
-                    DropdownMenuItem(child: Icon(Icons.star), value: Icons.star),
-                    DropdownMenuItem(child: Icon(Icons.favorite), value: Icons.favorite),
-                    DropdownMenuItem(child: Icon(Icons.check), value: Icons.check),
+                    DropdownMenuItem(
+                      child: Icon(Icons.star),
+                      value: Icons.star,
+                    ),
+                    DropdownMenuItem(
+                      child: Icon(Icons.favorite),
+                      value: Icons.favorite,
+                    ),
+                    DropdownMenuItem(
+                      child: Icon(Icons.check),
+                      value: Icons.check,
+                    ),
                   ],
                   onChanged: (v) => setState(() => icon = v),
                 ),
@@ -82,12 +97,14 @@ class _DayEditDialogState extends State<DayEditDialog> {
             ElevatedButton(
               onPressed: () {
                 final updated = widget.day.copyWith(
-                    weekend: isDone, noWork: isSkipDay);
+                  weekend: isDone,
+                  noWork: isSkipDay,
+                );
                 widget.cubit.updateDay(updated);
                 Navigator.pop(context);
               },
               child: const Text("Save"),
-            )
+            ),
           ],
         ),
       ),

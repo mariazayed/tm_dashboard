@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../bloc/calendar_state.dart';
-import '../../../models/day_model.dart';
+import '../models/day_card_model.dart';
 import 'day_edit_dialog.dart';
 
 class WeekRow extends StatelessWidget {
-  final List<DayModel> row;
+  final List<DayCardModel> row;
   final int placeholders;
+
   const WeekRow({required this.row, this.placeholders = 0, super.key});
 
   @override
@@ -20,13 +21,15 @@ class WeekRow extends StatelessWidget {
 
         if (dayIndex >= row.length) return const Expanded(child: SizedBox());
 
-        final DayModel day = row[dayIndex];
+        final DayCardModel day = row[dayIndex];
         final today = DateTime.now();
-        final isToday = day.date.year == today.year &&
+        final isToday =
+            day.date.year == today.year &&
             day.date.month == today.month &&
             day.date.day == today.day;
         final isWeekend =
-            day.date.weekday == DateTime.saturday || day.date.weekday == DateTime.sunday;
+            day.date.weekday == DateTime.saturday ||
+            day.date.weekday == DateTime.sunday;
 
         Color backgroundColor;
         if (day.noWork) {
@@ -34,7 +37,9 @@ class WeekRow extends StatelessWidget {
         } else if (isToday) {
           backgroundColor = Colors.deepPurple.shade100;
         } else if (day.isEnded) {
-          backgroundColor = isWeekend ? Colors.orange.shade100.withOpacity(0.4) : Colors.grey.shade200;
+          backgroundColor = isWeekend
+              ? Colors.orange.shade100.withOpacity(0.4)
+              : Colors.grey.shade200;
         } else if (day.weekend) {
           backgroundColor = Colors.green.shade200;
         } else if (isWeekend) {
@@ -120,7 +125,7 @@ class WeekRow extends StatelessWidget {
     );
   }
 
-  void _openDayDialog(BuildContext context, DayModel day) {
+  void _openDayDialog(BuildContext context, DayCardModel day) {
     final cubit = context.read<CalendarCubit>();
     showDialog(
       context: context,

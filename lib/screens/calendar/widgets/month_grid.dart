@@ -7,45 +7,65 @@ import '../../../models/day_model.dart';
 import '../../../services/day_service.dart';
 import 'dashed_border.dart';
 
-class MonthGrid extends StatelessWidget {
-  final DayService _dayService = DayService();
-  Map<int, DayModel> daysMap = {};
+class MonthGrid extends StatefulWidget {
+  const MonthGrid({super.key});
 
-  MonthGrid({super.key});
+  @override
+  State<MonthGrid> createState() => _MonthGridState();
+}
+
+class _MonthGridState extends State<MonthGrid> {
+  final DayService _dayService = DayService();
+  final Map<int, DayModel> daysMap = {};
+
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
   Future<void> _loadData() async {
-    List<DayModel> daysList = await _dayService.getAll();
+    final daysList = await _dayService.getAll();
+
     for (var dayObj in daysList) {
       daysMap[dayObj.date.day] = dayObj;
     }
 
-    print(daysMap);
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    _loadData();
+    if (isLoading) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
 
     return BlocBuilder<CalendarCubit, CalendarState>(
       builder: (context, state) {
         List<DayModel> days = state.days.values.toList();
+
         final firstWeekday = DateTime(
           state.currentMonth.year,
           state.currentMonth.month,
           1,
         ).weekday;
+
         final placeholderCount = (firstWeekday - 1) % 7;
 
-        final rows = <List<DayModel>>[];
-
-        for (var i = 0; i < days.length; i += 1) {
-          print(days[i].date.day);
-          print(daysMap);
-          if (daysMap[days[i].date.day] != null) {
-            days[i] = daysMap[days[i].date.day]!;
+        // Merge loaded data into bloc days
+        for (var i = 0; i < days.length; i++) {
+          final loadedDay = daysMap[days[i].date.day];
+          if (loadedDay != null) {
+            loadedDay.exists = true;
+            days[i] = loadedDay;
           }
         }
 
+        final rows = <List<DayModel>>[];
         for (var i = 0; i < days.length; i += 7) {
           rows.add(days.sublist(i, i + 7 > days.length ? days.length : i + 7));
         }
@@ -64,7 +84,6 @@ class MonthGrid extends StatelessWidget {
               );
 
               if (isLastRow) {
-                // Wrap last row in dashed border
                 weekRow = DashedBorder(child: weekRow);
               }
 

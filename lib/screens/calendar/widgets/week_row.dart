@@ -33,18 +33,21 @@ class WeekRow extends StatelessWidget {
 
         Color backgroundColor;
         if (day.noWork) {
-          backgroundColor = Colors.grey.shade300;
+          backgroundColor = Colors.cyan.shade300;
         }
         // else if (isToday) {
         //   backgroundColor = Colors.deepPurple.shade100;
         // }
         else if (day.ended) {
-          backgroundColor = day.weekend
-              ? Colors.orange.shade100.withOpacity(0.4)
-              : Colors.grey.shade200;
-        } else if (day.weekend) {
-          backgroundColor = Colors.green.shade200;
-        } else if (day.weekend) {
+          // backgroundColor = day.weekend
+          //     ? Colors.orange.shade100.withOpacity(0.4)
+          //     : Colors.grey.shade200;
+          backgroundColor = Colors.blue.shade200;
+        }
+        // else if (day.weekend) {
+        //   backgroundColor = Colors.green.shade200;
+        // }
+        else if (day.weekend) {
           backgroundColor = Colors.orange.shade100;
         } else {
           backgroundColor = Colors.grey.shade100;

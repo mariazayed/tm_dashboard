@@ -63,7 +63,13 @@ class _DayEditDialogState extends State<DayEditDialog> {
                 );
                 print(updated.toJson());
                 widget.cubit.updateDay(updated);
-                _dayService.create(updated.toJson());
+                if (widget.day.exists) {
+                  print("update");
+                  _dayService.update(widget.day.id, updated.toJson());
+                } else {
+                  print("create");
+                  _dayService.create(updated.toJson());
+                }
                 Navigator.pop(context);
               },
               child: const Text("Save"),

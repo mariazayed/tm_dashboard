@@ -60,25 +60,153 @@ class StaticDataResponse {
   });
 
   factory StaticDataResponse.fromJson(Map<String, dynamic> json) {
+    List<TradeDirectionModel> tradeDirections = [];
+    if (json['tradeDirections'] != null) {
+      tradeDirections = (json['tradeDirections'] as List<dynamic>)
+          .map((e) => TradeDirectionModel.fromJson(e))
+          .toList();
+    }
+
+    List<MarketBiasModel> marketBiases = [];
+    if (json['marketBiases'] != null) {
+      marketBiases = (json['marketBiases'] as List<dynamic>)
+          .map((e) => MarketBiasModel.fromJson(e))
+          .toList();
+    }
+
+    List<MarketStateModel> marketStates = [];
+    if (json['marketStates'] != null) {
+      marketStates = (json['marketStates'] as List<dynamic>)
+          .map((e) => MarketStateModel.fromJson(e))
+          .toList();
+    }
+
+    List<EntryReasonModel> entryReasons = [];
+    if (json['entryReasons'] != null) {
+      entryReasons = (json['entryReasons'] as List<dynamic>)
+          .map((e) => EntryReasonModel.fromJson(e))
+          .toList();
+    }
+
+    List<EntryConfirmationModel> entryConfirmations = [];
+    if (json['entryConfirmations'] != null) {
+      entryConfirmations = (json['entryConfirmations'] as List<dynamic>)
+          .map((e) => EntryConfirmationModel.fromJson(e))
+          .toList();
+    }
+
+    List<EntryZoneTypeModel> entryZoneTypes = [];
+    if (json['entryZoneTypes'] != null) {
+      entryZoneTypes = (json['entryZoneTypes'] as List<dynamic>)
+          .map((e) => EntryZoneTypeModel.fromJson(e))
+          .toList();
+    }
+
+    List<InvalidationConditionModel> invalidationConditions = [];
+    if (json['invalidationConditions'] != null) {
+      invalidationConditions = (json['invalidationConditions'] as List<dynamic>)
+          .map((e) => InvalidationConditionModel.fromJson(e))
+          .toList();
+    }
+
+    List<ProbabilityModel> probabilities = [];
+    if (json['probabilities'] != null) {
+      probabilities = (json['probabilities'] as List<dynamic>)
+          .map((e) => ProbabilityModel.fromJson(e))
+          .toList();
+    }
+
+    List<VolatilityModel> volatilities = [];
+    if (json['volatilities'] != null) {
+      volatilities = (json['volatilities'] as List<dynamic>)
+          .map((e) => VolatilityModel.fromJson(e))
+          .toList();
+    }
+
+    List<ScalingRuleModel> scalingRules = [];
+    if (json['scalingRules'] != null) {
+      scalingRules = (json['scalingRules'] as List<dynamic>)
+          .map((e) => ScalingRuleModel.fromJson(e))
+          .toList();
+    }
+
+    List<BoostRuleModel> boostRules = [];
+    if (json['boostRules'] != null) {
+      boostRules = (json['boostRules'] as List<dynamic>)
+          .map((e) => BoostRuleModel.fromJson(e))
+          .toList();
+    }
+
+    List<StopLossPlacementReasonModel> stopLossPlacementReasons = [];
+    if (json['stopLossPlacementReasons'] != null) {
+      stopLossPlacementReasons =
+          (json['stopLossPlacementReasons'] as List<dynamic>)
+              .map((e) => StopLossPlacementReasonModel.fromJson(e))
+              .toList();
+    }
+
+    List<TakeProfitPlacementReasonModel> takeProfitPlacementReasons = [];
+    if (json['takeProfitPlacementReasons'] != null) {
+      takeProfitPlacementReasons =
+          (json['takeProfitPlacementReasons'] as List<dynamic>)
+              .map((e) => TakeProfitPlacementReasonModel.fromJson(e))
+              .toList();
+    }
+
+    List<EntryTypeModel> entryTypes = [];
+    if (json['entryTypes'] != null) {
+      entryTypes = (json['entryTypes'] as List<dynamic>)
+          .map((e) => EntryTypeModel.fromJson(e))
+          .toList();
+    }
+
+    List<SessionModel> sessions = [];
+    if (json['sessions'] != null) {
+      sessions = (json['sessions'] as List<dynamic>)
+          .map((e) => SessionModel.fromJson(e))
+          .toList();
+    }
+
+    List<TradeTagModel> tradeTags = [];
+    if (json['tradeTags'] != null) {
+      tradeTags = (json['tradeTags'] as List<dynamic>)
+          .map((e) => TradeTagModel.fromJson(e))
+          .toList();
+    }
+
+    List<TradeUpdateModel> tradeUpdates = [];
+    if (json['tradeUpdates'] != null) {
+      tradeUpdates = (json['tradeUpdates'] as List<dynamic>)
+          .map((e) => TradeUpdateModel.fromJson(e))
+          .toList();
+    }
+
+    List<ExitReasonModel> exitReasons = [];
+    if (json['exitReasons'] != null) {
+      exitReasons = (json['exitReasons'] as List<dynamic>)
+          .map((e) => ExitReasonModel.fromJson(e))
+          .toList();
+    }
+
     return StaticDataResponse(
-      tradeDirections: json['tradeDirections'],
-      marketBiases: json['marketBiases'],
-      marketStates: json['marketStates'],
-      entryReasons: json['entryReasons'],
-      entryConfirmations: json['entryConfirmations'],
-      entryZoneTypes: json['entryZoneTypes'],
-      invalidationConditions: json['invalidationConditions'],
-      probabilities: json['probabilities'],
-      volatilities: json['volatilities'],
-      scalingRules: json['scalingRules'],
-      boostRules: json['boostRules'],
-      stopLossPlacementReasons: json['stopLossPlacementReasons'],
-      takeProfitPlacementReasons: json['takeProfitPlacementReasons'],
-      entryTypes: json['entryTypes'],
-      sessions: json['sessions'],
-      tradeTags: json['tradeTags'],
-      tradeUpdates: json['tradeUpdates'],
-      exitReasons: json['exitReasons'],
+      tradeDirections: tradeDirections,
+      marketBiases: marketBiases,
+      marketStates: marketStates,
+      entryReasons: entryReasons,
+      entryConfirmations: entryConfirmations,
+      entryZoneTypes: entryZoneTypes,
+      invalidationConditions: invalidationConditions,
+      probabilities: probabilities,
+      volatilities: volatilities,
+      scalingRules: scalingRules,
+      boostRules: boostRules,
+      stopLossPlacementReasons: stopLossPlacementReasons,
+      takeProfitPlacementReasons: takeProfitPlacementReasons,
+      entryTypes: entryTypes,
+      sessions: sessions,
+      tradeTags: tradeTags,
+      tradeUpdates: tradeUpdates,
+      exitReasons: exitReasons,
     );
   }
 }

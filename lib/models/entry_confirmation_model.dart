@@ -4,21 +4,22 @@ import 'base_static_data_model.dart';
 
 class EntryConfirmationModel extends BaseStaticDataModel {
   EntryConfirmationEnum id;
-  int order;
-  String enName;
-  String arName;
-  String description;
 
   EntryConfirmationModel({
     required this.id,
-    required this.order,
-    required this.enName,
-    required this.arName,
-    required this.description,
-  }) : super(
-         order: order,
-         enName: enName,
-         arName: arName,
-         description: description,
-       );
+    required super.order,
+    required super.enName,
+    required super.arName,
+    required super.description,
+  });
+
+  factory EntryConfirmationModel.fromJson(dynamic json) {
+    return EntryConfirmationModel(
+      id: EntryConfirmationEnum.fromValue(json["id"]),
+      arName: json["arName"],
+      enName: json["enName"],
+      order: json["order"],
+      description: json["description"],
+    );
+  }
 }

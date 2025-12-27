@@ -3,21 +3,22 @@ import 'base_static_data_model.dart';
 
 class ScalingRuleModel extends BaseStaticDataModel {
   ScalingRuleEnum id;
-  int order;
-  String enName;
-  String arName;
-  String description;
 
   ScalingRuleModel({
     required this.id,
-    required this.order,
-    required this.enName,
-    required this.arName,
-    required this.description,
-  }) : super(
-         order: order,
-         enName: enName,
-         arName: arName,
-         description: description,
-       );
+    required super.order,
+    required super.enName,
+    required super.arName,
+    required super.description,
+  });
+
+  factory ScalingRuleModel.fromJson(dynamic json) {
+    return ScalingRuleModel(
+      id: ScalingRuleEnum.fromValue(json["id"]),
+      arName: json["arName"],
+      enName: json["enName"],
+      order: json["order"],
+      description: json["description"],
+    );
+  }
 }

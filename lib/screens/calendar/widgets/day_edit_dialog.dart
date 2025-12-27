@@ -3,6 +3,8 @@ import 'package:tm_dashboard/services/day_service.dart';
 
 import '../../../bloc/calendar_state.dart';
 import '../../../models/day_model.dart';
+import '../../../models/static_data.dart';
+import '../../../services/data_service.dart';
 
 class DayEditDialog extends StatefulWidget {
   final DayModel day;
@@ -16,6 +18,8 @@ class DayEditDialog extends StatefulWidget {
 
 class _DayEditDialogState extends State<DayEditDialog> {
   final DayService _dayService = DayService();
+  final DataService _dataService = DataService();
+
   final _formKey = GlobalKey<FormState>();
 
   /// ---------------- STEP STATE ----------------
@@ -36,6 +40,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
   List<String> entryConfirmations = [];
   String? entryZoneType;
 
+  late StaticDataResponse data;
   final entryZoneStartCtrl = TextEditingController();
   final entryZoneEndCtrl = TextEditingController();
   final estimatedEntryCtrl = TextEditingController();
@@ -84,6 +89,8 @@ class _DayEditDialogState extends State<DayEditDialog> {
     weekend = widget.day.weekend;
     noWork = widget.day.noWork;
     ended = widget.day.ended;
+
+    loadData();
   }
 
   @override
@@ -400,5 +407,10 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
     debugPrint("Trade form saved (API integration later)");
     // later: map fields → Trade DTO → API
+  }
+
+  Future<void> loadData() async {
+    data = await _dataService.getAll();
+    print(data);
   }
 }

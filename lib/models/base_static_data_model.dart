@@ -10,4 +10,12 @@ class BaseStaticDataModel {
     required this.arName,
     required this.description,
   });
+
+  // factory BaseStaticDataModel.fromJson(dynamic json) {
+  //   return BaseStaticDataModel(
+  //     arName: json["arName"],
+  //     enName: json["enName"],
+  //     order: json["order"],
+  //     description: json["description"],
+  //   );
 }

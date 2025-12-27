@@ -1,4 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/enums/entry_confirmation_enum.dart';
+import 'package:tm_dashboard/enums/entry_reason_enum.dart';
+import 'package:tm_dashboard/enums/entry_zone_type_enum.dart';
+import 'package:tm_dashboard/enums/invalidation_condition_enum.dart';
+import 'package:tm_dashboard/enums/market_bias_enum.dart';
+import 'package:tm_dashboard/enums/market_state_enum.dart';
+import 'package:tm_dashboard/enums/probability_enum.dart';
+import 'package:tm_dashboard/enums/scaling_rule_enum.dart';
+import 'package:tm_dashboard/enums/trade_direction_enum.dart';
+import 'package:tm_dashboard/enums/volatility_enum.dart';
 import 'package:tm_dashboard/services/day_service.dart';
 
 import '../../../bloc/calendar_state.dart';
@@ -31,57 +41,37 @@ class _DayEditDialogState extends State<DayEditDialog> {
   late bool ended;
 
   /// ---------------- STEP 1 – MARKET CONTEXT ----------------
-  String? direction;
-  String? marketBias;
-  String? marketState;
-  String? volatility;
+  TradeDirectionEnum? direction;
+  MarketBiasEnum? marketBias;
+  MarketStateEnum? marketState;
+  VolatilityEnum? volatility;
 
-  List<String> entryReasons = [];
-  List<String> entryConfirmations = [];
-  String? entryZoneType;
+  List<EntryReasonEnum> entryReasons = [];
+  List<EntryConfirmationEnum> entryConfirmations = [];
+  EntryZoneTypeEnum? entryZoneType;
 
-  late StaticDataResponse data;
+  StaticDataResponse? data;
   final entryZoneStartCtrl = TextEditingController();
   final entryZoneEndCtrl = TextEditingController();
   final estimatedEntryCtrl = TextEditingController();
 
   final invalidationStartCtrl = TextEditingController();
   final invalidationEndCtrl = TextEditingController();
-  String? invalidationCondition;
+  InvalidationConditionEnum? invalidationCondition;
 
   bool willPyramid = false;
   bool willBoost = false;
 
-  List<String> scalingRules = [];
-  List<String> boostRules = [];
+  List<ScalingRuleEnum> scalingRules = [];
+  List<int> boostRules = [];
 
   final lotSizeCtrl = TextEditingController();
   final rrCtrl = TextEditingController();
 
-  String? focusLevel;
-  String? stressLevel;
-  String? confidenceLevel;
-  String? probability;
-
-  /// ---------------- ENUM MOCK DATA ----------------
-  final directions = ['BUY', 'SELL'];
-  final marketBiases = ['BULLISH', 'BEARISH', 'RANGE'];
-  final marketStates = ['TRENDING', 'RANGING', 'CHOPPY'];
-  final volatilityLevels = ['LOW', 'MEDIUM', 'HIGH'];
-
-  final entryReasonOptions = [
-    'SUPPORT_RESISTANCE',
-    'BREAKOUT',
-    'TREND_CONTINUATION',
-  ];
-
-  final confirmationOptions = ['CANDLE_PATTERN', 'VOLUME', 'INDICATOR'];
-
-  final scalingRuleOptions = ['FIXED', 'ATR_BASED'];
-  final boostRuleOptions = ['NEWS', 'MOMENTUM'];
-
-  final scoreOptions = ['LOW', 'MEDIUM', 'HIGH'];
-  final probabilityOptions = ['LOW', 'MEDIUM', 'HIGH'];
+  int? focusLevel;
+  int? stressLevel;
+  int? confidenceLevel;
+  ProbabilityEnum? probability;
 
   @override
   void initState() {
@@ -95,6 +85,10 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    if (data == null) {
+      return const CircularProgressIndicator();
+    }
+
     return AlertDialog(
       title: Text("Day ${widget.day.date.day}"),
       content: SizedBox(
@@ -212,41 +206,41 @@ class _DayEditDialogState extends State<DayEditDialog> {
           children: [
             _dropdown(
               "Direction",
-              directions,
+              data!.tradeDirections,
               direction,
               (v) => setState(() => direction = v),
             ),
             _dropdown(
               "Market Bias",
-              marketBiases,
+              data!.marketBiases,
               marketBias,
               (v) => setState(() => marketBias = v),
             ),
             _dropdown(
               "Market State",
-              marketStates,
+              data!.marketStates,
               marketState,
               (v) => setState(() => marketState = v),
             ),
             _dropdown(
               "Volatility",
-              volatilityLevels,
+              data!.volatilities,
               volatility,
               (v) => setState(() => volatility = v),
             ),
 
             const Divider(),
 
-            _multiSelect("Entry Reasons", entryReasonOptions, entryReasons),
+            _multiSelect("Entry Reasons", data!.entryReasons, entryReasons),
             _multiSelect(
               "Entry Confirmations",
-              confirmationOptions,
+              data!.entryConfirmations,
               entryConfirmations,
             ),
 
             _dropdown(
               "Entry Zone Type",
-              ['RANGE', 'LEVEL'],
+              data!.entryZoneTypes,
               entryZoneType,
               (v) => setState(() => entryZoneType = v),
             ),
@@ -263,7 +257,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
               onChanged: (v) => setState(() => willPyramid = v),
             ),
 
-            _multiSelect("Scaling Rules", scalingRuleOptions, scalingRules),
+            _multiSelect("Scaling Rules", data!.scalingRules, scalingRules),
 
             SwitchListTile(
               title: const Text("Will Boost"),
@@ -271,7 +265,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
               onChanged: (v) => setState(() => willBoost = v),
             ),
 
-            _multiSelect("Boost Rules", boostRuleOptions, boostRules),
+            _multiSelect("Boost Rules", data!.boostRules, boostRules),
 
             const Divider(),
 
@@ -280,27 +274,27 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
             const Divider(),
 
-            _dropdown(
-              "Focus Level",
-              scoreOptions,
-              focusLevel,
-              (v) => setState(() => focusLevel = v),
-            ),
-            _dropdown(
-              "Stress Level",
-              scoreOptions,
-              stressLevel,
-              (v) => setState(() => stressLevel = v),
-            ),
-            _dropdown(
-              "Confidence Level",
-              scoreOptions,
-              confidenceLevel,
-              (v) => setState(() => confidenceLevel = v),
-            ),
+            // _dropdown(
+            //   "Focus Level",
+            //   scoreOptions,
+            //   focusLevel,
+            //   (v) => setState(() => focusLevel = v),
+            // ),
+            // _dropdown(
+            //   "Stress Level",
+            //   scoreOptions,
+            //   stressLevel,
+            //   (v) => setState(() => stressLevel = v),
+            // ),
+            // _dropdown(
+            //   "Confidence Level",
+            //   scoreOptions,
+            //   confidenceLevel,
+            //   (v) => setState(() => confidenceLevel = v),
+            // ),
             _dropdown(
               "Expected Probability",
-              probabilityOptions,
+              data!.probabilities,
               probability,
               (v) => setState(() => probability = v),
             ),
@@ -326,9 +320,9 @@ class _DayEditDialogState extends State<DayEditDialog> {
   /// ================= UI HELPERS =================
   Widget _dropdown(
     String label,
-    List<String> items,
-    String? value,
-    ValueChanged<String?> onChanged,
+    List<dynamic> items,
+    dynamic value,
+    ValueChanged<dynamic> onChanged,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -336,7 +330,12 @@ class _DayEditDialogState extends State<DayEditDialog> {
         value: value,
         decoration: InputDecoration(labelText: label),
         items: items
-            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+            .map(
+              (e) => DropdownMenuItem(
+                value: e.id.toString(),
+                child: Text(e.enName),
+              ),
+            )
             .toList(),
         onChanged: onChanged,
       ),
@@ -356,8 +355,8 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
   Widget _multiSelect(
     String title,
-    List<String> options,
-    List<String> selected,
+    List<dynamic> options,
+    List<dynamic> selected,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -370,11 +369,11 @@ class _DayEditDialogState extends State<DayEditDialog> {
             spacing: 8,
             children: options.map((o) {
               return FilterChip(
-                label: Text(o),
-                selected: selected.contains(o),
+                label: Text(o.enName),
+                selected: selected.contains(o.id),
                 onSelected: (v) {
                   setState(() {
-                    v ? selected.add(o) : selected.remove(o);
+                    v ? selected.add(o.id) : selected.remove(o.id);
                   });
                 },
               );
@@ -410,7 +409,10 @@ class _DayEditDialogState extends State<DayEditDialog> {
   }
 
   Future<void> loadData() async {
-    data = await _dataService.getAll();
-    print(data);
+    final tempData = await _dataService.getAll();
+
+    setState(() {
+      data = tempData;
+    });
   }
 }

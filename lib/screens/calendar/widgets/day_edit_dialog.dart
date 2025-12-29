@@ -201,29 +201,37 @@ class _DayEditDialogState extends State<DayEditDialog> {
               title: "Market Direction",
               icon: Icons.trending_up,
               children: [
-                _dropdown(
+                _dropdown<TradeDirectionEnum>(
                   "Direction",
-                  data!.tradeDirections,
+                  TradeDirectionEnum.values,
                   direction,
-                  (v) => setState(() => direction = v),
+                  (TradeDirectionEnum e) => e.name,
+                  (TradeDirectionEnum? v) {
+                    setState(() {
+                      direction = v;
+                    });
+                  },
                 ),
-                _dropdown(
+                _dropdown<MarketBiasEnum>(
                   "Market Bias",
-                  data!.marketBiases,
+                  MarketBiasEnum.values,
                   marketBias,
-                  (v) => setState(() => marketBias = v),
+                  (MarketBiasEnum e) => e.name,
+                  (MarketBiasEnum? v) => setState(() => marketBias = v),
                 ),
-                _dropdown(
+                _dropdown<MarketStateEnum>(
                   "Market State",
-                  data!.marketStates,
+                  MarketStateEnum.values,
                   marketState,
-                  (v) => setState(() => marketState = v),
+                  (MarketStateEnum e) => e.name,
+                  (MarketStateEnum? v) => setState(() => marketState = v),
                 ),
-                _dropdown(
+                _dropdown<VolatilityEnum>(
                   "Volatility",
-                  data!.volatilities,
+                  VolatilityEnum.values,
                   volatility,
-                  (v) => setState(() => volatility = v),
+                  (VolatilityEnum e) => e.name,
+                  (VolatilityEnum? v) => setState(() => volatility = v),
                 ),
               ],
             ),
@@ -232,19 +240,29 @@ class _DayEditDialogState extends State<DayEditDialog> {
               title: "Entry Logic",
               icon: Icons.login,
               children: [
-                _multiSelect("Entry Reasons", data!.entryReasons, entryReasons),
-                _multiSelect(
-                  "Confirmations",
-                  data!.entryConfirmations,
-                  entryConfirmations,
-                ),
-                _dropdown(
-                  "Entry Zone Type",
-                  data!.entryZoneTypes,
-                  entryZoneType,
-                  (v) => setState(() => entryZoneType = v),
+                _multiSelect<EntryReasonEnum>(
+                  title: "Entry Reasons",
+                  options: EntryReasonEnum.values,
+                  selected: entryReasons,
+                  labelBuilder: (e) => e.name,
+                  onChanged: (v) => setState(() => entryReasons = v),
                 ),
 
+                _multiSelect<EntryConfirmationEnum>(
+                  title: "Confirmations",
+                  options: EntryConfirmationEnum.values,
+                  selected: entryConfirmations,
+                  labelBuilder: (e) => e.name,
+                  onChanged: (v) => setState(() => entryConfirmations = v),
+                ),
+
+                _dropdown<EntryZoneTypeEnum>(
+                  "Entry Zone Type",
+                  EntryZoneTypeEnum.values,
+                  entryZoneType,
+                  (EntryZoneTypeEnum e) => e.name,
+                  (EntryZoneTypeEnum? v) => setState(() => entryZoneType = v),
+                ),
                 Row(
                   children: [
                     Expanded(
@@ -270,10 +288,12 @@ class _DayEditDialogState extends State<DayEditDialog> {
                 ),
 
                 if (willPyramid)
-                  _multiSelect(
-                    "Scaling Rules",
-                    data!.scalingRules,
-                    scalingRules,
+                  _multiSelect<ScalingRuleEnum>(
+                    title: "Scaling Rules",
+                    options: ScalingRuleEnum.values,
+                    selected: scalingRules,
+                    labelBuilder: (e) => e.name,
+                    onChanged: (v) => setState(() => scalingRules = v),
                   ),
 
                 SwitchListTile.adaptive(
@@ -282,8 +302,8 @@ class _DayEditDialogState extends State<DayEditDialog> {
                   onChanged: (v) => setState(() => willBoost = v),
                 ),
 
-                if (willBoost)
-                  _multiSelect("Boost Rules", data!.boostRules, boostRules),
+                // if (willBoost)
+                //   _multiSelect("Boost Rules", data!.boostRules, boostRules),
               ],
             ),
 
@@ -298,12 +318,12 @@ class _DayEditDialogState extends State<DayEditDialog> {
                     Expanded(child: _numberField("R:R", rrCtrl)),
                   ],
                 ),
-
-                _dropdown(
+                _dropdown<ProbabilityEnum>(
                   "Expected Probability",
-                  data!.probabilities,
+                  ProbabilityEnum.values,
                   probability,
-                  (v) => setState(() => probability = v),
+                  (ProbabilityEnum e) => e.name,
+                  (ProbabilityEnum? v) => setState(() => probability = v),
                 ),
               ],
             ),
@@ -327,23 +347,22 @@ class _DayEditDialogState extends State<DayEditDialog> {
   }
 
   /// ================= UI HELPERS =================
-  Widget _dropdown(
+  Widget _dropdown<T>(
     String label,
-    List<dynamic> items,
-    dynamic value,
-    ValueChanged<dynamic> onChanged,
+    List<T> items,
+    T? value,
+    String Function(T) labelBuilder,
+    ValueChanged<T?> onChanged,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField<String>(
+      child: DropdownButtonFormField<T>(
         value: value,
         decoration: InputDecoration(labelText: label),
         items: items
             .map(
-              (e) => DropdownMenuItem(
-                value: e.id.toString(),
-                child: Text(e.enName),
-              ),
+              (e) =>
+                  DropdownMenuItem<T>(value: e, child: Text(labelBuilder(e))),
             )
             .toList(),
         onChanged: onChanged,
@@ -362,11 +381,13 @@ class _DayEditDialogState extends State<DayEditDialog> {
     );
   }
 
-  Widget _multiSelect(
-    String title,
-    List<dynamic> options,
-    List<dynamic> selected,
-  ) {
+  Widget _multiSelect<T>({
+    required String title,
+    required List<T> options,
+    required List<T> selected,
+    required String Function(T) labelBuilder,
+    required void Function(List<T>) onChanged,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -377,15 +398,17 @@ class _DayEditDialogState extends State<DayEditDialog> {
           Wrap(
             spacing: 8,
             children: options.map((o) {
+              final isSelected = selected.contains(o);
+
               return FilterChip(
-                label: Text(o.enName),
-                selected: selected.contains(o.id),
+                label: Text(labelBuilder(o)),
+                selected: isSelected,
                 showCheckmark: false,
                 selectedColor: Theme.of(
                   context,
                 ).colorScheme.primary.withOpacity(0.15),
                 labelStyle: TextStyle(
-                  color: selected.contains(o.id)
+                  color: isSelected
                       ? Theme.of(context).colorScheme.primary
                       : Colors.black87,
                   fontWeight: FontWeight.w500,
@@ -394,9 +417,10 @@ class _DayEditDialogState extends State<DayEditDialog> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 onSelected: (v) {
-                  setState(() {
-                    v ? selected.add(o.id) : selected.remove(o.id);
-                  });
+                  final updated = List<T>.from(selected);
+
+                  v ? updated.add(o) : updated.remove(o);
+                  onChanged(updated);
                 },
               );
             }).toList(),

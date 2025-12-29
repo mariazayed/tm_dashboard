@@ -99,35 +99,25 @@ class _DayEditDialogState extends State<DayEditDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// ================= DAY CHECKBOXES =================
-              Text(
-                "Day Settings",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-
-              CheckboxListTile(
-                title: const Text("Weekend"),
-                value: weekend,
-                onChanged: (v) => setState(() => weekend = v ?? false),
-              ),
-              CheckboxListTile(
-                title: const Text("No Work"),
-                value: noWork,
-                onChanged: (v) => setState(() => noWork = v ?? false),
-              ),
-              CheckboxListTile(
-                title: const Text("Is Ended"),
-                value: ended,
-                onChanged: (v) => setState(() => ended = v ?? false),
-              ),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.save),
-                  label: const Text("Save Day Settings"),
-                  onPressed: _saveDaySettings,
-                ),
+              Wrap(
+                spacing: 12,
+                children: [
+                  FilterChip(
+                    label: const Text("Weekend"),
+                    selected: weekend,
+                    onSelected: (v) => setState(() => weekend = v),
+                  ),
+                  FilterChip(
+                    label: const Text("No Work"),
+                    selected: noWork,
+                    onSelected: (v) => setState(() => noWork = v),
+                  ),
+                  FilterChip(
+                    label: const Text("Ended"),
+                    selected: ended,
+                    onSelected: (v) => setState(() => ended = v),
+                  ),
+                ],
               ),
 
               const Divider(height: 32),
@@ -144,6 +134,8 @@ class _DayEditDialogState extends State<DayEditDialog> {
                 child: Stepper(
                   currentStep: _currentStep,
                   type: StepperType.horizontal,
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
                   onStepContinue: () {
                     if (_currentStep < 4) {
                       setState(() => _currentStep++);
@@ -199,104 +191,121 @@ class _DayEditDialogState extends State<DayEditDialog> {
   Step _marketContextStep() {
     return Step(
       title: const Text("Context"),
+      subtitle: const Text("Market conditions"),
       isActive: _currentStep >= 0,
       content: Form(
         key: _formKey,
         child: Column(
           children: [
-            _dropdown(
-              "Direction",
-              data!.tradeDirections,
-              direction,
-              (v) => setState(() => direction = v),
-            ),
-            _dropdown(
-              "Market Bias",
-              data!.marketBiases,
-              marketBias,
-              (v) => setState(() => marketBias = v),
-            ),
-            _dropdown(
-              "Market State",
-              data!.marketStates,
-              marketState,
-              (v) => setState(() => marketState = v),
-            ),
-            _dropdown(
-              "Volatility",
-              data!.volatilities,
-              volatility,
-              (v) => setState(() => volatility = v),
-            ),
-
-            const Divider(),
-
-            _multiSelect("Entry Reasons", data!.entryReasons, entryReasons),
-            _multiSelect(
-              "Entry Confirmations",
-              data!.entryConfirmations,
-              entryConfirmations,
+            sectionCard(
+              title: "Market Direction",
+              icon: Icons.trending_up,
+              children: [
+                _dropdown(
+                  "Direction",
+                  data!.tradeDirections,
+                  direction,
+                  (v) => setState(() => direction = v),
+                ),
+                _dropdown(
+                  "Market Bias",
+                  data!.marketBiases,
+                  marketBias,
+                  (v) => setState(() => marketBias = v),
+                ),
+                _dropdown(
+                  "Market State",
+                  data!.marketStates,
+                  marketState,
+                  (v) => setState(() => marketState = v),
+                ),
+                _dropdown(
+                  "Volatility",
+                  data!.volatilities,
+                  volatility,
+                  (v) => setState(() => volatility = v),
+                ),
+              ],
             ),
 
-            _dropdown(
-              "Entry Zone Type",
-              data!.entryZoneTypes,
-              entryZoneType,
-              (v) => setState(() => entryZoneType = v),
+            sectionCard(
+              title: "Entry Logic",
+              icon: Icons.login,
+              children: [
+                _multiSelect("Entry Reasons", data!.entryReasons, entryReasons),
+                _multiSelect(
+                  "Confirmations",
+                  data!.entryConfirmations,
+                  entryConfirmations,
+                ),
+                _dropdown(
+                  "Entry Zone Type",
+                  data!.entryZoneTypes,
+                  entryZoneType,
+                  (v) => setState(() => entryZoneType = v),
+                ),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _numberField("Zone Start", entryZoneStartCtrl),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: _numberField("Zone End", entryZoneEndCtrl)),
+                  ],
+                ),
+
+                _numberField("Estimated Entry", estimatedEntryCtrl),
+              ],
             ),
 
-            _numberField("Entry Zone Start", entryZoneStartCtrl),
-            _numberField("Entry Zone End", entryZoneEndCtrl),
-            _numberField("Estimated Entry", estimatedEntryCtrl),
+            sectionCard(
+              title: "Position Management",
+              icon: Icons.layers,
+              children: [
+                SwitchListTile.adaptive(
+                  title: const Text("Enable pyramiding"),
+                  value: willPyramid,
+                  onChanged: (v) => setState(() => willPyramid = v),
+                ),
 
-            const Divider(),
+                if (willPyramid)
+                  _multiSelect(
+                    "Scaling Rules",
+                    data!.scalingRules,
+                    scalingRules,
+                  ),
 
-            SwitchListTile(
-              title: const Text("Will Pyramid"),
-              value: willPyramid,
-              onChanged: (v) => setState(() => willPyramid = v),
+                SwitchListTile.adaptive(
+                  title: const Text("Enable boost"),
+                  value: willBoost,
+                  onChanged: (v) => setState(() => willBoost = v),
+                ),
+
+                if (willBoost)
+                  _multiSelect("Boost Rules", data!.boostRules, boostRules),
+              ],
             ),
 
-            _multiSelect("Scaling Rules", data!.scalingRules, scalingRules),
+            sectionCard(
+              title: "Risk & Expectancy",
+              icon: Icons.shield,
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _numberField("Lot Size", lotSizeCtrl)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _numberField("R:R", rrCtrl)),
+                  ],
+                ),
 
-            SwitchListTile(
-              title: const Text("Will Boost"),
-              value: willBoost,
-              onChanged: (v) => setState(() => willBoost = v),
-            ),
-
-            _multiSelect("Boost Rules", data!.boostRules, boostRules),
-
-            const Divider(),
-
-            _numberField("Lot Size", lotSizeCtrl),
-            _numberField("Risk / Reward", rrCtrl),
-
-            const Divider(),
-
-            // _dropdown(
-            //   "Focus Level",
-            //   scoreOptions,
-            //   focusLevel,
-            //   (v) => setState(() => focusLevel = v),
-            // ),
-            // _dropdown(
-            //   "Stress Level",
-            //   scoreOptions,
-            //   stressLevel,
-            //   (v) => setState(() => stressLevel = v),
-            // ),
-            // _dropdown(
-            //   "Confidence Level",
-            //   scoreOptions,
-            //   confidenceLevel,
-            //   (v) => setState(() => confidenceLevel = v),
-            // ),
-            _dropdown(
-              "Expected Probability",
-              data!.probabilities,
-              probability,
-              (v) => setState(() => probability = v),
+                _dropdown(
+                  "Expected Probability",
+                  data!.probabilities,
+                  probability,
+                  (v) => setState(() => probability = v),
+                ),
+              ],
             ),
           ],
         ),
@@ -371,6 +380,19 @@ class _DayEditDialogState extends State<DayEditDialog> {
               return FilterChip(
                 label: Text(o.enName),
                 selected: selected.contains(o.id),
+                showCheckmark: false,
+                selectedColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withOpacity(0.15),
+                labelStyle: TextStyle(
+                  color: selected.contains(o.id)
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 onSelected: (v) {
                   setState(() {
                     v ? selected.add(o.id) : selected.remove(o.id);
@@ -380,6 +402,38 @@ class _DayEditDialogState extends State<DayEditDialog> {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget sectionCard({
+    required String title,
+    IconData? icon,
+    required List<Widget> children,
+  }) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 20),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (icon != null) Icon(icon, size: 20, color: Colors.blueGrey),
+                if (icon != null) const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
       ),
     );
   }

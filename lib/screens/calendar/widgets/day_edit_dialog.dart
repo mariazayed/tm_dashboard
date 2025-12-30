@@ -3,7 +3,7 @@ import 'package:tm_dashboard/services/day_service.dart';
 
 import '../../../bloc/calendar_state.dart';
 import '../../../models/day_model.dart';
-import 'trade_plan_form.dart';
+import '../../../trade_cycle_forms/trade_plan_form.dart';
 
 class DayEditDialog extends StatefulWidget {
   final DayModel day;

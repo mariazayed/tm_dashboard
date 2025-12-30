@@ -13,8 +13,8 @@ import 'package:tm_dashboard/enums/take_profit_placement_reason.dart';
 import 'package:tm_dashboard/enums/trade_direction_enum.dart';
 import 'package:tm_dashboard/enums/volatility_enum.dart';
 
-import '../../../models/static_data.dart';
-import '../../../services/data_service.dart';
+import '../models/static_data.dart';
+import '../services/data_service.dart';
 
 class MarketContextForm extends StatefulWidget {
   const MarketContextForm({super.key});

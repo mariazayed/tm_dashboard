@@ -27,27 +27,16 @@ class WeekRow extends StatelessWidget {
             day.date.year == today.year &&
             day.date.month == today.month &&
             day.date.day == today.day;
-        // final isWeekend =
-        //     day.date.weekday == DateTime.saturday ||
-        //     day.date.weekday == DateTime.sunday;
 
         Color backgroundColor;
-        if (day.noWork) {
-          backgroundColor = Colors.cyan.shade300;
-        }
-        // else if (isToday) {
-        //   backgroundColor = Colors.deepPurple.shade100;
-        // }
-        else if (day.ended) {
-          // backgroundColor = day.weekend
-          //     ? Colors.orange.shade100.withOpacity(0.4)
-          //     : Colors.grey.shade200;
-          backgroundColor = Colors.blue.shade200;
-        }
-        // else if (day.weekend) {
-        //   backgroundColor = Colors.green.shade200;
-        // }
-        else if (day.weekend) {
+
+        if (isToday) {
+          backgroundColor = Colors.deepPurple.shade100;
+        } else if (day.noWork) {
+          backgroundColor = Colors.grey.shade300;
+        } else if (day.ended) {
+          backgroundColor = Colors.grey.shade200;
+        } else if (day.weekend) {
           backgroundColor = Colors.orange.shade100;
         } else {
           backgroundColor = Colors.grey.shade100;

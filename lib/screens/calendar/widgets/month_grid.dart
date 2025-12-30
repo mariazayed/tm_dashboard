@@ -56,7 +56,7 @@ class _MonthGridState extends State<MonthGrid> {
 
         final placeholderCount = (firstWeekday - 1) % 7;
 
-        // Merge loaded data into bloc days
+        // todo: Merge loaded data into bloc days
         for (var i = 0; i < days.length; i++) {
           final loadedDay = daysMap[days[i].date.day];
           if (loadedDay != null) {
@@ -75,8 +75,8 @@ class _MonthGridState extends State<MonthGrid> {
           child: Column(
             key: ValueKey(state.currentMonth),
             children: List.generate(rows.length, (rowIndex) {
-              final row = rows[rowIndex];
-              final isLastRow = rowIndex == rows.length - 1;
+              final List<DayModel> row = rows[rowIndex];
+              final bool isLastRow = rowIndex == rows.length - 1;
 
               Widget weekRow = WeekRow(
                 row: row,

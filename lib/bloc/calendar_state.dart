@@ -75,6 +75,7 @@ class CalendarCubit extends Cubit<CalendarState> {
             normalizedDate.year == state.currentMonth.year) {
           final dayNumber = localDate.day;
           map[dayNumber] = apiDay;
+          map[dayNumber]?.exists = true;
         }
       }
     } catch (e) {

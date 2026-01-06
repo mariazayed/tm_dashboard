@@ -65,6 +65,15 @@ class _DayEditDialogState extends State<DayEditDialog> {
                 ],
               ),
 
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.save_alt),
+                  label: const Text("Save"),
+                  onPressed: _saveDaySettings,
+                ),
+              ),
+
               const Divider(height: 32),
 
               /// ================= STEPPER FORM =================
@@ -201,6 +210,8 @@ class _DayEditDialogState extends State<DayEditDialog> {
     } else {
       _dayService.create(updated.toJson());
     }
+
+    Navigator.of(context).pop();
   }
 
   // void _saveTradeForm() {

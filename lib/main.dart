@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: Scaffold(
-          appBar: AppBar(title: const Text('Trade Mind Dashboard 🧠')),
+          appBar: AppBar(title: const Text('Dashboard 🧠')),
           body: const CalendarScreen(),
         ),
       ),

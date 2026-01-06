@@ -1,17 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tm_dashboard/enums/day_of_week_enum.dart';
+import 'package:tm_dashboard/services/day_service.dart';
 
 import '../models/day_model.dart';
 
 class CalendarState {
   final DateTime currentMonth;
-  final Map<DateTime, DayModel> days;
+  final Map<int, DayModel> days;
 
   CalendarState({required this.currentMonth, required this.days});
 
   CalendarState copyWith({
     DateTime? currentMonth,
-    Map<DateTime, DayModel>? days,
+    Map<int, DayModel>? days,
   }) {
     return CalendarState(
       currentMonth: currentMonth ?? this.currentMonth,
@@ -31,58 +32,80 @@ class CalendarCubit extends Cubit<CalendarState> {
     _generateDays();
   }
 
-  void _generateDays() {
-    final firstDay = DateTime(
-      state.currentMonth.year,
-      state.currentMonth.month,
-      1,
-    );
+  Future<void> _generateDays() async {
     final lastDay = DateTime(
       state.currentMonth.year,
       state.currentMonth.month + 1,
       0,
-    );
-    final today = DateTime.now();
+    ).day;
 
-    Map<DateTime, DayModel> map = {};
-    for (var i = 0; i < lastDay.day; i++) {
-      final day = DateTime(
+    final Map<int, DayModel> map = {};
+
+    // 1. Generate default days
+    for (int dayNumber = 1; dayNumber <= lastDay; dayNumber++) {
+      final date = DateTime(
         state.currentMonth.year,
         state.currentMonth.month,
-        i + 1,
+        dayNumber,
       );
-      map[day] = DayModel(
-        id: -1, // todo: fix
-        date: day,
-        dayOfWeek: DayOfWeekEnum.fromValue(today.weekday),
-        ended:
-            false, //day.isBefore(DateTime(today.year, today.month, today.day)),
+
+      map[dayNumber] = DayModel(
+        id: -1,
+        date: date,
+        dayOfWeek: DayOfWeekEnum.fromValue(date.weekday),
       );
     }
+
+    // 2. Fetch existing days from API
+    try {
+      final apiDays = await DayService().getAll();
+
+      // 3. Override generated days with API data
+      for (final apiDay in apiDays) {
+        final localDate = apiDay.date.toLocal();
+
+        final normalizedDate = DateTime(
+          localDate.year,
+          localDate.month,
+          localDate.day,
+        );
+
+        // Only fill days belonging to current month
+        if (normalizedDate.month == state.currentMonth.month &&
+            normalizedDate.year == state.currentMonth.year) {
+          final dayNumber = localDate.day;
+          map[dayNumber] = apiDay;
+        }
+      }
+    } catch (e) {
+      print("Error fetching days: $e");
+    }
+
+    print("map ${map.length}");
     emit(state.copyWith(days: map));
   }
 
-  void nextMonth() {
+  Future<void> nextMonth() async {
     final newMonth = DateTime(
       state.currentMonth.year,
       state.currentMonth.month + 1,
     );
     emit(state.copyWith(currentMonth: newMonth));
-    _generateDays();
+    await _generateDays();
   }
 
-  void previousMonth() {
+  Future<void> previousMonth() async {
     final newMonth = DateTime(
       state.currentMonth.year,
       state.currentMonth.month - 1,
     );
     emit(state.copyWith(currentMonth: newMonth));
-    _generateDays();
+    await _generateDays();
   }
 
   void updateDay(DayModel day) {
     final newDays = {...state.days};
-    newDays[day.date] = day;
+    newDays[day.date.day] = day;
     emit(state.copyWith(days: newDays));
   }
 }

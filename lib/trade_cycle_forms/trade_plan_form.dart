@@ -421,7 +421,7 @@ class _MarketContextFormState extends State<MarketContextForm> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         decoration: InputDecoration(labelText: label),
         items: items
             .map(
@@ -443,9 +443,9 @@ class _MarketContextFormState extends State<MarketContextForm> {
 
     Color? fillColor;
     if (readOnly && value != null && label == "R:R") {
-      if (value < 1.0)
+      if (value < 1.0) {
         fillColor = Colors.red.withOpacity(0.1);
-      else if (value < 1.5)
+      } else if (value < 1.5)
         fillColor = Colors.orange.withOpacity(0.1);
       else
         fillColor = Colors.green.withOpacity(0.1);

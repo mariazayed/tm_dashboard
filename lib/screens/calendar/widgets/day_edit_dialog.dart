@@ -216,8 +216,5 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
   // void _saveTradeForm() {
   //   if (!_formKey.currentState!.validate()) return;
-  //
-  //   debugPrint("Trade form saved (API integration later)");
-  //   // later: map fields → Trade DTO → API
   // }
 }

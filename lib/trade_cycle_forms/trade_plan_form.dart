@@ -13,10 +13,14 @@ import 'package:tm_dashboard/enums/take_profit_placement_reason.dart';
 import 'package:tm_dashboard/enums/trade_direction_enum.dart';
 import 'package:tm_dashboard/enums/volatility_enum.dart';
 import 'package:tm_dashboard/services/trade_calculator_service.dart';
-import 'package:tm_dashboard/trade_cycle_forms/trade_form_widgets.dart';
+import 'package:tm_dashboard/widgets/form_multi_select.dart';
 
 import '../models/static_data.dart';
 import '../services/data_service.dart';
+import '../widgets/form_dropdown.dart';
+import '../widgets/form_number_field.dart';
+import '../widgets/form_text_area_field.dart';
+import '../widgets/section_card.dart';
 
 class TradePlanForm extends StatefulWidget {
   const TradePlanForm({super.key});

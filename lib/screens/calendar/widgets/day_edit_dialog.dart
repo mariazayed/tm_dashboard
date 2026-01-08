@@ -34,108 +34,140 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text("Day ${widget.day.date.day}"),
-      content: SizedBox(
-        width: 950,
-        height: 700,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// ================= DAY CHECKBOXES =================
-              Wrap(
-                spacing: 12,
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      child: Container(
+        width: 1000,
+        height: 800,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Column(
+          children: [
+            // Custom Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
+              child: Row(
                 children: [
-                  FilterChip(
-                    label: const Text("Weekend"),
-                    selected: weekend,
-                    onSelected: (v) => setState(() => weekend = v),
+                  Text(
+                    "Day ${widget.day.date.day}",
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  FilterChip(
-                    label: const Text("No Work"),
-                    selected: noWork,
-                    onSelected: (v) => setState(() => noWork = v),
-                  ),
-                  FilterChip(
-                    label: const Text("Ended"),
-                    selected: ended,
-                    onSelected: (v) => setState(() => ended = v),
+                  const Spacer(),
+                  IconButton.filledTonal(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
                   ),
                 ],
               ),
-
-              Align(
-                alignment: Alignment.centerRight,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.save_alt),
-                  label: const Text("Save"),
-                  onPressed: _saveDaySettings,
-                ),
-              ),
-
-              const Divider(height: 32),
-
-              /// ================= STEPPER FORM =================
-              Text(
-                "Trade Planning",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-
-              SizedBox(
-                height: 500,
-                child: Stepper(
-                  currentStep: _currentStep,
-                  type: StepperType.horizontal,
-                  elevation: 0,
-                  margin: EdgeInsets.zero,
-                  onStepContinue: () {
-                    if (_currentStep < 4) {
-                      setState(() => _currentStep++);
-                    }
-                  },
-                  onStepCancel: () {
-                    if (_currentStep > 0) {
-                      setState(() => _currentStep--);
-                    }
-                  },
-                  controlsBuilder: (context, details) {
-                    return Row(
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    /// ================= DAY CHECKBOXES =================
+                    Row(
                       children: [
-                        ElevatedButton(
-                          onPressed: details.onStepContinue,
-                          child: const Text("Next"),
+                        Wrap(
+                          spacing: 12,
+                          children: [
+                            FilterChip(
+                              label: const Text("Weekend"),
+                              selected: weekend,
+                              onSelected: (v) => setState(() => weekend = v),
+                            ),
+                            FilterChip(
+                              label: const Text("No Work"),
+                              selected: noWork,
+                              onSelected: (v) => setState(() => noWork = v),
+                            ),
+                            FilterChip(
+                              label: const Text("Ended"),
+                              selected: ended,
+                              onSelected: (v) => setState(() => ended = v),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        if (_currentStep > 0)
-                          OutlinedButton(
-                            onPressed: details.onStepCancel,
-                            child: const Text("Back"),
-                          ),
+                        const Spacer(),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.check_circle_outline),
+                          label: const Text("Save Changes"),
+                          onPressed: _saveDaySettings,
+                        ),
                       ],
-                    );
-                  },
-                  steps: [
-                    _marketContextStep(),
-                    _emptyStep("Trade Management"),
-                    _emptyStep("Execution"),
-                    _emptyStep("Post-Trade"),
-                    _emptyStep("Review"),
+                    ),
+
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Divider(),
+                    ),
+
+                    /// ================= STEPPER FORM =================
+                    Text(
+                      "Trade Planning",
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+
+                    SizedBox(
+                      height: 550,
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          canvasColor: Colors.transparent,
+                        ),
+                        child: Stepper(
+                          currentStep: _currentStep,
+                          type: StepperType.horizontal,
+                          elevation: 0,
+                          margin: EdgeInsets.zero,
+                          onStepContinue: () {
+                            if (_currentStep < 4) {
+                              setState(() => _currentStep++);
+                            }
+                          },
+                          onStepCancel: () {
+                            if (_currentStep > 0) {
+                              setState(() => _currentStep--);
+                            }
+                          },
+                          controlsBuilder: (context, details) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 24),
+                              child: Row(
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: details.onStepContinue,
+                                    child: Text(_currentStep == 4 ? "Complete" : "Continue"),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  if (_currentStep > 0)
+                                    TextButton(
+                                      onPressed: details.onStepCancel,
+                                      child: const Text("Back"),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                          steps: [
+                            _marketContextStep(),
+                            _emptyStep("Trade Management"),
+                            _emptyStep("Execution"),
+                            _emptyStep("Post-Trade"),
+                            _emptyStep("Review"),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-
-              // Align(
-              //   alignment: Alignment.centerRight,
-              //   child: ElevatedButton.icon(
-              //     icon: const Icon(Icons.save_alt),
-              //     label: const Text("Save Trade Form"),
-              //     onPressed: _saveTradeForm,
-              //   ),
-              // ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -153,11 +185,31 @@ class _DayEditDialogState extends State<DayEditDialog> {
   Step _emptyStep(String title) {
     return Step(
       title: Text(title),
-      content: const Padding(
-        padding: EdgeInsets.all(24),
-        child: Text(
-          "To be implemented later",
-          style: TextStyle(color: Colors.grey),
+      content: Container(
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade100),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.construction_rounded, size: 48, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text(
+              "Under Development",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey.shade400,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "This section will be available in a future update.",
+              style: TextStyle(color: Colors.grey.shade400),
+            ),
+          ],
         ),
       ),
     );

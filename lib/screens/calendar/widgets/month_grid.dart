@@ -55,23 +55,18 @@ class _MonthGridState extends State<MonthGrid> {
 
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 400),
-          child: Column(
+          child: SingleChildScrollView(
             key: ValueKey(state.currentMonth),
-            children: List.generate(rows.length, (rowIndex) {
-              final List<DayModel> row = rows[rowIndex];
-              final bool isLastRow = rowIndex == rows.length - 1;
-
-              Widget weekRow = WeekRow(
-                row: row,
-                placeholders: rowIndex == 0 ? placeholderCount : 0,
-              );
-
-              if (isLastRow) {
-                weekRow = DashedBorder(child: weekRow);
-              }
-
-              return weekRow;
-            }),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Column(
+              children: List.generate(rows.length, (rowIndex) {
+                final List<DayModel> row = rows[rowIndex];
+                return WeekRow(
+                  row: row,
+                  placeholders: rowIndex == 0 ? placeholderCount : 0,
+                );
+              }),
+            ),
           ),
         );
       },

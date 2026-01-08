@@ -487,32 +487,44 @@ class _MarketContextFormState extends State<MarketContextForm> {
     required void Function(List<T>) onChanged,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: options.map((o) {
               final isSelected = selected.contains(o);
 
               return FilterChip(
                 label: Text(labelBuilder(o)),
                 selected: isSelected,
-                showCheckmark: false,
-                selectedColor: Theme.of(
-                  context,
-                ).colorScheme.primary.withOpacity(0.15),
+                showCheckmark: true,
+                selectedColor: Theme.of(context).colorScheme.primaryContainer,
+                checkmarkColor: Theme.of(context).colorScheme.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                        : Colors.grey.shade200,
+                  ),
+                ),
                 labelStyle: TextStyle(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
-                      : Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                      : const Color(0xFF374151),
                 ),
                 onSelected: (v) {
                   final updated = List<T>.from(selected);
@@ -533,26 +545,50 @@ class _MarketContextFormState extends State<MarketContextForm> {
     IconData? icon,
     required List<Widget> children,
   }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                if (icon != null) Icon(icon, size: 20, color: Colors.blueGrey),
-                if (icon != null) const SizedBox(width: 8),
+                if (icon != null)
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+                  ),
+                if (icon != null) const SizedBox(width: 16),
                 Text(
                   title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Divider(height: 1),
+            ),
             ...children,
           ],
         ),

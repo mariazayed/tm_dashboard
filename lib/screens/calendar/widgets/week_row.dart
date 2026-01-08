@@ -29,88 +29,81 @@ class WeekRow extends StatelessWidget {
             day.date.day == today.day;
 
         Color backgroundColor;
+        Color textColor = const Color(0xFF1F2937);
+        double opacity = 1.0;
+        // final bool isWeekend = day.date.weekday == 6 || day.date.weekday == 7;
 
         if (isToday) {
-          backgroundColor = Colors.deepPurple.shade100;
+          backgroundColor = Theme.of(context).colorScheme.primaryContainer;
+          textColor = Theme.of(context).colorScheme.onPrimaryContainer;
         } else if (day.noWork) {
-          backgroundColor = Colors.grey.shade300;
+          backgroundColor = const Color(0xFFF3F4F6);
+          textColor = Colors.grey.shade400;
+          opacity = 0.6;
         } else if (day.ended) {
-          backgroundColor = Colors.grey.shade200;
+          backgroundColor = Colors.white;
+          textColor = Colors.grey.shade500;
+          opacity = 0.8;
         } else if (day.weekend) {
-          backgroundColor = Colors.orange.shade100;
+          backgroundColor = const Color(0xFFFFF7ED);
+          textColor = const Color(0xFFC2410C);
         } else {
-          backgroundColor = Colors.grey.shade100;
+          backgroundColor = Colors.white;
         }
 
         return Expanded(
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
-            onEnter: (_) {},
-            onExit: (_) {},
             child: GestureDetector(
               onTap: () => _openDayDialog(context, day),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.all(4),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(2, 2),
+              child: Opacity(
+                opacity: opacity,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.all(6),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isToday
+                          ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                          : Colors.grey.shade200,
+                      width: isToday ? 2 : 1,
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: Center(
-                        child: Text(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
                           day.date.day.toString(),
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            // color: day.noWork
-                            //     ? Colors.black54
-                            //     : day.ended
-                            //     ? Colors.black45
-                            //     : Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: textColor,
                           ),
                         ),
-                      ),
+                        const Spacer(),
+                        if (day.noWork)
+                          const Icon(Icons.block, size: 14, color: Colors.grey)
+                        else if (day.ended)
+                          Icon(Icons.check_circle_outline,
+                              size: 14, color: Colors.green.shade300)
+                        else if (day.weekend)
+                          Icon(Icons.weekend_outlined,
+                              size: 14, color: Colors.orange.shade300),
+                      ],
                     ),
-                    // const SizedBox(height: 4),
-                    // Row(
-                    //   mainAxisAlignment: MainAxisAlignment.center,
-                    //   children: [
-                    //     if (isWeekend)
-                    //       Container(
-                    //         width: 6,
-                    //         height: 6,
-                    //         margin: const EdgeInsets.symmetric(horizontal: 1),
-                    //         decoration: BoxDecoration(
-                    //           color: Colors.orange.shade400,
-                    //           shape: BoxShape.circle,
-                    //         ),
-                    //       ),
-                    //     if (day.noWork)
-                    //       Container(
-                    //         width: 6,
-                    //         height: 6,
-                    //         margin: const EdgeInsets.symmetric(horizontal: 1),
-                    //         decoration: BoxDecoration(
-                    //           color: Colors.grey.shade600,
-                    //           shape: BoxShape.circle,
-                    //         ),
-                    //       ),
-                    //   ],
-                    // ),
-                  ],
+                  ),
                 ),
               ),
             ),

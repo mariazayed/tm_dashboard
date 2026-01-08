@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 
 class WeekLabels extends StatelessWidget {
   const WeekLabels({super.key});
@@ -6,16 +7,27 @@ class WeekLabels extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    return Row(
-      children: labels
-          .map(
-            (e) => Expanded(
-              child: Center(
-                child: Text(e, style: TextStyle(fontWeight: FontWeight.bold)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Row(
+        children: labels
+            .map(
+              (e) => Expanded(
+                child: Center(
+                  child: Text(
+                    e.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey.shade500,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
               ),
-            ),
-          )
-          .toList(),
+            )
+            .toList(),
+      ),
     );
   }
 }

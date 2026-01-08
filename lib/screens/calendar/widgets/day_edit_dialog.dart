@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:tm_dashboard/services/day_service.dart';
 
 import '../../../bloc/calendar_state.dart';
 import '../../../models/day_model.dart';
-import '../../../trade_cycle_forms/trade_plan_form.dart';
+import '../../../trade_cycle_forms/trade_cycle_stepper_forms.dart';
+import 'day_status.dart';
 
 class DayEditDialog extends StatefulWidget {
   final DayModel day;
@@ -15,22 +15,11 @@ class DayEditDialog extends StatefulWidget {
   State<DayEditDialog> createState() => _DayEditDialogState();
 }
 
+enum _DialogView { status, forms }
+
 class _DayEditDialogState extends State<DayEditDialog> {
-  final DayService _dayService = DayService();
 
-  int _currentStep = 0;
-
-  late bool weekend;
-  late bool noWork;
-  late bool ended;
-
-  @override
-  void initState() {
-    super.initState();
-    weekend = widget.day.weekend;
-    noWork = widget.day.noWork;
-    ended = widget.day.ended;
-  }
+  _DialogView _selectedView = _DialogView.status;
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +42,35 @@ class _DayEditDialogState extends State<DayEditDialog> {
                 padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
                 child: Row(
                   children: [
-                    Text(
-                      "Day ${widget.day.date.day}",
-                      style: Theme.of(context).textTheme.headlineMedium,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Day ${widget.day.date.day}",
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        SegmentedButton<_DialogView>(
+                          segments: const [
+                            ButtonSegment(
+                              value: _DialogView.status,
+                              label: Text("Day Status"),
+                              icon: Icon(Icons.edit_calendar),
+                            ),
+                            ButtonSegment(
+                              value: _DialogView.forms,
+                              label: Text("Lifecycle Forms"),
+                              icon: Icon(Icons.assignment),
+                            ),
+                          ],
+                          selected: {_selectedView},
+                          onSelectionChanged: (Set<_DialogView> newSelection) {
+                            setState(() {
+                              _selectedView = newSelection.first;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     IconButton.filledTonal(
@@ -71,100 +86,13 @@ class _DayEditDialogState extends State<DayEditDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// ================= DAY CHECKBOXES =================
-                      Row(
-                        children: [
-                          Wrap(
-                            spacing: 12,
-                            children: [
-                              FilterChip(
-                                label: const Text("Weekend"),
-                                selected: weekend,
-                                onSelected: (v) => setState(() => weekend = v),
-                              ),
-                              FilterChip(
-                                label: const Text("No Work"),
-                                selected: noWork,
-                                onSelected: (v) => setState(() => noWork = v),
-                              ),
-                              FilterChip(
-                                label: const Text("Ended"),
-                                selected: ended,
-                                onSelected: (v) => setState(() => ended = v),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.check_circle_outline),
-                            label: const Text("Save Changes"),
-                            onPressed: _saveDaySettings,
-                          ),
-                        ],
-                      ),
+                      if (_selectedView == _DialogView.status) ...[
+                        DayStatus(day: widget.day, cubit: widget.cubit,),
+                      ],
 
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Divider(),
-                      ),
-
-                      /// ================= STEPPER FORM =================
-                      Text(
-                        "Planning",
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 16),
-
-                      SizedBox(
-                        height: 550,
-                        child: Theme(
-                          data: Theme.of(context).copyWith(
-                            canvasColor: Colors.transparent,
-                          ),
-                          child: Stepper(
-                            currentStep: _currentStep,
-                            type: StepperType.horizontal,
-                            elevation: 0,
-                            margin: EdgeInsets.zero,
-                            onStepContinue: () {
-                              if (_currentStep < 4) {
-                                setState(() => _currentStep++);
-                              }
-                            },
-                            onStepCancel: () {
-                              if (_currentStep > 0) {
-                                setState(() => _currentStep--);
-                              }
-                            },
-                            controlsBuilder: (context, details) {
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 24),
-                                child: Row(
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: details.onStepContinue,
-                                      child: Text(_currentStep == 4 ? "Complete" : "Continue"),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    if (_currentStep > 0)
-                                      TextButton(
-                                        onPressed: details.onStepCancel,
-                                        child: const Text("Back"),
-                                      ),
-                                  ],
-                                ),
-                              );
-                            },
-                            steps: [
-                              _marketContextStep(),
-                              _emptyStep("Trade Management"),
-                              _emptyStep("Execution"),
-                              _emptyStep("Post-Trade"),
-                              _emptyStep("Review"),
-                            ],
-                          ),
-                        ),
-                      ),
+                      if (_selectedView == _DialogView.forms) ...[
+                        TradeCycleStepperForms(),
+                      ],
                     ],
                   ),
                 ),
@@ -175,101 +103,4 @@ class _DayEditDialogState extends State<DayEditDialog> {
       ),
     );
   }
-
-  Step _marketContextStep() {
-    return Step(
-      title: const Text("Context"),
-      subtitle: const Text("Market conditions"),
-      isActive: _currentStep >= 0,
-      content: TradePlanForm(),
-    );
-  }
-
-  Step _emptyStep(String title) {
-    return Step(
-      title: Text(title),
-      content: Container(
-        padding: const EdgeInsets.all(40),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade100),
-        ),
-        child: Column(
-          children: [
-            Icon(Icons.construction_rounded, size: 48, color: Colors.grey.shade300),
-            const SizedBox(height: 16),
-            Text(
-              "Under Development",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey.shade400,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "This section will be available in a future update.",
-              style: TextStyle(color: Colors.grey.shade400),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget sectionCard({
-    required String title,
-    IconData? icon,
-    required List<Widget> children,
-  }) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 20),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (icon != null) Icon(icon, size: 20, color: Colors.blueGrey),
-                if (icon != null) const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// ================= SAVE ACTIONS =================
-  void _saveDaySettings() {
-    final updated = widget.day.copyWith(
-      weekend: weekend,
-      noWork: noWork,
-      ended: ended,
-    );
-
-    widget.cubit.updateDay(updated);
-
-    if (widget.day.exists) {
-      _dayService.update(widget.day.id, updated.toJson());
-    } else {
-      _dayService.create(updated.toJson());
-    }
-
-    Navigator.of(context).pop();
-  }
-
-  // void _saveTradeForm() {
-  //   if (!_formKey.currentState!.validate()) return;
-  // }
 }

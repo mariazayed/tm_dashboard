@@ -12,634 +12,172 @@ import 'package:tm_dashboard/enums/stop_loss_placement_reason_enum.dart';
 import 'package:tm_dashboard/enums/take_profit_placement_reason.dart';
 import 'package:tm_dashboard/enums/trade_direction_enum.dart';
 import 'package:tm_dashboard/enums/volatility_enum.dart';
+import 'package:tm_dashboard/services/trade_calculator_service.dart';
+import 'package:tm_dashboard/trade_cycle_forms/trade_form_widgets.dart';
 
 import '../models/static_data.dart';
 import '../services/data_service.dart';
 
-class MarketContextForm extends StatefulWidget {
-  const MarketContextForm({super.key});
+class TradePlanForm extends StatefulWidget {
+  const TradePlanForm({super.key});
 
   @override
-  State<MarketContextForm> createState() => _MarketContextFormState();
+  State<TradePlanForm> createState() => _TradePlanFormState();
 }
 
-class _MarketContextFormState extends State<MarketContextForm> {
+class _TradePlanFormState extends State<TradePlanForm> {
+  final DataService _dataService = DataService();
+  final _formKey = GlobalKey<FormState>();
+
+  // State Variables
+  TradeDirectionEnum? direction;
+  MarketBiasEnum? marketBias;
+  MarketStateEnum? marketState;
+  VolatilityEnum? volatility;
+  List<EntryReasonEnum> entryReasons = [];
+  List<EntryConfirmationEnum> entryConfirmations = [];
+  EntryZoneTypeEnum? entryZoneType;
+  StaticDataResponse? data;
+  InvalidationConditionEnum? invalidationCondition;
+  bool willPyramid = false;
+  bool willBoost = false;
+  List<ScalingRuleEnum> scalingRules = [];
+  List<int> boostRules = [];
+  ScoreEnum? focusLevel;
+  ScoreEnum? stressLevel;
+  ScoreEnum? confidenceLevel;
+  ProbabilityEnum? probability;
+  StopLossPlacementReasonEnum? slLogic;
+  TakeProfitPlacementReasonEnum? tpLogic;
+
+  // Controllers
+  final entryZoneStartCtrl = TextEditingController();
+  final entryZoneEndCtrl = TextEditingController();
+  final estimatedEntryCtrl = TextEditingController();
+  final invalidationStartCtrl = TextEditingController();
+  final invalidationEndCtrl = TextEditingController();
+  final lotSizeCtrl = TextEditingController();
+  final rrCtrl = TextEditingController();
+  final notesCtrl = TextEditingController();
+  final slCtrl = TextEditingController();
+  final slPipsCtrl = TextEditingController();
+  final slUsdCtrl = TextEditingController();
+  final tpCtrl = TextEditingController();
+  final tpPipsCtrl = TextEditingController();
+  final tpUsdCtrl = TextEditingController();
+
   @override
   void initState() {
     super.initState();
-    loadData();
+    _loadData();
 
     slCtrl.addListener(_recalculateStopLoss);
     tpCtrl.addListener(_recalculateTakeProfit);
-
     estimatedEntryCtrl.addListener(_recalculateStopLoss);
     estimatedEntryCtrl.addListener(_recalculateTakeProfit);
-
     lotSizeCtrl.addListener(_recalculateStopLoss);
     lotSizeCtrl.addListener(_recalculateTakeProfit);
   }
 
   @override
   void dispose() {
+    entryZoneStartCtrl.dispose();
+    entryZoneEndCtrl.dispose();
+    estimatedEntryCtrl.dispose();
+    invalidationStartCtrl.dispose();
+    invalidationEndCtrl.dispose();
+    lotSizeCtrl.dispose();
+    rrCtrl.dispose();
+    notesCtrl.dispose();
     slCtrl.dispose();
     slPipsCtrl.dispose();
     slUsdCtrl.dispose();
-
     tpCtrl.dispose();
     tpPipsCtrl.dispose();
     tpUsdCtrl.dispose();
-
-    rrCtrl.dispose();
-
     super.dispose();
   }
 
-  final DataService _dataService = DataService();
-
-  final _formKey = GlobalKey<FormState>();
-
-  TradeDirectionEnum? direction;
-
-  MarketBiasEnum? marketBias;
-
-  MarketStateEnum? marketState;
-
-  VolatilityEnum? volatility;
-
-  List<EntryReasonEnum> entryReasons = [];
-
-  List<EntryConfirmationEnum> entryConfirmations = [];
-
-  EntryZoneTypeEnum? entryZoneType;
-
-  StaticDataResponse? data;
-
-  final entryZoneStartCtrl = TextEditingController();
-
-  final entryZoneEndCtrl = TextEditingController();
-
-  final estimatedEntryCtrl = TextEditingController();
-
-  final invalidationStartCtrl = TextEditingController();
-
-  final invalidationEndCtrl = TextEditingController();
-
-  InvalidationConditionEnum? invalidationCondition;
-
-  bool willPyramid = false;
-
-  bool willBoost = false;
-
-  List<ScalingRuleEnum> scalingRules = [];
-
-  List<int> boostRules = [];
-
-  final lotSizeCtrl = TextEditingController();
-
-  final rrCtrl = TextEditingController();
-  final notesCtrl = TextEditingController();
-
-  final slCtrl = TextEditingController();
-  final slPipsCtrl = TextEditingController();
-  final slUsdCtrl = TextEditingController();
-
-  final tpCtrl = TextEditingController();
-  final tpPipsCtrl = TextEditingController();
-  final tpUsdCtrl = TextEditingController();
-
-  ScoreEnum? focusLevel;
-
-  ScoreEnum? stressLevel;
-
-  ScoreEnum? confidenceLevel;
-
-  ProbabilityEnum? probability;
-  StopLossPlacementReasonEnum? slLogic;
-  TakeProfitPlacementReasonEnum? tpLogic;
-
-  @override
-  Widget build(BuildContext context) {
-    if (data == null) {
-      return const CircularProgressIndicator();
-    }
-
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          sectionCard(
-            title: "Market Direction",
-            icon: Icons.trending_up,
-            children: [
-              _dropdown<TradeDirectionEnum>(
-                "Direction",
-                TradeDirectionEnum.values,
-                direction,
-                (TradeDirectionEnum e) => e.name,
-                (TradeDirectionEnum? v) {
-                  setState(() {
-                    direction = v;
-                  });
-                },
-              ),
-              _dropdown<MarketBiasEnum>(
-                "Market Bias",
-                MarketBiasEnum.values,
-                marketBias,
-                (MarketBiasEnum e) => e.name,
-                (MarketBiasEnum? v) => setState(() => marketBias = v),
-              ),
-              _dropdown<MarketStateEnum>(
-                "Market State",
-                MarketStateEnum.values,
-                marketState,
-                (MarketStateEnum e) => e.name,
-                (MarketStateEnum? v) => setState(() => marketState = v),
-              ),
-              _dropdown<VolatilityEnum>(
-                "Volatility",
-                VolatilityEnum.values,
-                volatility,
-                (VolatilityEnum e) => e.name,
-                (VolatilityEnum? v) => setState(() => volatility = v),
-              ),
-            ],
-          ),
-
-          sectionCard(
-            title: "Entry Logic",
-            icon: Icons.login,
-            children: [
-              _multiSelect<EntryReasonEnum>(
-                title: "Entry Reasons",
-                options: EntryReasonEnum.values,
-                selected: entryReasons,
-                labelBuilder: (e) => e.name,
-                onChanged: (v) => setState(() => entryReasons = v),
-              ),
-
-              _multiSelect<EntryConfirmationEnum>(
-                title: "Confirmations",
-                options: EntryConfirmationEnum.values,
-                selected: entryConfirmations,
-                labelBuilder: (e) => e.name,
-                onChanged: (v) => setState(() => entryConfirmations = v),
-              ),
-
-              _dropdown<EntryZoneTypeEnum>(
-                "Entry Zone Type",
-                EntryZoneTypeEnum.values,
-                entryZoneType,
-                (EntryZoneTypeEnum e) => e.name,
-                (EntryZoneTypeEnum? v) => setState(() => entryZoneType = v),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: _numberField("Zone Start", entryZoneStartCtrl),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: _numberField("Zone End", entryZoneEndCtrl)),
-                ],
-              ),
-
-              _numberField("Estimated Entry", estimatedEntryCtrl),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: _numberField(
-                      "Invalidation Start",
-                      invalidationStartCtrl,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _numberField(
-                      "Invalidation End",
-                      invalidationEndCtrl,
-                    ),
-                  ),
-                ],
-              ),
-
-              _dropdown<InvalidationConditionEnum>(
-                "Invalidation Condition",
-                InvalidationConditionEnum.values,
-                invalidationCondition,
-                (InvalidationConditionEnum e) => e.name,
-                (InvalidationConditionEnum? v) =>
-                    setState(() => invalidationCondition = v),
-              ),
-            ],
-          ),
-
-          sectionCard(
-            title: "Position Management",
-            icon: Icons.layers,
-            children: [
-              SwitchListTile.adaptive(
-                title: const Text("Enable pyramiding"),
-                value: willPyramid,
-                onChanged: (v) => setState(() => willPyramid = v),
-              ),
-
-              if (willPyramid)
-                _multiSelect<ScalingRuleEnum>(
-                  title: "Scaling Rules",
-                  options: ScalingRuleEnum.values,
-                  selected: scalingRules,
-                  labelBuilder: (e) => e.name,
-                  onChanged: (v) => setState(() => scalingRules = v),
-                ),
-
-              SwitchListTile.adaptive(
-                title: const Text("Enable boost"),
-                value: willBoost,
-                onChanged: (v) => setState(() => willBoost = v),
-              ),
-
-              // if (willBoost)
-              //   _multiSelect("Boost Rules", data!.boostRules, boostRules),
-            ],
-          ),
-
-          sectionCard(
-            title: "Risk & Expectancy",
-            icon: Icons.shield,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: _numberField("Lot Size", lotSizeCtrl)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _numberField("R:R", rrCtrl, readOnly: true)),
-                ],
-              ),
-              _dropdown<ProbabilityEnum>(
-                "Expected Probability",
-                ProbabilityEnum.values,
-                probability,
-                (ProbabilityEnum e) => e.name,
-                (ProbabilityEnum? v) => setState(() => probability = v),
-              ),
-            ],
-          ),
-
-          sectionCard(
-            title: "Stop Loss Details",
-            icon: Icons.stop_circle,
-            children: [
-              _numberField("Stop Loss Price", slCtrl),
-              _dropdown<StopLossPlacementReasonEnum>(
-                "Stop Loss Logic",
-                StopLossPlacementReasonEnum.values,
-                slLogic,
-                (StopLossPlacementReasonEnum e) => e.name,
-                (StopLossPlacementReasonEnum? v) => setState(() => slLogic = v),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: _numberField(
-                      "Stop Loss (Pips)",
-                      slPipsCtrl,
-                      readOnly: true,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _numberField(
-                      "Stop Loss (USD)",
-                      slUsdCtrl,
-                      readOnly: true,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          sectionCard(
-            title: "Take Profit Details",
-            icon: Icons.rocket,
-            children: [
-              _numberField("Take Profit Price", tpCtrl),
-              _dropdown<TakeProfitPlacementReasonEnum>(
-                "Take Profit Logic",
-                TakeProfitPlacementReasonEnum.values,
-                tpLogic,
-                (TakeProfitPlacementReasonEnum e) => e.name,
-                (TakeProfitPlacementReasonEnum? v) =>
-                    setState(() => tpLogic = v),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: _numberField(
-                      "Take Profit (Pips)",
-                      tpPipsCtrl,
-                      readOnly: true,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _numberField(
-                      "Take Profit (USD)",
-                      tpUsdCtrl,
-                      readOnly: true,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          sectionCard(
-            title: "Psychological Factors",
-            icon: Icons.rate_review,
-            children: [
-              _dropdown<ScoreEnum>(
-                "Focus Level",
-                ScoreEnum.values,
-                focusLevel,
-                (ScoreEnum e) => e.name,
-                (ScoreEnum? v) => setState(() => focusLevel = v),
-              ),
-              _dropdown<ScoreEnum>(
-                "Stress Level",
-                ScoreEnum.values,
-                stressLevel,
-                (ScoreEnum e) => e.name,
-                (ScoreEnum? v) => setState(() => stressLevel = v),
-              ),
-              _dropdown<ScoreEnum>(
-                "Confidence Level",
-                ScoreEnum.values,
-                confidenceLevel,
-                (ScoreEnum e) => e.name,
-                (ScoreEnum? v) => setState(() => confidenceLevel = v),
-              ),
-            ],
-          ),
-          sectionCard(
-            title: "Trade Quality and Performance",
-            icon: Icons.high_quality,
-            children: [
-              _dropdown<ProbabilityEnum>(
-                "Expected Probability of Success",
-                ProbabilityEnum.values,
-                probability,
-                (ProbabilityEnum e) => e.name,
-                (ProbabilityEnum? v) => setState(() => probability = v),
-              ),
-            ],
-          ),
-          sectionCard(
-            title: "Additional Details",
-            icon: Icons.note,
-            children: [_textAreaField("Notes", notesCtrl)],
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.check_circle_outline),
-              label: const Text("Submit"),
-              onPressed: _submitForm,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _dropdown<T>(
-    String label,
-    List<T> items,
-    T? value,
-    String Function(T) labelBuilder,
-    ValueChanged<T?> onChanged,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: DropdownButtonFormField<T>(
-        initialValue: value,
-        decoration: InputDecoration(labelText: label),
-        items: items
-            .map(
-              (e) =>
-                  DropdownMenuItem<T>(value: e, child: Text(labelBuilder(e))),
-            )
-            .toList(),
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _numberField(
-    String label,
-    TextEditingController controller, {
-    bool readOnly = false,
-  }) {
-    final value = double.tryParse(controller.text);
-
-    Color? fillColor;
-    if (readOnly && value != null && label == "R:R") {
-      if (value < 1.0) {
-        fillColor = Colors.red.withOpacity(0.1);
-      } else if (value < 1.5)
-        fillColor = Colors.orange.withOpacity(0.1);
-      else
-        fillColor = Colors.green.withOpacity(0.1);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        readOnly: readOnly,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: fillColor != null,
-          fillColor: fillColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _textAreaField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        minLines: 1,
-        maxLines: 5,
-        controller: controller,
-        keyboardType: TextInputType.text,
-        decoration: InputDecoration(labelText: label),
-      ),
-    );
-  }
-
-  Widget _multiSelect<T>({
-    required String title,
-    required List<T> options,
-    required List<T> selected,
-    required String Function(T) labelBuilder,
-    required void Function(List<T>) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: options.map((o) {
-              final isSelected = selected.contains(o);
-
-              return FilterChip(
-                label: Text(labelBuilder(o)),
-                selected: isSelected,
-                showCheckmark: true,
-                selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                checkmarkColor: Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
-                        : Colors.grey.shade200,
-                  ),
-                ),
-                labelStyle: TextStyle(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : const Color(0xFF374151),
-                ),
-                onSelected: (v) {
-                  final updated = List<T>.from(selected);
-
-                  v ? updated.add(o) : updated.remove(o);
-                  onChanged(updated);
-                },
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget sectionCard({
-    required String title,
-    IconData? icon,
-    required List<Widget> children,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                if (icon != null)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-                  ),
-                if (icon != null) const SizedBox(width: 16),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ],
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Divider(height: 1),
-            ),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> loadData() async {
+  Future<void> _loadData() async {
     final tempData = await _dataService.getAll();
-
     setState(() {
       data = tempData;
     });
   }
 
+  void _recalculateStopLoss() {
+    final entry = double.tryParse(estimatedEntryCtrl.text);
+    final sl = double.tryParse(slCtrl.text);
+    final lotSize = double.tryParse(lotSizeCtrl.text);
+
+    if (entry == null || sl == null || lotSize == null || direction == null) {
+      slPipsCtrl.text = '';
+      slUsdCtrl.text = '';
+      return;
+    }
+
+    final priceDiff = TradeCalculatorService.calculatePriceDifference(
+      direction: direction!,
+      entry: entry,
+      target: sl,
+    );
+
+    if (priceDiff == null || priceDiff >= 0) {
+      slPipsCtrl.text = '';
+      slUsdCtrl.text = '';
+      return;
+    }
+
+    // For Stop Loss, we want the absolute difference for USD/Pips
+    final absDiff = priceDiff.abs();
+    slPipsCtrl.text = TradeCalculatorService.calculatePips(absDiff).toStringAsFixed(1);
+    slUsdCtrl.text =
+        TradeCalculatorService.calculateUsd(absDiff, lotSize).toStringAsFixed(2);
+
+    _recalculateRR();
+  }
+
+  void _recalculateTakeProfit() {
+    final entry = double.tryParse(estimatedEntryCtrl.text);
+    final tp = double.tryParse(tpCtrl.text);
+    final lotSize = double.tryParse(lotSizeCtrl.text);
+
+    if (entry == null || tp == null || lotSize == null || direction == null) {
+      tpPipsCtrl.text = '';
+      tpUsdCtrl.text = '';
+      return;
+    }
+
+    final priceDiff = TradeCalculatorService.calculatePriceDifference(
+      direction: direction!,
+      entry: entry,
+      target: tp,
+    );
+
+    if (priceDiff == null || priceDiff <= 0) {
+      tpPipsCtrl.text = '';
+      tpUsdCtrl.text = '';
+      return;
+    }
+
+    tpPipsCtrl.text =
+        TradeCalculatorService.calculatePips(priceDiff).toStringAsFixed(1);
+    tpUsdCtrl.text =
+        TradeCalculatorService.calculateUsd(priceDiff, lotSize).toStringAsFixed(2);
+
+    _recalculateRR();
+  }
+
+  void _recalculateRR() {
+    final slUsd = double.tryParse(slUsdCtrl.text);
+    final tpUsd = double.tryParse(tpUsdCtrl.text);
+
+    final rr = TradeCalculatorService.calculateRR(slUsd, tpUsd);
+    rrCtrl.text = rr?.toStringAsFixed(2) ?? '';
+  }
+
   void _submitForm() {
-    // 1️⃣ Validate text fields
-    // if (!_formKey.currentState!.validate()) {
-    //   return;
-    // }
-    //
-    // // 2️⃣ Validate required enums
-    // if (direction == null ||
-    //     marketBias == null ||
-    //     marketState == null ||
-    //     volatility == null ||
-    //     probability == null) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(
-    //       content: Text("Please complete all required selections."),
-    //     ),
-    //   );
-    //   return;
-    // }
-    //
-    // // 3️⃣ Validate multi-selects if needed
-    // if (entryReasons.isEmpty || entryConfirmations.isEmpty) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(
-    //       content: Text(
-    //         "Please select at least one entry reason and confirmation.",
-    //       ),
-    //     ),
-    //   );
-    //   return;
-    // }
-
-    // 4️⃣ Submit (API integration later)
-    // debugPrint("Trade form submitted successfully");
-
-    dynamic sentData = {
+    final sentData = {
       "direction": direction,
       "marketBias": marketBias,
       "marketState": marketState,
@@ -674,85 +212,343 @@ class _MarketContextFormState extends State<MarketContextForm> {
       "notes": notesCtrl.text,
     };
 
-    // Example payload (safe & typed)
-    debugPrint("""
-sentData: $sentData
-""");
-
-    // 5️⃣ Close dialog (optional)
-    // Navigator.of(context).pop();
+    debugPrint("sentData: $sentData");
   }
 
-  void _recalculateStopLoss() {
-    final entry = double.tryParse(estimatedEntryCtrl.text);
-    final sl = double.tryParse(slCtrl.text);
-    final lotSize = double.tryParse(lotSizeCtrl.text);
+  Color? _getRRFillColor() {
+    final value = double.tryParse(rrCtrl.text);
+    if (value == null) return null;
 
-    if (entry == null || sl == null || lotSize == null || direction == null) {
-      slPipsCtrl.text = '';
-      slUsdCtrl.text = '';
-      return;
-    }
-
-    final priceDiff = direction == TradeDirectionEnum.LONG
-        ? entry - sl
-        : sl - entry;
-
-    if (priceDiff <= 0) {
-      slPipsCtrl.text = '';
-      slUsdCtrl.text = '';
-      return;
-    }
-
-    final pips = priceDiff * 10;
-    final usd = priceDiff * lotSize * 100;
-
-    slPipsCtrl.text = pips.toStringAsFixed(1);
-    slUsdCtrl.text = usd.toStringAsFixed(2);
-
-    _recalculateRR();
+    if (value < 1.0) return Colors.red.withOpacity(0.1);
+    if (value < 1.5) return Colors.orange.withOpacity(0.1);
+    return Colors.green.withOpacity(0.1);
   }
 
-  void _recalculateTakeProfit() {
-    final entry = double.tryParse(estimatedEntryCtrl.text);
-    final tp = double.tryParse(tpCtrl.text);
-    final lotSize = double.tryParse(lotSizeCtrl.text);
-
-    if (entry == null || tp == null || lotSize == null || direction == null) {
-      tpPipsCtrl.text = '';
-      tpUsdCtrl.text = '';
-      return;
+  @override
+  Widget build(BuildContext context) {
+    if (data == null) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    final priceDiff = direction == TradeDirectionEnum.LONG
-        ? tp - entry
-        : entry - tp;
-
-    if (priceDiff <= 0) {
-      tpPipsCtrl.text = '';
-      tpUsdCtrl.text = '';
-      return;
-    }
-
-    final pips = priceDiff * 10;
-    final usd = priceDiff * lotSize * 100;
-
-    tpPipsCtrl.text = pips.toStringAsFixed(1);
-    tpUsdCtrl.text = usd.toStringAsFixed(2);
-
-    _recalculateRR();
+    return Form(
+      key: _formKey,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _buildMarketDirectionSection(),
+            _buildEntryLogicSection(),
+            _buildPositionManagementSection(),
+            _buildRiskExpectancySection(),
+            _buildStopLossSection(),
+            _buildTakeProfitSection(),
+            _buildPsychologicalSection(),
+            _buildTradeQualitySection(),
+            _buildAdditionalDetailsSection(),
+            _buildSubmitButton(),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _recalculateRR() {
-    final slUsd = double.tryParse(slUsdCtrl.text);
-    final tpUsd = double.tryParse(tpUsdCtrl.text);
+  Widget _buildMarketDirectionSection() {
+    return SectionCard(
+      title: "Market Direction",
+      icon: Icons.trending_up,
+      children: [
+        FormDropdown<TradeDirectionEnum>(
+          label: "Direction",
+          items: TradeDirectionEnum.values,
+          value: direction,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => direction = v),
+        ),
+        FormDropdown<MarketBiasEnum>(
+          label: "Market Bias",
+          items: MarketBiasEnum.values,
+          value: marketBias,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => marketBias = v),
+        ),
+        FormDropdown<MarketStateEnum>(
+          label: "Market State",
+          items: MarketStateEnum.values,
+          value: marketState,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => marketState = v),
+        ),
+        FormDropdown<VolatilityEnum>(
+          label: "Volatility",
+          items: VolatilityEnum.values,
+          value: volatility,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => volatility = v),
+        ),
+      ],
+    );
+  }
 
-    if (slUsd == null || tpUsd == null || slUsd <= 0) {
-      rrCtrl.text = '';
-      return;
-    }
+  Widget _buildEntryLogicSection() {
+    return SectionCard(
+      title: "Entry Logic",
+      icon: Icons.login,
+      children: [
+        FormMultiSelect<EntryReasonEnum>(
+          title: "Entry Reasons",
+          options: EntryReasonEnum.values,
+          selected: entryReasons,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => entryReasons = v),
+        ),
+        FormMultiSelect<EntryConfirmationEnum>(
+          title: "Confirmations",
+          options: EntryConfirmationEnum.values,
+          selected: entryConfirmations,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => entryConfirmations = v),
+        ),
+        FormDropdown<EntryZoneTypeEnum>(
+          label: "Entry Zone Type",
+          items: EntryZoneTypeEnum.values,
+          value: entryZoneType,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => entryZoneType = v),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: FormNumberField(
+                  label: "Zone Start", controller: entryZoneStartCtrl),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FormNumberField(
+                  label: "Zone End", controller: entryZoneEndCtrl),
+            ),
+          ],
+        ),
+        FormNumberField(label: "Estimated Entry", controller: estimatedEntryCtrl),
+        Row(
+          children: [
+            Expanded(
+              child: FormNumberField(
+                label: "Invalidation Start",
+                controller: invalidationStartCtrl,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FormNumberField(
+                label: "Invalidation End",
+                controller: invalidationEndCtrl,
+              ),
+            ),
+          ],
+        ),
+        FormDropdown<InvalidationConditionEnum>(
+          label: "Invalidation Condition",
+          items: InvalidationConditionEnum.values,
+          value: invalidationCondition,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => invalidationCondition = v),
+        ),
+      ],
+    );
+  }
 
-    final rr = tpUsd / slUsd;
-    rrCtrl.text = rr.toStringAsFixed(2);
+  Widget _buildPositionManagementSection() {
+    return SectionCard(
+      title: "Position Management",
+      icon: Icons.layers,
+      children: [
+        SwitchListTile.adaptive(
+          title: const Text("Enable pyramiding"),
+          value: willPyramid,
+          onChanged: (v) => setState(() => willPyramid = v),
+        ),
+        if (willPyramid)
+          FormMultiSelect<ScalingRuleEnum>(
+            title: "Scaling Rules",
+            options: ScalingRuleEnum.values,
+            selected: scalingRules,
+            labelBuilder: (e) => e.name,
+            onChanged: (v) => setState(() => scalingRules = v),
+          ),
+        SwitchListTile.adaptive(
+          title: const Text("Enable boost"),
+          value: willBoost,
+          onChanged: (v) => setState(() => willBoost = v),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRiskExpectancySection() {
+    return SectionCard(
+      title: "Risk & Expectancy",
+      icon: Icons.shield,
+      children: [
+        Row(
+          children: [
+            Expanded(
+                child: FormNumberField(label: "Lot Size", controller: lotSizeCtrl)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FormNumberField(
+                label: "R:R",
+                controller: rrCtrl,
+                readOnly: true,
+                fillColor: _getRRFillColor(),
+              ),
+            ),
+          ],
+        ),
+        FormDropdown<ProbabilityEnum>(
+          label: "Expected Probability",
+          items: ProbabilityEnum.values,
+          value: probability,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => probability = v),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStopLossSection() {
+    return SectionCard(
+      title: "Stop Loss Details",
+      icon: Icons.stop_circle,
+      children: [
+        FormNumberField(label: "Stop Loss Price", controller: slCtrl),
+        FormDropdown<StopLossPlacementReasonEnum>(
+          label: "Stop Loss Logic",
+          items: StopLossPlacementReasonEnum.values,
+          value: slLogic,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => slLogic = v),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: FormNumberField(
+                label: "Stop Loss (Pips)",
+                controller: slPipsCtrl,
+                readOnly: true,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FormNumberField(
+                label: "Stop Loss (USD)",
+                controller: slUsdCtrl,
+                readOnly: true,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTakeProfitSection() {
+    return SectionCard(
+      title: "Take Profit Details",
+      icon: Icons.rocket,
+      children: [
+        FormNumberField(label: "Take Profit Price", controller: tpCtrl),
+        FormDropdown<TakeProfitPlacementReasonEnum>(
+          label: "Take Profit Logic",
+          items: TakeProfitPlacementReasonEnum.values,
+          value: tpLogic,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => tpLogic = v),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: FormNumberField(
+                label: "Take Profit (Pips)",
+                controller: tpPipsCtrl,
+                readOnly: true,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FormNumberField(
+                label: "Take Profit (USD)",
+                controller: tpUsdCtrl,
+                readOnly: true,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPsychologicalSection() {
+    return SectionCard(
+      title: "Psychological Factors",
+      icon: Icons.rate_review,
+      children: [
+        FormDropdown<ScoreEnum>(
+          label: "Focus Level",
+          items: ScoreEnum.values,
+          value: focusLevel,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => focusLevel = v),
+        ),
+        FormDropdown<ScoreEnum>(
+          label: "Stress Level",
+          items: ScoreEnum.values,
+          value: stressLevel,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => stressLevel = v),
+        ),
+        FormDropdown<ScoreEnum>(
+          label: "Confidence Level",
+          items: ScoreEnum.values,
+          value: confidenceLevel,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => confidenceLevel = v),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTradeQualitySection() {
+    return SectionCard(
+      title: "Trade Quality and Performance",
+      icon: Icons.high_quality,
+      children: [
+        FormDropdown<ProbabilityEnum>(
+          label: "Expected Probability of Success",
+          items: ProbabilityEnum.values,
+          value: probability,
+          labelBuilder: (e) => e.name,
+          onChanged: (v) => setState(() => probability = v),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAdditionalDetailsSection() {
+    return SectionCard(
+      title: "Additional Details",
+      icon: Icons.note,
+      children: [FormTextAreaField(label: "Notes", controller: notesCtrl)],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.check_circle_outline),
+        label: const Text("Submit"),
+        onPressed: _submitForm,
+      ),
+    );
   }
 }

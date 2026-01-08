@@ -178,7 +178,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
       title: const Text("Context"),
       subtitle: const Text("Market conditions"),
       isActive: _currentStep >= 0,
-      content: MarketContextForm(),
+      content: TradePlanForm(),
     );
   }
 

@@ -82,7 +82,6 @@ class CalendarCubit extends Cubit<CalendarState> {
       print("Error fetching days: $e");
     }
 
-    print("map ${map.length}");
     emit(state.copyWith(days: map));
   }
 

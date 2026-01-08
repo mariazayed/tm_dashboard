@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
         ),
         home: Scaffold(
           appBar: AppBar(
-            title: const Text('Trading Dashboard'),
+            title: const Text('Dashboard'),
             actions: [
               IconButton(
                 onPressed: () {},

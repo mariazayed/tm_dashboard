@@ -34,140 +34,143 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
-      child: Container(
-        width: 1000,
-        height: 800,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(28),
-        ),
-        child: Column(
-          children: [
-            // Custom Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
-              child: Row(
-                children: [
-                  Text(
-                    "Day ${widget.day.date.day}",
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const Spacer(),
-                  IconButton.filledTonal(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return PopScope(
+      canPop: false,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        child: Container(
+          width: 1000,
+          height: 800,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Column(
+            children: [
+              // Custom Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
+                child: Row(
                   children: [
-                    /// ================= DAY CHECKBOXES =================
-                    Row(
-                      children: [
-                        Wrap(
-                          spacing: 12,
-                          children: [
-                            FilterChip(
-                              label: const Text("Weekend"),
-                              selected: weekend,
-                              onSelected: (v) => setState(() => weekend = v),
-                            ),
-                            FilterChip(
-                              label: const Text("No Work"),
-                              selected: noWork,
-                              onSelected: (v) => setState(() => noWork = v),
-                            ),
-                            FilterChip(
-                              label: const Text("Ended"),
-                              selected: ended,
-                              onSelected: (v) => setState(() => ended = v),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.check_circle_outline),
-                          label: const Text("Save Changes"),
-                          onPressed: _saveDaySettings,
-                        ),
-                      ],
-                    ),
-
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Divider(),
-                    ),
-
-                    /// ================= STEPPER FORM =================
                     Text(
-                      "Trade Planning",
-                      style: Theme.of(context).textTheme.titleLarge,
+                      "Day ${widget.day.date.day}",
+                      style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    const SizedBox(height: 16),
-
-                    SizedBox(
-                      height: 550,
-                      child: Theme(
-                        data: Theme.of(context).copyWith(
-                          canvasColor: Colors.transparent,
-                        ),
-                        child: Stepper(
-                          currentStep: _currentStep,
-                          type: StepperType.horizontal,
-                          elevation: 0,
-                          margin: EdgeInsets.zero,
-                          onStepContinue: () {
-                            if (_currentStep < 4) {
-                              setState(() => _currentStep++);
-                            }
-                          },
-                          onStepCancel: () {
-                            if (_currentStep > 0) {
-                              setState(() => _currentStep--);
-                            }
-                          },
-                          controlsBuilder: (context, details) {
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 24),
-                              child: Row(
-                                children: [
-                                  ElevatedButton(
-                                    onPressed: details.onStepContinue,
-                                    child: Text(_currentStep == 4 ? "Complete" : "Continue"),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  if (_currentStep > 0)
-                                    TextButton(
-                                      onPressed: details.onStepCancel,
-                                      child: const Text("Back"),
-                                    ),
-                                ],
-                              ),
-                            );
-                          },
-                          steps: [
-                            _marketContextStep(),
-                            _emptyStep("Trade Management"),
-                            _emptyStep("Execution"),
-                            _emptyStep("Post-Trade"),
-                            _emptyStep("Review"),
-                          ],
-                        ),
-                      ),
+                    const Spacer(),
+                    IconButton.filledTonal(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      /// ================= DAY CHECKBOXES =================
+                      Row(
+                        children: [
+                          Wrap(
+                            spacing: 12,
+                            children: [
+                              FilterChip(
+                                label: const Text("Weekend"),
+                                selected: weekend,
+                                onSelected: (v) => setState(() => weekend = v),
+                              ),
+                              FilterChip(
+                                label: const Text("No Work"),
+                                selected: noWork,
+                                onSelected: (v) => setState(() => noWork = v),
+                              ),
+                              FilterChip(
+                                label: const Text("Ended"),
+                                selected: ended,
+                                onSelected: (v) => setState(() => ended = v),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.check_circle_outline),
+                            label: const Text("Save Changes"),
+                            onPressed: _saveDaySettings,
+                          ),
+                        ],
+                      ),
+
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Divider(),
+                      ),
+
+                      /// ================= STEPPER FORM =================
+                      Text(
+                        "Planning",
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 16),
+
+                      SizedBox(
+                        height: 550,
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            canvasColor: Colors.transparent,
+                          ),
+                          child: Stepper(
+                            currentStep: _currentStep,
+                            type: StepperType.horizontal,
+                            elevation: 0,
+                            margin: EdgeInsets.zero,
+                            onStepContinue: () {
+                              if (_currentStep < 4) {
+                                setState(() => _currentStep++);
+                              }
+                            },
+                            onStepCancel: () {
+                              if (_currentStep > 0) {
+                                setState(() => _currentStep--);
+                              }
+                            },
+                            controlsBuilder: (context, details) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 24),
+                                child: Row(
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: details.onStepContinue,
+                                      child: Text(_currentStep == 4 ? "Complete" : "Continue"),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    if (_currentStep > 0)
+                                      TextButton(
+                                        onPressed: details.onStepCancel,
+                                        child: const Text("Back"),
+                                      ),
+                                  ],
+                                ),
+                              );
+                            },
+                            steps: [
+                              _marketContextStep(),
+                              _emptyStep("Trade Management"),
+                              _emptyStep("Execution"),
+                              _emptyStep("Post-Trade"),
+                              _emptyStep("Review"),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

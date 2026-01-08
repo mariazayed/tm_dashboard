@@ -4,6 +4,8 @@ import 'package:tm_dashboard/trade_cycle_forms/trade_plan_form.dart';
 import '../widgets/in_development.dart';
 
 class TradeCycleStepperForms extends StatefulWidget {
+  const TradeCycleStepperForms({super.key});
+
   @override
   State<TradeCycleStepperForms> createState() => _TradeCycleStepperFormsState();
 }

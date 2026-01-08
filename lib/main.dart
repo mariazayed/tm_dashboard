@@ -66,11 +66,11 @@ class MyApp extends StatelessWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 1),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -84,6 +84,20 @@ class MyApp extends StatelessWidget {
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+
+          chipTheme: ChipThemeData(
+            backgroundColor: const Color(0xFFF3F4F6),
+            selectedColor: const Color(0xFF6366F1),
+            secondarySelectedColor: const Color(0xFF6366F1),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            labelStyle: const TextStyle(color: Color(0xFF374151), fontWeight: FontWeight.w500),
+            secondaryLabelStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            brightness: Brightness.light,
+            side: BorderSide(color: Colors.grey.shade200),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
         ),

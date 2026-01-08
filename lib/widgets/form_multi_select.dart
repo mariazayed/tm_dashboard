@@ -42,22 +42,6 @@ class FormMultiSelect<T> extends StatelessWidget {
                 label: Text(labelBuilder(o)),
                 selected: isSelected,
                 showCheckmark: true,
-                selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                checkmarkColor: Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  side: BorderSide(
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
-                        : Colors.grey.shade200,
-                  ),
-                ),
-                labelStyle: TextStyle(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : const Color(0xFF374151),
-                ),
                 onSelected: (v) {
                   final updated = List<T>.from(selected);
                   v ? updated.add(o) : updated.remove(o);

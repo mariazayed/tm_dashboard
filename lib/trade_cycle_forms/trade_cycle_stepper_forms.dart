@@ -17,50 +17,45 @@ class _TradeCycleStepperFormsState extends State<TradeCycleStepperForms> {
   Widget build(BuildContext context) {
     return SizedBox(
       height: 550,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          canvasColor: Colors.transparent,
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: Stepper(
-                currentStep: _currentStep,
-                type: StepperType.horizontal,
-                elevation: 0,
-                margin: EdgeInsets.zero,
-                onStepTapped: (step) => setState(() => _currentStep = step),
-                onStepContinue: _onStepContinue,
-                onStepCancel: _onStepCancel,
-                controlsBuilder: (context, details) => const SizedBox.shrink(),
-                steps: [
-                  _marketContextStep(),
-                  _emptyStep("Trade Management", 1),
-                  _emptyStep("Execution", 2),
-                  _emptyStep("Post-Trade", 3),
-                  _emptyStep("Review", 4),
-                ],
-              ),
+      child: Column(
+        children: [
+          Expanded(
+            child: Stepper(
+              currentStep: _currentStep,
+              type: StepperType.horizontal,
+              elevation: 0,
+              margin: EdgeInsets.zero,
+              onStepTapped: (step) => setState(() => _currentStep = step),
+              onStepContinue: _onStepContinue,
+              onStepCancel: _onStepCancel,
+              controlsBuilder: (context, details) => const SizedBox.shrink(),
+              steps: [
+                _marketContextStep(),
+                _emptyStep("Trade Management", 1),
+                _emptyStep("Execution", 2),
+                _emptyStep("Post-Trade", 3),
+                _emptyStep("Review", 4),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: _onStepContinue,
-                    child: Text(_currentStep == 4 ? "Complete" : "Continue"),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _onStepContinue,
+                  child: Text(_currentStep == 4 ? "Complete" : "Continue"),
+                ),
+                const SizedBox(width: 12),
+                if (_currentStep > 0)
+                  TextButton(
+                    onPressed: _onStepCancel,
+                    child: const Text("Back"),
                   ),
-                  const SizedBox(width: 12),
-                  if (_currentStep > 0)
-                    TextButton(
-                      onPressed: _onStepCancel,
-                      child: const Text("Back"),
-                    ),
-                ],
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

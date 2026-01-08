@@ -21,50 +21,60 @@ class _TradeCycleStepperFormsState extends State<TradeCycleStepperForms> {
         data: Theme.of(context).copyWith(
           canvasColor: Colors.transparent,
         ),
-        child: Stepper(
-          currentStep: _currentStep,
-          type: StepperType.horizontal,
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          onStepContinue: () {
-            if (_currentStep < 4) {
-              setState(() => _currentStep++);
-            }
-          },
-          onStepCancel: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep--);
-            }
-          },
-          controlsBuilder: (context, details) {
-            return Padding(
-              padding: const EdgeInsets.only(top: 24),
+        child: Column(
+          children: [
+            Expanded(
+              child: Stepper(
+                currentStep: _currentStep,
+                type: StepperType.horizontal,
+                elevation: 0,
+                margin: EdgeInsets.zero,
+                onStepTapped: (step) => setState(() => _currentStep = step),
+                onStepContinue: _onStepContinue,
+                onStepCancel: _onStepCancel,
+                controlsBuilder: (context, details) => const SizedBox.shrink(),
+                steps: [
+                  _marketContextStep(),
+                  _emptyStep("Trade Management", 1),
+                  _emptyStep("Execution", 2),
+                  _emptyStep("Post-Trade", 3),
+                  _emptyStep("Review", 4),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 children: [
                   ElevatedButton(
-                    onPressed: details.onStepContinue,
+                    onPressed: _onStepContinue,
                     child: Text(_currentStep == 4 ? "Complete" : "Continue"),
                   ),
                   const SizedBox(width: 12),
                   if (_currentStep > 0)
                     TextButton(
-                      onPressed: details.onStepCancel,
+                      onPressed: _onStepCancel,
                       child: const Text("Back"),
                     ),
                 ],
               ),
-            );
-          },
-          steps: [
-            _marketContextStep(),
-            _emptyStep("Trade Management"),
-            _emptyStep("Execution"),
-            _emptyStep("Post-Trade"),
-            _emptyStep("Review"),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  void _onStepContinue() {
+    if (_currentStep < 4) {
+      setState(() => _currentStep++);
+    }
+  }
+
+  void _onStepCancel() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    }
   }
 
   Step _marketContextStep() {
@@ -76,9 +86,10 @@ class _TradeCycleStepperFormsState extends State<TradeCycleStepperForms> {
     );
   }
 
-  Step _emptyStep(String title) {
+  Step _emptyStep(String title, int index) {
     return Step(
       title: Text(title),
+      isActive: _currentStep >= index,
       content: Container(
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(

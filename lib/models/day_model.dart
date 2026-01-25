@@ -8,6 +8,7 @@ class DayModel {
   final bool weekend;
   final bool noWork;
   final bool ended;
+  final String notes;
 
   bool exists;
 
@@ -18,10 +19,11 @@ class DayModel {
     this.weekend = false,
     this.noWork = false,
     this.ended = false,
+    this.notes = '',
     this.exists = false,
   });
 
-  DayModel copyWith({bool? weekend, bool? noWork, bool? ended}) {
+  DayModel copyWith({bool? weekend, bool? noWork, bool? ended, String? notes}) {
     return DayModel(
       id: id,
       dayOfWeek: dayOfWeek,
@@ -29,6 +31,7 @@ class DayModel {
       weekend: weekend ?? this.weekend,
       noWork: noWork ?? this.noWork,
       ended: ended ?? this.ended,
+      notes: notes ?? this.notes,
     );
   }
 
@@ -37,9 +40,10 @@ class DayModel {
       id: json['id'],
       date: DateTime.parse(json['date']),
       dayOfWeek: DayOfWeekEnum.fromValue(json['dayOfWeek']),
-      weekend: json['weekend'],
-      noWork: json['noWork'],
-      ended: json['ended'],
+      weekend: json['weekend'] ?? false,
+      noWork: json['noWork'] ?? false,
+      ended: json['ended'] ?? false,
+      notes: json['notes'] ?? '',
     );
   }
 
@@ -50,6 +54,7 @@ class DayModel {
       'weekend': weekend,
       'noWork': noWork,
       'ended': ended,
+      'notes': notes,
     };
   }
 
@@ -60,13 +65,13 @@ class DayModel {
   // Format the date
   //   String formattedDate = formatter.format(now);
 
-  Map<String, dynamic> toJson() =>
-      {
-        // todo: the day of week has a wrong value in the initialization
-        'dayOfWeek': date.weekday,
-        'date': formatter.format(date),
-        'weekend': weekend,
-        'noWork': noWork,
-        'ended': ended,
-      };
+  Map<String, dynamic> toJson() => {
+    // todo: the day of week has a wrong value in the initialization
+    'dayOfWeek': date.weekday,
+    'date': formatter.format(date),
+    'weekend': weekend,
+    'noWork': noWork,
+    'ended': ended,
+    'notes': notes,
+  };
 }

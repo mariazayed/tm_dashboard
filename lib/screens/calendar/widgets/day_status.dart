@@ -16,23 +16,51 @@ class DayStatus extends StatefulWidget {
 
 class _DayStatusState extends State<DayStatus> {
   final DayService _dayService = DayService();
+  final TextEditingController _notesController = TextEditingController();
 
-  late bool weekend;
-  late bool noWork;
-  late bool ended;
+  // Safe default values
+  bool weekend = false;
+  bool noWork = false;
+  bool ended = false;
+
+  String _notes = ''; // Safe default for notes
 
   @override
   void initState() {
     super.initState();
-    weekend = widget.day.weekend;
-    noWork = widget.day.noWork;
-    ended = widget.day.ended;
+    _syncFromDay();
+  }
+
+  @override
+  void didUpdateWidget(covariant DayStatus oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.day.id != widget.day.id) {
+      _syncFromDay();
+    }
+  }
+
+  void _syncFromDay() {
+    // Null-safe assignments
+    weekend = widget.day.weekend ?? false;
+    noWork = widget.day.noWork ?? false;
+    ended = widget.day.ended ?? false;
+
+    _notes = widget.day.notes ?? '';
+    _notesController.text = _notes;
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        /// -------- Status Chips --------
         Wrap(
           spacing: 12,
           children: [
@@ -71,11 +99,38 @@ class _DayStatusState extends State<DayStatus> {
             ),
           ],
         ),
-        const Spacer(),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.check_circle_outline),
-          label: const Text("Save Changes"),
-          onPressed: _saveDaySettings,
+
+        const SizedBox(height: 24),
+
+        /// -------- Notes --------
+        Text("Notes", style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 8),
+
+        TextField(
+          controller: _notesController,
+          maxLines: 6,
+          onChanged: (v) => _notes = v, // Keep notes in sync
+          decoration: InputDecoration(
+            hintText: "Write notes about this trading day...",
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 32),
+
+        /// -------- Save Button --------
+        Align(
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.check_circle_outline),
+            label: const Text("Save Changes"),
+            onPressed: _saveDaySettings,
+          ),
         ),
       ],
     );
@@ -86,16 +141,21 @@ class _DayStatusState extends State<DayStatus> {
       weekend: weekend,
       noWork: noWork,
       ended: ended,
+      notes: _notesController.text.trim(),
     );
 
     widget.cubit.updateDay(updated);
 
     if (widget.day.exists) {
+      print('updated.toJson() ${updated.toJson()}');
       _dayService.update(widget.day.id, updated.toJson());
     } else {
+      print('updated2.toJson() ${updated.toJson()}');
       _dayService.create(updated.toJson());
     }
 
-    Navigator.of(context).pop();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
   }
 }

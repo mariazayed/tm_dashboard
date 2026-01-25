@@ -67,7 +67,9 @@ class WeekRow extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isToday
-                          ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.5)
                           : Colors.grey.shade200,
                       width: isToday ? 2 : 1,
                     ),
@@ -96,11 +98,17 @@ class WeekRow extends StatelessWidget {
                         if (day.noWork)
                           const Icon(Icons.block, size: 14, color: Colors.grey)
                         else if (day.ended)
-                          Icon(Icons.check_circle_outline,
-                              size: 14, color: Colors.green.shade300)
+                          Icon(
+                            Icons.check_circle_outline,
+                            size: 14,
+                            color: Colors.green.shade300,
+                          )
                         else if (day.weekend)
-                          Icon(Icons.weekend_outlined,
-                              size: 14, color: Colors.orange.shade300),
+                          Icon(
+                            Icons.weekend_outlined,
+                            size: 14,
+                            color: Colors.orange.shade300,
+                          ),
                       ],
                     ),
                   ),

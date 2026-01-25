@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../bloc/calendar_state.dart';
 import '../../../models/day_model.dart';
-import '../../../trade_cycle_forms/trade_cycle_stepper_forms.dart';
 import 'day_status.dart';
 
 class DayEditDialog extends StatefulWidget {
@@ -15,11 +14,16 @@ class DayEditDialog extends StatefulWidget {
   State<DayEditDialog> createState() => _DayEditDialogState();
 }
 
-enum _DialogView { status, forms }
-
 class _DayEditDialogState extends State<DayEditDialog> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
-  _DialogView _selectedView = _DialogView.status;
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +41,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
           ),
           child: Column(
             children: [
-              // Custom Header
+              // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
                 child: Row(
@@ -50,25 +54,9 @@ class _DayEditDialogState extends State<DayEditDialog> {
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 8),
-                        SegmentedButton<_DialogView>(
-                          segments: const [
-                            ButtonSegment(
-                              value: _DialogView.status,
-                              label: Text("Day Status"),
-                              icon: Icon(Icons.edit_calendar),
-                            ),
-                            ButtonSegment(
-                              value: _DialogView.forms,
-                              label: Text("Lifecycle Forms"),
-                              icon: Icon(Icons.assignment),
-                            ),
-                          ],
-                          selected: {_selectedView},
-                          onSelectionChanged: (Set<_DialogView> newSelection) {
-                            setState(() {
-                              _selectedView = newSelection.first;
-                            });
-                          },
+                        Text(
+                          "Overview & notes",
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
                     ),
@@ -80,19 +68,15 @@ class _DayEditDialogState extends State<DayEditDialog> {
                   ],
                 ),
               ),
+
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_selectedView == _DialogView.status) ...[
-                        DayStatus(day: widget.day, cubit: widget.cubit,),
-                      ],
-
-                      if (_selectedView == _DialogView.forms) ...[
-                        TradeCycleStepperForms(),
-                      ],
+                      DayStatus(day: widget.day, cubit: widget.cubit),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),

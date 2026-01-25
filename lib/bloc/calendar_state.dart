@@ -10,10 +10,7 @@ class CalendarState {
 
   CalendarState({required this.currentMonth, required this.days});
 
-  CalendarState copyWith({
-    DateTime? currentMonth,
-    Map<int, DayModel>? days,
-  }) {
+  CalendarState copyWith({DateTime? currentMonth, Map<int, DayModel>? days}) {
     return CalendarState(
       currentMonth: currentMonth ?? this.currentMonth,
       days: days ?? this.days,

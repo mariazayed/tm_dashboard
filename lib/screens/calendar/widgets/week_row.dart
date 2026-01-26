@@ -25,15 +25,18 @@ class WeekRow extends StatelessWidget {
         final today = DateTime.now();
         final isToday =
             day.date.year == today.year &&
-            day.date.month == today.month &&
-            day.date.day == today.day;
+                day.date.month == today.month &&
+                day.date.day == today.day;
 
         Color backgroundColor;
         Color textColor = const Color(0xFF1F2937);
         double opacity = 1.0;
-        // final bool isWeekend = day.date.weekday == 6 || day.date.weekday == 7;
+        // Mark days with notes with a different background
+        // if (day.notes.isNotEmpty) {
+        //   backgroundColor = Colors.yellow.shade100; // background for notes
+        // } else
 
-        if (isToday) {
+          if (isToday) {
           backgroundColor = Theme.of(context).colorScheme.primaryContainer;
           textColor = Theme.of(context).colorScheme.onPrimaryContainer;
         } else if (day.noWork) {
@@ -68,8 +71,8 @@ class WeekRow extends StatelessWidget {
                     border: Border.all(
                       color: isToday
                           ? Theme.of(
-                              context,
-                            ).colorScheme.primary.withOpacity(0.5)
+                        context,
+                      ).colorScheme.primary.withOpacity(0.5)
                           : Colors.grey.shade200,
                       width: isToday ? 2 : 1,
                     ),
@@ -96,18 +99,32 @@ class WeekRow extends StatelessWidget {
                         ),
                         const Spacer(),
                         if (day.noWork)
-                          const Icon(Icons.block, size: 14, color: Colors.grey)
-                        else if (day.ended)
+                          const Icon(Icons.block, size: 14, color: Colors.grey),
+                        if (day.ended)
                           Icon(
                             Icons.check_circle_outline,
                             size: 14,
                             color: Colors.green.shade300,
-                          )
-                        else if (day.weekend)
+                          ),
+                        if (day.weekend)
+                            Icon(
+                              Icons.weekend_outlined,
+                              size: 14,
+                              color: Colors.orange.shade300,
+                            ),
+                        // If the day has notes, show a note icon
+                        if (day.notes.isNotEmpty)
                           Icon(
-                            Icons.weekend_outlined,
+                            Icons.note_add,
                             size: 14,
-                            color: Colors.orange.shade300,
+                            color: Colors.blue.shade300,
+                          ),
+
+                        if (day.exists)
+                          Icon(
+                            Icons.hdr_strong,
+                            size: 14,
+                            color: Colors.purple.shade200,
                           ),
                       ],
                     ),

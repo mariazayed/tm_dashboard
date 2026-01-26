@@ -9,7 +9,6 @@ class DayModel {
   final bool noWork;
   final bool ended;
   final String notes;
-
   bool exists;
 
   DayModel({

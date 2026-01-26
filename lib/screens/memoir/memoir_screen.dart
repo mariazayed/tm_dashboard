@@ -280,35 +280,89 @@ class MemoirWidget extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Text(isNew ? 'New Entry' : 'Edit Entry',
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Text(
+                    isNew ? 'New Entry' : 'Edit Entry',
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
-                TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title')),
-                TextField(controller: descCtrl, maxLines: 4, decoration: const InputDecoration(labelText: 'Description')),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    final newEntry = MemoirEntry(
-                      id: isNew
-                          ? DateTime.now().millisecondsSinceEpoch.toString()
-                          : entry!.id,
-                      title: titleCtrl.text.trim(),
-                      description: descCtrl.text.trim(),
-                      date: date,
-                    );
-                    bloc.eventSink.add(
-                        isNew ? AddEntry(newEntry) : UpdateEntry(newEntry));
-                    Navigator.pop(ctx);
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: titleCtrl,
+                    decoration: const InputDecoration(labelText: 'Title'),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: descCtrl,
+                    maxLines: 4,
+                    decoration: const InputDecoration(labelText: 'Description'),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  /// 📅 Date picker
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}',
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: ctx,
+                            initialDate: date,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            setState(() => date = picked);
+                          }
+                        },
+                        child: const Text('Change'),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  ElevatedButton(
+                    onPressed: () {
+                      final newEntry = MemoirEntry(
+                        id: isNew
+                            ? DateTime.now()
+                            .millisecondsSinceEpoch
+                            .toString()
+                            : entry!.id,
+                        title: titleCtrl.text.trim(),
+                        description: descCtrl.text.trim(),
+                        date: date,
+                      );
+
+                      bloc.eventSink.add(
+                        isNew
+                            ? AddEntry(newEntry)
+                            : UpdateEntry(newEntry),
+                      );
+
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text('Save'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -335,21 +389,44 @@ class _MemoirCard extends StatelessWidget {
         onTap: () => bloc.eventSink.add(ToggleExpand(entry.id)),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Text(_prettyDate(entry.date),
-                  style: const TextStyle(color: Colors.grey)),
-            ]),
-            const SizedBox(height: 8),
-            Text(entry.title,
-                style:
-                const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            if (entry.expanded) ...[
-              const SizedBox(height: 12),
-              Text(entry.description),
-              const SizedBox(height: 12),
-            ]
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    _prettyDate(entry.date),
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                  const Spacer(),
+
+                  /// ✏️ Edit button
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 18),
+                    onPressed: () {
+                      // open editor in edit mode
+                      (context.findAncestorWidgetOfExactType<MemoirWidget>()
+                      as MemoirWidget)
+                          ._openEditor(context, entry: entry);
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                entry.title,
+                style: const TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+
+              if (entry.expanded) ...[
+                const SizedBox(height: 12),
+                Text(entry.description),
+              ],
+            ],
+          ),
         ),
       ),
     );

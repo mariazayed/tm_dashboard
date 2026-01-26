@@ -2,27 +2,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// ----------------------------
-/// Models
-/// ----------------------------
-
-enum MemoirMode {
-  personal,
-  work,
-  learning,
-  travel,
-  milestone,
-  reflection,
-}
-
 class MemoirEntry {
   final String id;
   String title;
   String description;
   DateTime date;
-  MemoirMode mode;
-  List<String> tags;
-  List<String> attachments;
   bool expanded;
 
   MemoirEntry({
@@ -30,9 +14,6 @@ class MemoirEntry {
     required this.title,
     required this.description,
     required this.date,
-    required this.mode,
-    this.tags = const [],
-    this.attachments = const [],
     this.expanded = false,
   });
 
@@ -40,9 +21,6 @@ class MemoirEntry {
     String? title,
     String? description,
     DateTime? date,
-    MemoirMode? mode,
-    List<String>? tags,
-    List<String>? attachments,
     bool? expanded,
   }) {
     return MemoirEntry(
@@ -50,17 +28,10 @@ class MemoirEntry {
       title: title ?? this.title,
       description: description ?? this.description,
       date: date ?? this.date,
-      mode: mode ?? this.mode,
-      tags: tags ?? List.from(this.tags),
-      attachments: attachments ?? List.from(this.attachments),
       expanded: expanded ?? this.expanded,
     );
   }
 }
-
-/// ----------------------------
-/// BLoC (no packages)
-/// ----------------------------
 
 abstract class MemoirEvent {}
 class LoadSample extends MemoirEvent {}
@@ -189,36 +160,26 @@ class MemoirBloc {
         title: 'The Idea Was Born',
         description: 'I realized this should be a memoir, not a planner.',
         date: now.subtract(const Duration(days: 60)),
-        mode: MemoirMode.milestone,
-        tags: ['idea', 'vision'],
-        attachments: ['notes.pdf'],
       ),
       MemoirEntry(
         id: 'm2',
         title: 'First Working Timeline',
         description: 'Seeing memories ordered by time felt powerful.',
         date: now.subtract(const Duration(days: 30)),
-        mode: MemoirMode.work,
-        tags: ['flutter', 'timeline'],
       ),
       MemoirEntry(
         id: 'm3',
         title: 'Reflection',
         description: 'Removing the Gantt was the best decision.',
         date: now.subtract(const Duration(days: 7)),
-        mode: MemoirMode.reflection,
-        tags: ['lesson', 'architecture'],
       ),
     ];
   }
 }
 
-/// ----------------------------
-/// App
-/// ----------------------------
 
 class MemoirScreen extends StatefulWidget {
-  const MemoirScreen({Key? key}) : super(key: key);
+  const MemoirScreen({super.key});
 
   @override
   State<MemoirScreen> createState() => _MemoirScreenState();
@@ -267,11 +228,8 @@ class MemoirWidget extends StatelessWidget {
   List<MemoirEntry> get filtered {
     final q = state.searchQuery.toLowerCase();
     return state.entries.where((e) {
-      if (state.tagFilter != null &&
-          state.tagFilter!.isNotEmpty &&
-          !e.tags.contains(state.tagFilter)) return false;
       if (q.isEmpty) return true;
-      return '${e.title} ${e.description} ${e.tags.join(' ')}'
+      return '${e.title} ${e.description}'
           .toLowerCase()
           .contains(q);
     }).toList()
@@ -281,23 +239,6 @@ class MemoirWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Memoir'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.format_textdirection_r_to_l),
-            onPressed: () => bloc.eventSink.add(ToggleRTL()),
-          ),
-          IconButton(
-            icon: Icon(
-              state.forceLight
-                  ? Icons.light_mode
-                  : Icons.light_mode_outlined,
-            ),
-            onPressed: () => bloc.eventSink.add(ToggleForceLight()),
-          ),
-        ],
-      ),
       body: Column(
         children: [
           Padding(
@@ -335,10 +276,7 @@ class MemoirWidget extends StatelessWidget {
     final isNew = entry == null;
     final titleCtrl = TextEditingController(text: entry?.title ?? '');
     final descCtrl = TextEditingController(text: entry?.description ?? '');
-    final tagsCtrl =
-    TextEditingController(text: (entry?.tags ?? []).join(','));
     DateTime date = entry?.date ?? DateTime.now();
-    MemoirMode mode = entry?.mode ?? MemoirMode.personal;
 
     showDialog(
       context: context,
@@ -354,17 +292,6 @@ class MemoirWidget extends StatelessWidget {
                 TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: 'Title')),
                 TextField(controller: descCtrl, maxLines: 4, decoration: const InputDecoration(labelText: 'Description')),
                 const SizedBox(height: 8),
-                DropdownButtonFormField<MemoirMode>(
-                  value: mode,
-                  items: MemoirMode.values
-                      .map((m) => DropdownMenuItem(
-                      value: m, child: Text(describeEnum(m))))
-                      .toList(),
-                  onChanged: (v) => mode = v!,
-                  decoration: const InputDecoration(labelText: 'Mode'),
-                ),
-                TextField(controller: tagsCtrl, decoration: const InputDecoration(labelText: 'Tags (comma separated)')),
-                const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {
                     final newEntry = MemoirEntry(
@@ -374,13 +301,6 @@ class MemoirWidget extends StatelessWidget {
                       title: titleCtrl.text.trim(),
                       description: descCtrl.text.trim(),
                       date: date,
-                      mode: mode,
-                      tags: tagsCtrl.text
-                          .split(',')
-                          .map((e) => e.trim())
-                          .where((e) => e.isNotEmpty)
-                          .toList(),
-                      attachments: entry?.attachments ?? [],
                     );
                     bloc.eventSink.add(
                         isNew ? AddEntry(newEntry) : UpdateEntry(newEntry));
@@ -409,7 +329,6 @@ class _MemoirCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _modeColor(entry.mode);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: InkWell(
@@ -420,11 +339,6 @@ class _MemoirCard extends StatelessWidget {
             Row(children: [
               Text(_prettyDate(entry.date),
                   style: const TextStyle(color: Colors.grey)),
-              const Spacer(),
-              Chip(
-                label: Text(describeEnum(entry.mode)),
-                backgroundColor: color.withOpacity(0.15),
-              )
             ]),
             const SizedBox(height: 8),
             Text(entry.title,
@@ -434,32 +348,11 @@ class _MemoirCard extends StatelessWidget {
               const SizedBox(height: 12),
               Text(entry.description),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                children: entry.tags.map((t) => Chip(label: Text('#$t'))).toList(),
-              ),
             ]
           ]),
         ),
       ),
     );
-  }
-
-  Color _modeColor(MemoirMode m) {
-    switch (m) {
-      case MemoirMode.personal:
-        return Colors.pink;
-      case MemoirMode.work:
-        return Colors.indigo;
-      case MemoirMode.learning:
-        return Colors.green;
-      case MemoirMode.travel:
-        return Colors.orange;
-      case MemoirMode.milestone:
-        return Colors.blue;
-      case MemoirMode.reflection:
-        return Colors.deepPurple;
-    }
   }
 
   String _prettyDate(DateTime d) =>

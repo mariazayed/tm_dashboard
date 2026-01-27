@@ -80,114 +80,59 @@ class _RiskManagementScreenState
     double pct(double v) => (v / capital) * 100;
 
     /// RISK OF RUIN
-    final ruin = riskOfRuin(
-      winRate: winRate,
-      capital: capital,
-      riskPerTrade: riskPerTrade,
-    );
+    // final ruin = riskOfRuin(
+    //   winRate: winRate,
+    //   capital: capital,
+    //   riskPerTrade: riskPerTrade,
+    // );
 
     /// SIMULATION METRICS
     final double maxDD = equityCurve.isNotEmpty
         ? maxDrawdown(equityCurve)
         : 0;
 
+    final metrics = RiskMetrics(
+      capital: max(v(capitalCtrl), 1),
+      riskPct: v(riskCtrl) / 100,
+      winRate: v(winRateCtrl) / 100,
+      rrr: max(v(rrrCtrl), 1),
+      trades: v(tradesCtrl),
+      tradesPerDay: max(v(tradesPerDayCtrl), 1),
+    );
+
+    final ruin = riskOfRuin(
+      winRate: metrics.winRate,
+      capital: metrics.capital,
+      riskPerTrade: metrics.riskPerTrade,
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Risk Management')),
       body: LayoutBuilder(
         builder: (context, constraints) {
-      final width = constraints.maxWidth;
+          final isDesktop = constraints.maxWidth > 1200;
+          final isTablet = constraints.maxWidth > 800;
 
-      int columns;
-      if (width > 1200) {
-        columns = 3;
-      } else if (width > 800) {
-        columns = 2;
-      } else {
-        columns = 1;
-      }
-
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            _responsiveGrid(
-              columns: columns,
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _card('Inputs', _inputsSection()),
+                _kpiBar(metrics, ruin),
+                const SizedBox(height: 24),
 
-                _card(
-                  'Trade Expectancy 🎯',
-                  _stats({
-                    'Risk / Trade \$': _Stat(riskPerTrade, pct(riskPerTrade)),
-                    'Reward / Trade \$': _Stat(rewardPerTrade, 0),
-                    'Expectancy \$': _Stat(expectancy, 0),
-                    'Expectancy %': _Stat(expectancyPct, 0),
-                    'Edge Score': _Stat(edgeScore, 0),
-                    'Risk of Ruin %': _Stat(ruin * 100, 0),
-                    'Max Drawdown %': _Stat(maxDD, 0),
-                  }),
-                ),
+                if (isDesktop)
+                  _desktopMainLayout()
+                else
+                  _mobileMainLayout(),
 
-                _card(
-                  'Trade Distribution',
-                  _stats({
-                    'Winning Trades':
-                    _Stat(winningTrades, winRate * 100),
-                    'Losing Trades':
-                    _Stat(losingTrades, (1 - winRate) * 100),
-                  }),
-                ),
-
-                _card(
-                  'Risk & Reward Exposure',
-                  _stats({
-                    'Daily Risk \$': _Stat(dailyRisk, pct(dailyRisk)),
-                    'Daily Reward \$': _Stat(dailyReward, pct(dailyReward)),
-                    'Weekly Risk \$': _Stat(weeklyRisk, pct(weeklyRisk)),
-                    'Weekly Reward \$': _Stat(weeklyReward, pct(weeklyReward)),
-                    'Monthly Risk \$': _Stat(monthlyRisk, pct(monthlyRisk)),
-                    'Monthly Reward \$': _Stat(monthlyReward, pct(monthlyReward)),
-                  }),
-                ),
-
-                _card(
-                  'Approx. Performance',
-                  _stats({
-                    'Total Wins \$': _Stat(totalWins, pct(totalWins)),
-                    'Total Losses \$': _Stat(totalLosses, pct(totalLosses)),
-                    'Net Amount \$': _Stat(totalAmount, pct(totalAmount)),
-                  }),
-                ),
-
-                _card(
-                  'Time & Growth',
-                  _stats({
-                    'Capital Increase %':
-                    _Stat(capitalIncreasePct, capitalIncreasePct),
-                    'Days': _Stat(days, 0),
-                    'Weeks': _Stat(weeks, 0),
-                    'Months': _Stat(months, 0),
-                  }, showPercent: false),
-                ),
+                const SizedBox(height: 24),
+                _secondaryStatsGrid(isTablet ? 3 : 1, metrics),
               ],
             ),
-
-            if (equityCurve.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              _card(
-                'Equity Curve 📊',
-                SizedBox(
-                  height: 350,
-                  width: double.infinity,
-                  child: EquityCurveChart(equityCurve),
-                ),
-              ),
-            ],
-          ],
-        ),
-      );
-    },
-    ),
+          );
+        },
+      ),
     );
   }
 
@@ -340,7 +285,246 @@ class _RiskManagementScreenState
       ),
     );
   }
+
+  Widget _kpiBar(RiskMetrics m, double ruin) {
+    return Row(
+      children: [
+        _kpi('Capital', m.capital, '\$'),
+        _kpi('Risk / Trade', m.riskPct * 100, '%'),
+        _kpi('Win Rate', m.winRate * 100, '%'),
+        _kpi('Edge', m.edgeScore, ''),
+        _kpi('Ruin', ruin * 100, '%'),
+      ],
+    );
+  }
+
+
+  Widget _kpi(String label, double value, String suffix) {
+    return Expanded(
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      color: Colors.grey.shade600, fontSize: 13)),
+              const SizedBox(height: 6),
+              Text(
+                '${value.toStringAsFixed(2)}$suffix',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  Widget _desktopMainLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 340,
+          child: _card('Trading Controls', _inputsSection()),
+        ),
+        const SizedBox(width: 24),
+        Expanded(
+          child: _card(
+            'Equity Curve',
+            SizedBox(
+              height: 420,
+              child: equityCurve.isEmpty
+                  ? _emptyState()
+                  : EquityCurveChart(equityCurve),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _mobileMainLayout() {
+    return Column(
+      children: [
+        _card('Trading Controls', _inputsSection()),
+        const SizedBox(height: 24),
+        if (equityCurve.isNotEmpty)
+          _card(
+            'Equity Curve',
+            SizedBox(height: 300, child: EquityCurveChart(equityCurve)),
+          ),
+      ],
+    );
+  }
+  Widget _secondaryStatsGrid(int columns, RiskMetrics metrics) {
+    return GridView.count(
+      crossAxisCount: columns,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.25,
+      children: [
+        _card('Expectancy 🎯', _expectancyStats(metrics)),
+        _card('Risk Exposure ⚠️', _riskStats(metrics)),
+        _card('Performance 💰', _performanceStats(metrics)),
+        _card('Time & Growth ⏳', _timeStats(metrics)),
+        _card('Distribution 📊', _distributionStats(metrics)),
+      ],
+    );
+  }
+  Widget _emptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.show_chart, size: 48, color: Colors.grey.shade400),
+          const SizedBox(height: 12),
+          Text(
+            'Run simulation to generate equity curve',
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _expectancyStats(RiskMetrics m) {
+    return _stats({
+      'Risk / Trade \$': _Stat(m.riskPerTrade, m.pct(m.riskPerTrade)),
+      'Reward / Trade \$': _Stat(m.rewardPerTrade, m.pct(m.rewardPerTrade)),
+      'Expectancy \$': _Stat(m.expectancy, m.pct(m.expectancy)),
+      'Expectancy %': _Stat(m.expectancyPct, m.expectancyPct),
+      'Edge Score': _Stat(m.edgeScore, 0),
+    });
+  }
+
+  Widget _riskStats(RiskMetrics m) {
+    return _stats({
+      'Daily Risk \$': _Stat(m.dailyRisk, m.pct(m.dailyRisk)),
+      'Daily Reward \$': _Stat(m.dailyReward, m.pct(m.dailyReward)),
+      'Weekly Risk \$': _Stat(m.weeklyRisk, m.pct(m.weeklyRisk)),
+      'Weekly Reward \$': _Stat(m.weeklyReward, m.pct(m.weeklyReward)),
+      'Monthly Risk \$': _Stat(m.monthlyRisk, m.pct(m.monthlyRisk)),
+      'Monthly Reward \$': _Stat(m.monthlyReward, m.pct(m.monthlyReward)),
+    });
+  }
+  Widget _performanceStats(RiskMetrics m) {
+    return _stats({
+      'Total Wins \$': _Stat(m.totalWins, m.pct(m.totalWins)),
+      'Total Losses \$': _Stat(m.totalLosses, m.pct(m.totalLosses)),
+      'Net P/L \$': _Stat(m.totalAmount, m.pct(m.totalAmount)),
+      'Capital Increase %':
+      _Stat(m.capitalIncreasePct, m.capitalIncreasePct),
+    });
+  }
+  Widget _timeStats(RiskMetrics m) {
+    return _stats({
+      'Days': _Stat(m.days, 0),
+      'Weeks': _Stat(m.weeks, 0),
+      'Months': _Stat(m.months, 0),
+    }, showPercent: false);
+  }
+  Widget _distributionStats(RiskMetrics m) {
+    return _stats({
+      'Winning Trades':
+      _Stat(m.winningTrades, m.winRate * 100),
+      'Losing Trades':
+      _Stat(m.losingTrades, (1 - m.winRate) * 100),
+    });
+  }
+
+
+
 }
+
+class RiskMetrics {
+  final double capital;
+  final double riskPct;
+  final double winRate;
+  final double rrr;
+  final double trades;
+  final double tradesPerDay;
+
+  late final double winningTrades;
+  late final double losingTrades;
+
+  late final double riskPerTrade;
+  late final double rewardPerTrade;
+
+  late final double expectancy;
+  late final double expectancyPct;
+  late final double edgeScore;
+
+  late final double dailyRisk;
+  late final double dailyReward;
+  late final double weeklyRisk;
+  late final double weeklyReward;
+  late final double monthlyRisk;
+  late final double monthlyReward;
+
+  late final double totalWins;
+  late final double totalLosses;
+  late final double totalAmount;
+
+  late final double days;
+  late final double weeks;
+  late final double months;
+
+  late final double capitalIncreasePct;
+
+  RiskMetrics({
+    required this.capital,
+    required this.riskPct,
+    required this.winRate,
+    required this.rrr,
+    required this.trades,
+    required this.tradesPerDay,
+  }) {
+    winningTrades = trades * winRate;
+    losingTrades = trades - winningTrades;
+
+    riskPerTrade = capital * riskPct;
+    rewardPerTrade = riskPerTrade * rrr;
+
+    expectancy =
+        (winRate * rewardPerTrade) -
+            ((1 - winRate) * riskPerTrade);
+
+    expectancyPct = expectancy / capital * 100;
+    edgeScore = expectancy / riskPerTrade;
+
+    dailyRisk = riskPerTrade * tradesPerDay;
+    dailyReward = rewardPerTrade * tradesPerDay;
+
+    weeklyRisk = dailyRisk * 5;
+    weeklyReward = dailyReward * 5;
+
+    monthlyRisk = dailyRisk * 20;
+    monthlyReward = dailyReward * 20;
+
+    totalWins = winningTrades * rewardPerTrade;
+    totalLosses = losingTrades * riskPerTrade;
+    totalAmount = totalWins - totalLosses;
+
+    days = trades / tradesPerDay;
+    weeks = days / 5;
+    months = days / 20;
+
+    capitalIncreasePct = (totalAmount / capital) * 100;
+  }
+
+  double pct(double value) => (value / capital) * 100;
+}
+
 
 class _Stat {
   final double value;

@@ -677,34 +677,64 @@ class _Stat {
 
 
 class EquityCurveChart extends StatelessWidget {
-  final List<double> curve;
-  const EquityCurveChart(this.curve, {super.key});
+  final List<double> equityCurve;
+
+  const EquityCurveChart(this.equityCurve, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    final spots = curve
-        .asMap()
-        .entries
-        .map((e) => FlSpot(e.key.toDouble(), e.value))
-        .toList();
+    final minY = equityCurve.reduce((a, b) => a < b ? a : b) * 0.95;
+    final maxY = equityCurve.reduce((a, b) => a > b ? a : b) * 1.05;
 
     return LineChart(
       LineChartData(
-        gridData: FlGridData(show: true),
-        borderData: FlBorderData(show: true),
+        minY: minY,
+        maxY: maxY,
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: true, reservedSize: 50),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: true, interval: (equityCurve.length/5).ceilToDouble()),
+          ),
+        ),
+        gridData: FlGridData(show: true, horizontalInterval: (maxY - minY) / 5),
         lineBarsData: [
           LineChartBarData(
-            spots: spots,
+            spots: List.generate(
+                equityCurve.length,
+                    (index) => FlSpot(index.toDouble(), equityCurve[index])),
             isCurved: true,
-            barWidth: 3,
             color: Colors.blueAccent,
+            barWidth: 3,
             dotData: FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.blueAccent.withOpacity(0.3),
+                  Colors.blueAccent.withOpacity(0.05),
+                ],
+              ),
+            ),
           ),
         ],
+        borderData: FlBorderData(
+          show: true,
+          border: const Border(
+            left: BorderSide(color: Colors.grey, width: 1),
+            bottom: BorderSide(color: Colors.grey, width: 1),
+            top: BorderSide(color: Colors.transparent),
+            right: BorderSide(color: Colors.transparent),
+          ),
+        ),
       ),
     );
   }
 }
+
 
 double riskOfRuin({
   required double winRate,

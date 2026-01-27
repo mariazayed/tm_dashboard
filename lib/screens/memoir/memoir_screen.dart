@@ -307,8 +307,11 @@ class _MemoirCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  DateFormat.Hm().format(entry.date),
-                  style: const TextStyle(color: Colors.grey),
+                  entry.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const Spacer(),
                 IconButton(
@@ -320,14 +323,6 @@ class _MemoirCard extends StatelessWidget {
                   },
                 ),
               ],
-            ),
-
-            Text(
-              entry.title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
             ),
 
             const SizedBox(height: 6),

@@ -435,7 +435,8 @@ class _RiskManagementScreenState
               height: 420,
               child: equityCurve.isEmpty
                   ? _emptyState()
-                  : EquityCurveChart(equityCurve),
+                  : EquityCurveChart(equityCurve,      startingCapital: max(v(capitalCtrl), 1),
+              ),
             ),
           ),
         ),
@@ -450,7 +451,8 @@ class _RiskManagementScreenState
         if (equityCurve.isNotEmpty)
           _card(
             'Equity Curve',
-            SizedBox(height: 300, child: EquityCurveChart(equityCurve)),
+            SizedBox(height: 300, child: EquityCurveChart(equityCurve,      startingCapital: max(v(capitalCtrl), 1),
+            )),
           ),
       ],
     );
@@ -678,11 +680,20 @@ class _Stat {
 
 class EquityCurveChart extends StatelessWidget {
   final List<double> equityCurve;
+  final double startingCapital;
 
-  const EquityCurveChart(this.equityCurve, {super.key});
+  const EquityCurveChart(
+      this.equityCurve, {
+        required this.startingCapital,
+        super.key,
+      });
 
   @override
   Widget build(BuildContext context) {
+    if (equityCurve.isEmpty) {
+      return const Center(child: Text('No data'));
+    }
+
     final minY = equityCurve.reduce((a, b) => a < b ? a : b) * 0.95;
     final maxY = equityCurve.reduce((a, b) => a > b ? a : b) * 1.05;
 
@@ -695,32 +706,10 @@ class EquityCurveChart extends StatelessWidget {
             sideTitles: SideTitles(showTitles: true, reservedSize: 50),
           ),
           bottomTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true, interval: (equityCurve.length/5).ceilToDouble()),
+            sideTitles: SideTitles(showTitles: true, interval: (equityCurve.length / 5).ceilToDouble()),
           ),
         ),
         gridData: FlGridData(show: true, horizontalInterval: (maxY - minY) / 5),
-        lineBarsData: [
-          LineChartBarData(
-            spots: List.generate(
-                equityCurve.length,
-                    (index) => FlSpot(index.toDouble(), equityCurve[index])),
-            isCurved: true,
-            color: Colors.blueAccent,
-            barWidth: 3,
-            dotData: FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.blueAccent.withOpacity(0.3),
-                  Colors.blueAccent.withOpacity(0.05),
-                ],
-              ),
-            ),
-          ),
-        ],
         borderData: FlBorderData(
           show: true,
           border: const Border(
@@ -730,6 +719,31 @@ class EquityCurveChart extends StatelessWidget {
             right: BorderSide(color: Colors.transparent),
           ),
         ),
+        lineBarsData: [
+          LineChartBarData(
+            spots: List.generate(
+              equityCurve.length,
+                  (index) => FlSpot(index.toDouble(), equityCurve[index]),
+            ),
+            isCurved: true,
+            barWidth: 3,
+            dotData: FlDotData(show: false),
+            color: Colors.black87, // main line color
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: equityCurve.map((e) {
+                  return e >= startingCapital
+                      ? Colors.greenAccent.withOpacity(0.3)
+                      : Colors.redAccent.withOpacity(0.3);
+                }).toList(),
+                stops: List.generate(equityCurve.length, (i) => i / (equityCurve.length - 1)),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

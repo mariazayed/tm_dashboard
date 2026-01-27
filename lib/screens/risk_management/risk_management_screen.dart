@@ -1,124 +1,145 @@
-import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class RiskManagementScreen extends StatefulWidget {
   const RiskManagementScreen({super.key});
 
   @override
-  State<RiskManagementScreen> createState() => _RiskManagementScreenState();
+  State<RiskManagementScreen> createState() =>
+      _RiskManagementScreenState();
 }
 
-class _RiskManagementScreenState extends State<RiskManagementScreen> {
-  final _winRateCtrl = TextEditingController(text: '65');
-  final _tradesCtrl = TextEditingController(text: '20');
-  final _riskCtrl = TextEditingController(text: '1.5');
-  final _capitalCtrl = TextEditingController(text: '800');
-  final _rrrCtrl = TextEditingController(text: '2');
-  final _tradesPerDayCtrl = TextEditingController(text: '2');
+class _RiskManagementScreenState
+    extends State<RiskManagementScreen> {
+  final capitalCtrl = TextEditingController(text: '10000');
+  final riskCtrl = TextEditingController(text: '1');
+  final winRateCtrl = TextEditingController(text: '50');
+  final rrrCtrl = TextEditingController(text: '2');
+  final tradesCtrl = TextEditingController(text: '200');
+  final tradesPerDayCtrl = TextEditingController(text: '3');
 
-  double _get(TextEditingController c) =>
+  List<double> equityCurve = [];
+
+  double v(TextEditingController c) =>
       double.tryParse(c.text) ?? 0;
 
   @override
   Widget build(BuildContext context) {
-    final winRate = _get(_winRateCtrl) / 100;
-    final trades = _get(_tradesCtrl);
-    final riskPct = _get(_riskCtrl) / 100;
-    final capital = max(_get(_capitalCtrl), 1);
-    final rrr = max(_get(_rrrCtrl), 1);
-    final tradesPerDay = max(_get(_tradesPerDayCtrl), 1);
+    final double capital = max(v(capitalCtrl), 1);
+    final riskPct = v(riskCtrl) / 100;
+    final winRate = v(winRateCtrl) / 100;
+    final double rrr = max(v(rrrCtrl), 1);
+    final trades = v(tradesCtrl).toInt();
+    final tradesPerDay = max(v(tradesPerDayCtrl), 1);
 
-    final wins = trades * winRate;
-    final losses = trades - wins;
-
+    /// CORE RISK
     final riskPerTrade = capital * riskPct;
     final rewardPerTrade = riskPerTrade * rrr;
 
+    /// EXPECTANCY & EDGE
+    final expectancy =
+        (winRate * rewardPerTrade) -
+            ((1 - winRate) * riskPerTrade);
+    final expectancyPct = expectancy / capital * 100;
+    final edgeScore = expectancy / riskPerTrade;
+
+    /// EXPOSURE
     final dailyRisk = riskPerTrade * tradesPerDay;
-    final dailyReward = rewardPerTrade * tradesPerDay;
-
     final weeklyRisk = dailyRisk * 5;
-    final weeklyReward = dailyReward * 5;
-
     final monthlyRisk = dailyRisk * 20;
-    final monthlyReward = dailyReward * 20;
 
-    final totalWins = wins * rewardPerTrade;
-    final totalLosses = losses * riskPerTrade;
-    final totalAmount = totalWins - totalLosses;
+    /// RISK OF RUIN
+    final ruin = riskOfRuin(
+      winRate: winRate,
+      capital: capital,
+      riskPerTrade: riskPerTrade,
+    );
 
-    double pct(double v) => (v / capital) * 100;
+    /// SIMULATION METRICS
+    final double maxDD = equityCurve.isNotEmpty
+        ? maxDrawdown(equityCurve)
+        : 0;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _card(
-            title: 'Inputs',
-            child: Column(
-              children: [
-                _row('Win Rate %', _winRateCtrl),
-                _row('Number of Trades', _tradesCtrl),
-                _row('Risk %', _riskCtrl),
-                _row('Capital', _capitalCtrl),
-                _row('Min RRR', _rrrCtrl),
-                _row('Max Trades / Day', _tradesPerDayCtrl),
-              ],
+    return Scaffold(
+      appBar: AppBar(title: const Text('Risk Management')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _card(
+              'Inputs',
+              Column(
+                children: [
+                  _f('Capital', capitalCtrl),
+                  _f('Risk % / Trade', riskCtrl),
+                  _f('Win Rate %', winRateCtrl),
+                  _f('RRR', rrrCtrl),
+                  _f('Trades', tradesCtrl),
+                  _f('Max Trades / Day', tradesPerDayCtrl),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        equityCurve = simulateEquityCurve(
+                          startingCapital: capital,
+                          trades: trades,
+                          winRate: winRate,
+                          riskPct: riskPct,
+                          rrr: rrr,
+                        );
+                      });
+                    },
+                    child: const Text('Run Simulation'),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          _card(
-            title: 'Trade Distribution',
-            child: _stats({
-              'Winning Trades':
-              _Stat(wins, wins / trades * 100),
-              'Losing Trades':
-              _Stat(losses, losses / trades * 100),
-            }, isCount: true),
-          ),
+            _card(
+              'Trade Expectancy 🎯',
+              _stats({
+                'Risk / Trade \$': riskPerTrade,
+                'Reward / Trade \$': rewardPerTrade,
+                'Expectancy \$': expectancy,
+                'Expectancy %': expectancyPct,
+                'Edge Score': edgeScore,
+              }),
+            ),
 
-          _card(
-            title: 'Risk & Reward Exposure',
-            child: _stats({
-              'Daily Risk \$':
-              _Stat(dailyRisk, pct(dailyRisk)),
-              'Daily Reward \$':
-              _Stat(dailyReward, pct(dailyReward)),
-              'Weekly Risk \$':
-              _Stat(weeklyRisk, pct(weeklyRisk)),
-              'Weekly Reward \$':
-              _Stat(weeklyReward, pct(weeklyReward)),
-              'Monthly Risk \$':
-              _Stat(monthlyRisk, pct(monthlyRisk)),
-              'Monthly Reward \$':
-              _Stat(monthlyReward, pct(monthlyReward)),
-            }),
-          ),
+            _card(
+              'Exposure & Survival 🚨',
+              _stats({
+                'Daily Risk \$': dailyRisk,
+                'Weekly Risk \$': weeklyRisk,
+                'Monthly Risk \$': monthlyRisk,
+                'Risk of Ruin %': ruin * 100,
+                'Max Drawdown %': maxDD,
+              }),
+            ),
 
-          _card(
-            title: 'Approx. Performance',
-            child: _stats({
-              'Total Wins \$':
-              _Stat(totalWins, pct(totalWins)),
-              'Total Losses \$':
-              _Stat(totalLosses, pct(totalLosses)),
-              'Net Amount \$':
-              _Stat(totalAmount, pct(totalAmount)),
-            }),
-          ),
-        ],
+            if (equityCurve.isNotEmpty)
+              _card(
+                'Equity Curve 📊',
+                SizedBox(
+                  height: 280,
+                  child: EquityCurveChart(equityCurve),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _row(String label, TextEditingController controller) {
+  Widget _f(String l, TextEditingController c) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextField(
-        controller: controller,
+        controller: c,
         keyboardType: TextInputType.number,
         decoration: InputDecoration(
-          labelText: label,
+          labelText: l,
           filled: true,
           fillColor: Colors.grey.shade100,
           border: OutlineInputBorder(
@@ -126,12 +147,11 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
             borderSide: BorderSide.none,
           ),
         ),
-        onChanged: (_) => setState(() {}),
       ),
     );
   }
 
-  Widget _stats(Map<String, _Stat> data, {bool isCount = false}) {
+  Widget _stats(Map<String, double> data) {
     return Column(
       children: data.entries.map((e) {
         return Padding(
@@ -139,23 +159,11 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(e.key,
-                  style: const TextStyle(fontWeight: FontWeight.w500)),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    e.value.value.toStringAsFixed(2),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    '${e.value.percent.toStringAsFixed(2)}%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
+              Text(e.key),
+              Text(
+                e.value.toStringAsFixed(2),
+                style:
+                const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -164,20 +172,21 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
     );
   }
 
-  Widget _card({required String title, required Widget child}) {
+  Widget _card(String title, Widget child) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+      elevation: 4,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title,
-                style: Theme.of(context).textTheme.titleLarge),
+                style:
+                Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
             child,
           ],
@@ -187,9 +196,81 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
   }
 }
 
-class _Stat {
-  final double value;
-  final double percent;
+class EquityCurveChart extends StatelessWidget {
+  final List<double> curve;
+  const EquityCurveChart(this.curve, {super.key});
 
-  _Stat(this.value, this.percent);
+  @override
+  Widget build(BuildContext context) {
+    final spots = curve
+        .asMap()
+        .entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value))
+        .toList();
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(show: true),
+        borderData: FlBorderData(show: true),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            barWidth: 3,
+            color: Colors.blueAccent,
+            dotData: FlDotData(show: false),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+double riskOfRuin({
+  required double winRate,
+  required double capital,
+  required double riskPerTrade,
+}) {
+  final lossRate = 1 - winRate;
+  if (winRate <= 0 || lossRate <= 0) return 1;
+
+  return pow(
+    lossRate / winRate,
+    capital / riskPerTrade,
+  ).toDouble();
+}
+
+List<double> simulateEquityCurve({
+  required double startingCapital,
+  required int trades,
+  required double winRate,
+  required double riskPct,
+  required double rrr,
+}) {
+  final random = Random();
+  double equity = startingCapital;
+  final curve = <double>[equity];
+
+  for (int i = 0; i < trades; i++) {
+    final risk = equity * riskPct;
+    final win = random.nextDouble() <= winRate;
+    equity += win ? risk * rrr : -risk;
+    curve.add(equity);
+  }
+
+  return curve;
+}
+
+double maxDrawdown(List<double> curve) {
+  double peak = curve.first;
+  double maxDD = 0;
+
+  for (final v in curve) {
+    if (v > peak) peak = v;
+    final dd = (peak - v) / peak;
+    maxDD = max(maxDD, dd);
+  }
+
+  return maxDD * 100;
+}
+

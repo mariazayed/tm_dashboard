@@ -1,106 +1,67 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/services/memoir_service.dart';
 
-class MemoirEntry {
-  final String id;
-  String title;
-  String description;
-  DateTime date;
-  bool expanded;
-
-  MemoirEntry({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.date,
-    this.expanded = false,
-  });
-
-  MemoirEntry copyWith({
-    String? title,
-    String? description,
-    DateTime? date,
-    bool? expanded,
-  }) {
-    return MemoirEntry(
-      id: id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      date: date ?? this.date,
-      expanded: expanded ?? this.expanded,
-    );
-  }
-}
+import '../../models/memoir_model.dart';
 
 abstract class MemoirEvent {}
+
 class LoadSample extends MemoirEvent {}
+
 class ToggleExpand extends MemoirEvent {
-  final String id;
+  final int id;
+
   ToggleExpand(this.id);
 }
-class SearchQuery extends MemoirEvent {
-  final String q;
-  SearchQuery(this.q);
-}
-class FilterByTag extends MemoirEvent {
-  final String? tag;
-  FilterByTag(this.tag);
-}
-class ToggleRTL extends MemoirEvent {}
-class ToggleForceLight extends MemoirEvent {}
+
 class AddEntry extends MemoirEvent {
-  final MemoirEntry entry;
+  final MemoirModel entry;
+
   AddEntry(this.entry);
 }
+
 class UpdateEntry extends MemoirEvent {
-  final MemoirEntry entry;
+  final MemoirModel entry;
+
   UpdateEntry(this.entry);
 }
+
 class DeleteEntry extends MemoirEvent {
   final String id;
+
   DeleteEntry(this.id);
 }
 
 class MemoirState {
-  final List<MemoirEntry> entries;
-  final String searchQuery;
-  final String? tagFilter;
-  final bool rtl;
-  final bool forceLight;
+  final List<MemoirModel> entries;
+  final bool loading;
+  final String? error;
 
-  MemoirState({
-    this.entries = const [],
-    this.searchQuery = '',
-    this.tagFilter,
-    this.rtl = false,
-    this.forceLight = false,
-  });
+  MemoirState({this.entries = const [], this.loading = false, this.error});
 
   MemoirState copyWith({
-    List<MemoirEntry>? entries,
-    String? searchQuery,
-    String? tagFilter,
-    bool? rtl,
-    bool? forceLight,
+    List<MemoirModel>? entries,
+    bool? loading,
+    String? error,
   }) {
     return MemoirState(
       entries: entries ?? List.from(this.entries),
-      searchQuery: searchQuery ?? this.searchQuery,
-      tagFilter: tagFilter ?? this.tagFilter,
-      rtl: rtl ?? this.rtl,
-      forceLight: forceLight ?? this.forceLight,
+      loading: loading ?? this.loading,
+      error: error,
     );
   }
 }
 
 class MemoirBloc {
   final _stateController = StreamController<MemoirState>.broadcast();
+
   MemoirState _state = MemoirState();
 
   Stream<MemoirState> get stream => _stateController.stream;
 
   final _eventController = StreamController<MemoirEvent>();
+
   Sink<MemoirEvent> get eventSink => _eventController.sink;
 
   MemoirBloc() {
@@ -112,38 +73,31 @@ class MemoirBloc {
     _stateController.add(_state);
   }
 
-  void _mapEvent(MemoirEvent e) {
-    if (e is LoadSample) {
-      _emit(_state.copyWith(entries: _sampleData()));
-    } else if (e is ToggleExpand) {
-      _emit(_state.copyWith(
-        entries: _state.entries.map((it) {
-          if (it.id == e.id) return it.copyWith(expanded: !it.expanded);
-          return it;
-        }).toList(),
-      ));
-    } else if (e is SearchQuery) {
-      _emit(_state.copyWith(searchQuery: e.q));
-    } else if (e is FilterByTag) {
-      _emit(_state.copyWith(tagFilter: e.tag));
-    } else if (e is ToggleRTL) {
-      _emit(_state.copyWith(rtl: !_state.rtl));
-    } else if (e is ToggleForceLight) {
-      _emit(_state.copyWith(forceLight: !_state.forceLight));
-    } else if (e is AddEntry) {
-      final list = List<MemoirEntry>.from(_state.entries)..add(e.entry);
-      _emit(_state.copyWith(entries: list));
-    } else if (e is UpdateEntry) {
-      _emit(_state.copyWith(
-        entries: _state.entries.map((it) {
-          if (it.id == e.entry.id) return e.entry;
-          return it;
-        }).toList(),
-      ));
-    } else if (e is DeleteEntry) {
-      _emit(_state.copyWith(
-        entries: _state.entries.where((e2) => e2.id != e.id).toList(),
-      ));
+  Future<void> _mapEvent(MemoirEvent event) async {
+    try {
+      if (event is LoadSample) {
+        _emit(_state.copyWith(loading: true));
+
+        final memoirs = await MemoirService().getAll();
+
+        _emit(_state.copyWith(entries: memoirs, loading: false));
+      } else if (event is AddEntry) {
+        final created = await MemoirService().create(event.entry);
+
+        final updated = List<MemoirModel>.from(_state.entries)..add(created);
+
+        _emit(_state.copyWith(entries: updated));
+      } else if (event is UpdateEntry) {
+        await MemoirService().update(event.entry.id, event.entry);
+
+        final updated = _state.entries.map((m) {
+          return m.id == event.entry.id ? event.entry : m;
+        }).toList();
+
+        _emit(_state.copyWith(entries: updated));
+      }
+    } catch (e) {
+      _emit(_state.copyWith(loading: false, error: e.toString()));
     }
   }
 
@@ -151,32 +105,7 @@ class MemoirBloc {
     _stateController.close();
     _eventController.close();
   }
-
-  List<MemoirEntry> _sampleData() {
-    final now = DateTime.now();
-    return [
-      MemoirEntry(
-        id: 'm1',
-        title: 'The Idea Was Born',
-        description: 'I realized this should be a memoir, not a planner.',
-        date: now.subtract(const Duration(days: 60)),
-      ),
-      MemoirEntry(
-        id: 'm2',
-        title: 'First Working Timeline',
-        description: 'Seeing memories ordered by time felt powerful.',
-        date: now.subtract(const Duration(days: 30)),
-      ),
-      MemoirEntry(
-        id: 'm3',
-        title: 'Reflection',
-        description: 'Removing the Gantt was the best decision.',
-        date: now.subtract(const Duration(days: 7)),
-      ),
-    ];
-  }
 }
-
 
 class MemoirScreen extends StatefulWidget {
   const MemoirScreen({super.key});
@@ -223,17 +152,10 @@ class MemoirWidget extends StatelessWidget {
   final MemoirState state;
 
   const MemoirWidget({Key? key, required this.bloc, required this.state})
-      : super(key: key);
+    : super(key: key);
 
-  List<MemoirEntry> get filtered {
-    final q = state.searchQuery.toLowerCase();
-    return state.entries.where((e) {
-      if (q.isEmpty) return true;
-      return '${e.title} ${e.description}'
-          .toLowerCase()
-          .contains(q);
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+  List<MemoirModel> get filtered {
+    return state.entries;
   }
 
   @override
@@ -241,19 +163,6 @@ class MemoirWidget extends StatelessWidget {
     return Scaffold(
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              onChanged: (v) => bloc.eventSink.add(SearchQuery(v)),
-              decoration: InputDecoration(
-                hintText: 'Search memories...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(12),
@@ -272,7 +181,7 @@ class MemoirWidget extends StatelessWidget {
     );
   }
 
-  void _openEditor(BuildContext context, {MemoirEntry? entry}) {
+  void _openEditor(BuildContext context, {MemoirModel? entry}) {
     final isNew = entry == null;
     final titleCtrl = TextEditingController(text: entry?.title ?? '');
     final descCtrl = TextEditingController(text: entry?.description ?? '');
@@ -290,7 +199,9 @@ class MemoirWidget extends StatelessWidget {
                   Text(
                     isNew ? 'New Entry' : 'Edit Entry',
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
 
                   const SizedBox(height: 12),
@@ -340,11 +251,9 @@ class MemoirWidget extends StatelessWidget {
 
                   ElevatedButton(
                     onPressed: () {
-                      final newEntry = MemoirEntry(
+                      final newEntry = MemoirModel(
                         id: isNew
-                            ? DateTime.now()
-                            .millisecondsSinceEpoch
-                            .toString()
+                            ? DateTime.now().millisecondsSinceEpoch
                             : entry!.id,
                         title: titleCtrl.text.trim(),
                         description: descCtrl.text.trim(),
@@ -352,9 +261,7 @@ class MemoirWidget extends StatelessWidget {
                       );
 
                       bloc.eventSink.add(
-                        isNew
-                            ? AddEntry(newEntry)
-                            : UpdateEntry(newEntry),
+                        isNew ? AddEntry(newEntry) : UpdateEntry(newEntry),
                       );
 
                       Navigator.pop(ctx);
@@ -376,7 +283,7 @@ class MemoirWidget extends StatelessWidget {
 /// ----------------------------
 
 class _MemoirCard extends StatelessWidget {
-  final MemoirEntry entry;
+  final MemoirModel entry;
   final MemoirBloc bloc;
 
   const _MemoirCard({required this.entry, required this.bloc});
@@ -406,7 +313,7 @@ class _MemoirCard extends StatelessWidget {
                     onPressed: () {
                       // open editor in edit mode
                       (context.findAncestorWidgetOfExactType<MemoirWidget>()
-                      as MemoirWidget)
+                              as MemoirWidget)
                           ._openEditor(context, entry: entry);
                     },
                   ),
@@ -418,13 +325,10 @@ class _MemoirCard extends StatelessWidget {
               Text(
                 entry.title,
                 style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w600),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-
-              if (entry.expanded) ...[
-                const SizedBox(height: 12),
-                Text(entry.description),
-              ],
             ],
           ),
         ),

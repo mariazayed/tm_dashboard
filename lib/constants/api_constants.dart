@@ -3,4 +3,5 @@ class ApiConstants {
   static const String dayURL = '$baseURL/day';
   static const String staticDataURL = '$baseURL/staticData';
   static const String tradeURL = '$baseURL/trade';
+  static const String memoirURL = '$baseURL/memoir';
 }

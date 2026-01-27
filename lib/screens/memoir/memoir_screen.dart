@@ -79,7 +79,6 @@ class MemoirBloc {
         _emit(_state.copyWith(loading: true));
 
         final memoirs = await MemoirService().getAll();
-        print("memoirs $memoirs");
 
         _emit(_state.copyWith(entries: memoirs, loading: false));
       } else if (event is AddEntry) {

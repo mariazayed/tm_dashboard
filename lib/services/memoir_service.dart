@@ -12,11 +12,9 @@ class MemoirService {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      print("data $data}");
       final List<MemoirModel> list = data
           .map((e) => MemoirModel.fromJson(e as Map<String, dynamic>))
           .toList();
-      print("list $list");
       return list;
     } else {
       throw Exception(

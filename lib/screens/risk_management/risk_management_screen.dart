@@ -93,117 +93,168 @@ class _RiskManagementScreenState
 
     return Scaffold(
       appBar: AppBar(title: const Text('Risk Management')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+      final width = constraints.maxWidth;
+
+      int columns;
+      if (width > 1200) {
+        columns = 3;
+      } else if (width > 800) {
+        columns = 2;
+      } else {
+        columns = 1;
+      }
+
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            _card(
-              'Inputs',
-              Column(
-                children: [
-                  _f('Capital', capitalCtrl),
-                  _f('Risk % / Trade', riskCtrl),
-                  _f('Win Rate %', winRateCtrl),
-                  _f('RRR', rrrCtrl),
-                  _f('Total Trades', tradesCtrl),
-                  _f('Max Trades / Day', tradesPerDayCtrl),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        equityCurve = simulateEquityCurve(
-                          startingCapital: capital,
-                          trades: trades,
-                          winRate: winRate,
-                          riskPct: riskPct,
-                          rrr: rrr,
-                        );
-                      });
-                    },
-                    child: const Text('Run Simulation'),
-                  ),
-                ],
-              ),
-            ),
-            _card(
-              'Trade Expectancy 🎯',
-              _stats({
-                'Risk / Trade \$': _Stat(riskPerTrade, pct(riskPerTrade)),
-                'Reward / Trade \$': _Stat(rewardPerTrade, 0),
-                'Expectancy \$': _Stat(expectancy, 0),
-                'Expectancy %': _Stat(expectancyPct, 0),
-                'Edge Score': _Stat(edgeScore, 0),
-                'Risk of Ruin %': _Stat(ruin * 100, 0),
-                'Max Drawdown %': _Stat(maxDD, 0),
-              }),
-            ),
-            _card(
-              'Trade Distribution',
-              _stats({
-                'Winning Trades':
-                _Stat(winningTrades, winRate * 100),
-                'Losing Trades':
-                _Stat(losingTrades, (1 - winRate) * 100),
-              }),
+            _responsiveGrid(
+              columns: columns,
+              children: [
+                _card('Inputs', _inputsSection()),
+
+                _card(
+                  'Trade Expectancy 🎯',
+                  _stats({
+                    'Risk / Trade \$': _Stat(riskPerTrade, pct(riskPerTrade)),
+                    'Reward / Trade \$': _Stat(rewardPerTrade, 0),
+                    'Expectancy \$': _Stat(expectancy, 0),
+                    'Expectancy %': _Stat(expectancyPct, 0),
+                    'Edge Score': _Stat(edgeScore, 0),
+                    'Risk of Ruin %': _Stat(ruin * 100, 0),
+                    'Max Drawdown %': _Stat(maxDD, 0),
+                  }),
+                ),
+
+                _card(
+                  'Trade Distribution',
+                  _stats({
+                    'Winning Trades':
+                    _Stat(winningTrades, winRate * 100),
+                    'Losing Trades':
+                    _Stat(losingTrades, (1 - winRate) * 100),
+                  }),
+                ),
+
+                _card(
+                  'Risk & Reward Exposure',
+                  _stats({
+                    'Daily Risk \$': _Stat(dailyRisk, pct(dailyRisk)),
+                    'Daily Reward \$': _Stat(dailyReward, pct(dailyReward)),
+                    'Weekly Risk \$': _Stat(weeklyRisk, pct(weeklyRisk)),
+                    'Weekly Reward \$': _Stat(weeklyReward, pct(weeklyReward)),
+                    'Monthly Risk \$': _Stat(monthlyRisk, pct(monthlyRisk)),
+                    'Monthly Reward \$': _Stat(monthlyReward, pct(monthlyReward)),
+                  }),
+                ),
+
+                _card(
+                  'Approx. Performance',
+                  _stats({
+                    'Total Wins \$': _Stat(totalWins, pct(totalWins)),
+                    'Total Losses \$': _Stat(totalLosses, pct(totalLosses)),
+                    'Net Amount \$': _Stat(totalAmount, pct(totalAmount)),
+                  }),
+                ),
+
+                _card(
+                  'Time & Growth',
+                  _stats({
+                    'Capital Increase %':
+                    _Stat(capitalIncreasePct, capitalIncreasePct),
+                    'Days': _Stat(days, 0),
+                    'Weeks': _Stat(weeks, 0),
+                    'Months': _Stat(months, 0),
+                  }, showPercent: false),
+                ),
+              ],
             ),
 
-            _card(
-              'Risk & Reward Exposure',
-              _stats({
-                'Daily Risk \$':
-                _Stat(dailyRisk, pct(dailyRisk)),
-                'Daily Reward \$':
-                _Stat(dailyReward, pct(dailyReward)),
-                'Weekly Risk \$':
-                _Stat(weeklyRisk, pct(weeklyRisk)),
-                'Weekly Reward \$':
-                _Stat(weeklyReward, pct(weeklyReward)),
-                'Monthly Risk \$':
-                _Stat(monthlyRisk, pct(monthlyRisk)),
-                'Monthly Reward \$':
-                _Stat(monthlyReward, pct(monthlyReward)),
-              }),
-            ),
-
-            _card(
-              'Approx. Performance',
-              _stats({
-                'Total Wins \$':
-                _Stat(totalWins, pct(totalWins)),
-                'Total Losses \$':
-                _Stat(totalLosses, pct(totalLosses)),
-                'Net Amount \$':
-                _Stat(totalAmount, pct(totalAmount)),
-              }),
-            ),
-
-            _card(
-              'Time & Growth',
-              _stats({
-                'Capital Increase %':
-                _Stat(capitalIncreasePct, capitalIncreasePct),
-                'Days':
-                _Stat(days, 0),
-                'Weeks':
-                _Stat(weeks, 0),
-                'Months':
-                _Stat(months, 0),
-              }, showPercent: false),
-            ),
-
-            if (equityCurve.isNotEmpty)
+            if (equityCurve.isNotEmpty) ...[
+              const SizedBox(height: 24),
               _card(
                 'Equity Curve 📊',
                 SizedBox(
-                  height: 280,
+                  height: 350,
+                  width: double.infinity,
                   child: EquityCurveChart(equityCurve),
                 ),
               ),
+            ],
           ],
         ),
-      ),
+      );
+    },
+    ),
     );
   }
+
+  Widget _responsiveGrid({
+    required int columns,
+    required List<Widget> children,
+  }) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.35,
+      ),
+      itemCount: children.length,
+      itemBuilder: (_, i) => children[i],
+    );
+  }
+
+  Widget _inputsSection() {
+    return Column(
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _inputSized('Capital', capitalCtrl),
+            _inputSized('Risk % / Trade', riskCtrl),
+            _inputSized('Win Rate %', winRateCtrl),
+            _inputSized('RRR', rrrCtrl),
+            _inputSized('Total Trades', tradesCtrl),
+            _inputSized('Trades / Day', tradesPerDayCtrl),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.play_arrow),
+            label: const Text('Run Simulation'),
+            onPressed: () {
+              setState(() {
+                equityCurve = simulateEquityCurve(
+                  startingCapital: max(v(capitalCtrl), 1),
+                  trades: v(tradesCtrl),
+                  winRate: v(winRateCtrl) / 100,
+                  riskPct: v(riskCtrl) / 100,
+                  rrr: max(v(rrrCtrl), 1),
+                );
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _inputSized(String l, TextEditingController c) {
+    return SizedBox(
+      width: 220,
+      child: _f(l, c),
+    );
+  }
+
 
   // ───────── UI HELPERS ─────────
 

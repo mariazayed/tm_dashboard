@@ -226,6 +226,8 @@ class _RiskManagementScreenState
     return Column(
       children: data.entries.map((e) {
         final stat = e.value;
+        final valueColor = _statColor(e.key, stat.value);
+
         final child = Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -235,7 +237,8 @@ class _RiskManagementScreenState
               children: [
                 Text(
                   stat.value.toStringAsFixed(2),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: valueColor),
                 ),
                 if (showPercent)
                   Text(
@@ -346,6 +349,36 @@ class _RiskManagementScreenState
 
   Widget _kpi(String label, double value, String suffix,
       {required String tooltip}) {
+    // Determine background color based on KPI
+    Color bgColor = Colors.grey.shade100;
+    Color valueColor = Colors.black;
+
+    switch (label) {
+      case 'Capital':
+        valueColor = value >= 10000 ? Colors.green : Colors.orange;
+        break;
+      case 'Risk / Trade':
+        if (value < 2) valueColor = Colors.green;
+        else if (value < 5) valueColor = Colors.orange;
+        else valueColor = Colors.red;
+        break;
+      case 'Win Rate':
+        if (value > 55) valueColor = Colors.green;
+        else if (value > 45) valueColor = Colors.orange;
+        else valueColor = Colors.red;
+        break;
+      case 'Edge':
+        if (value > 0.2) valueColor = Colors.green;
+        else if (value > 0) valueColor = Colors.orange;
+        else valueColor = Colors.red;
+        break;
+      case 'Ruin':
+        if (value < 1) valueColor = Colors.green;
+        else if (value < 5) valueColor = Colors.orange;
+        else valueColor = Colors.red;
+        break;
+    }
+
     return Expanded(
       child: Tooltip(
         message: tooltip,
@@ -365,20 +398,16 @@ class _RiskManagementScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(label,
+                    style: TextStyle(
+                        color: Colors.grey.shade600, fontSize: 13)),
                 const SizedBox(height: 6),
                 Text(
                   '${value.toStringAsFixed(2)}$suffix',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
+                    color: valueColor,
                   ),
                 ),
               ],
@@ -388,6 +417,7 @@ class _RiskManagementScreenState
       ),
     );
   }
+
 
   Widget _desktopMainLayout() {
     return Row(
@@ -471,6 +501,37 @@ class _RiskManagementScreenState
       'Edge Score': _Stat(m.edgeScore, 0,
           tooltip: 'Edge = expectancy / risk per trade. Positive edge is profitable.'),
     });
+  }
+
+  Color _statColor(String label, double value) {
+    switch (label) {
+      case 'Risk / Trade \$':
+      case 'Daily Risk \$':
+      case 'Weekly Risk \$':
+      case 'Monthly Risk \$':
+        if (value < 100) return Colors.green;
+        else if (value < 500) return Colors.orange;
+        else return Colors.red;
+
+      case 'Reward / Trade \$':
+      case 'Daily Reward \$':
+      case 'Weekly Reward \$':
+      case 'Monthly Reward \$':
+      case 'Total Wins \$':
+      case 'Net P/L \$':
+      case 'Capital Increase %':
+        return value >= 0 ? Colors.green : Colors.red;
+
+      case 'Total Losses \$':
+      case 'Losing Trades':
+        return value < 0 ? Colors.green : Colors.red;
+
+      case 'Winning Trades':
+        return value > 0 ? Colors.green : Colors.red;
+
+      default:
+        return Colors.black;
+    }
   }
 
 

@@ -11,8 +11,13 @@ class MemoirService {
     final response = await http.get(Uri.parse(ApiConstants.memoirURL));
 
     if (response.statusCode == 200) {
-      dynamic data = jsonDecode(response.body);
-      return data.map((dataObj) => MemoirModel.fromJson(dataObj)).toList();
+      final List<dynamic> data = jsonDecode(response.body);
+      print("data $data}");
+      final List<MemoirModel> list = data
+          .map((e) => MemoirModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      print("list $list");
+      return list;
     } else {
       throw Exception(
         'Failed to fetch all memoirs: ${response.statusCode}',

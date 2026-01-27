@@ -14,12 +14,12 @@ class MemoirModel {
     required this.description,
   });
 
-  MemoirModel copyWith() {
+  MemoirModel copyWith({String? title, String? description}) {
     return MemoirModel(
       id: id,
       date: date,
-      title: title,
-      description: description
+      title: title ?? this.title,
+      description: description ?? this.description
     );
   }
 

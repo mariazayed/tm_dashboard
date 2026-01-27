@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:tm_dashboard/services/memoir_service.dart';
 
 import '../../models/memoir_model.dart';
@@ -143,6 +144,17 @@ class _MemoirScreenState extends State<MemoirScreen> {
   }
 }
 
+Map<DateTime, List<MemoirModel>> groupByDate(List<MemoirModel> entries) {
+  final map = <DateTime, List<MemoirModel>>{};
+
+  for (final e in entries) {
+    final key = DateTime(e.date.year, e.date.month, e.date.day);
+    map.putIfAbsent(key, () => []).add(e);
+  }
+
+  return map;
+}
+
 /// ----------------------------
 /// Screen
 /// ----------------------------
@@ -151,27 +163,35 @@ class MemoirWidget extends StatelessWidget {
   final MemoirBloc bloc;
   final MemoirState state;
 
-  const MemoirWidget({Key? key, required this.bloc, required this.state})
-    : super(key: key);
-
-  List<MemoirModel> get filtered {
-    return state.entries;
-  }
+  const MemoirWidget({super.key, required this.bloc, required this.state});
 
   @override
   Widget build(BuildContext context) {
+    if (state.loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final grouped = groupByDate(state.entries);
+    final sortedDates = grouped.keys.toList()
+      ..sort((a, b) => b.compareTo(a)); // newest first
+
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(12),
-              itemCount: filtered.length,
-              itemBuilder: (c, i) =>
-                  _MemoirCard(entry: filtered[i], bloc: bloc),
-            ),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Memoir Calendar')),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: sortedDates.length,
+        itemBuilder: (context, index) {
+          final date = sortedDates[index];
+          final entries = grouped[date]!;
+
+          return _DaySection(
+            date: date,
+            entries: entries,
+            bloc: bloc,
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add),
@@ -189,88 +209,75 @@ class MemoirWidget extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: SingleChildScrollView(
-              child: Column(
+      builder: (ctx) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isNew ? 'New Entry' : 'Edit Entry',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 12),
+
+              TextField(
+                controller: titleCtrl,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+
+              const SizedBox(height: 12),
+
+              TextField(
+                controller: descCtrl,
+                maxLines: 4,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
                 children: [
-                  Text(
-                    isNew ? 'New Entry' : 'Edit Entry',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: titleCtrl,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: descCtrl,
-                    maxLines: 4,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  /// 📅 Date picker
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}',
-                      ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: ctx,
-                            initialDate: date,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime.now(),
-                          );
-                          if (picked != null) {
-                            setState(() => date = picked);
-                          }
-                        },
-                        child: const Text('Change'),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  ElevatedButton(
-                    onPressed: () {
-                      final newEntry = MemoirModel(
-                        id: isNew
-                            ? DateTime.now().millisecondsSinceEpoch
-                            : entry!.id,
-                        title: titleCtrl.text.trim(),
-                        description: descCtrl.text.trim(),
-                        date: date,
+                  Text(DateFormat.yMMMd().format(date)),
+                  const Spacer(),
+                  TextButton(
+                    child: const Text('Change'),
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: ctx,
+                        initialDate: date,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
                       );
-
-                      bloc.eventSink.add(
-                        isNew ? AddEntry(newEntry) : UpdateEntry(newEntry),
-                      );
-
-                      Navigator.pop(ctx);
+                      if (picked != null) date = picked;
                     },
-                    child: const Text('Save'),
                   ),
                 ],
               ),
-            ),
+
+              const SizedBox(height: 16),
+
+              ElevatedButton(
+                onPressed: () {
+                  final newEntry = MemoirModel(
+                    id: isNew
+                        ? DateTime.now().millisecondsSinceEpoch
+                        : entry!.id,
+                    title: titleCtrl.text.trim(),
+                    description: descCtrl.text.trim(),
+                    date: date,
+                  );
+
+                  bloc.eventSink.add(
+                    isNew ? AddEntry(newEntry) : UpdateEntry(newEntry),
+                  );
+
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Save'),
+              ),
+            ],
           ),
         ),
       ),
@@ -291,61 +298,80 @@ class _MemoirCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: InkWell(
-        onTap: () => bloc.eventSink.add(ToggleExpand(entry.id)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    _prettyDate(entry.date),
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                  const Spacer(),
-
-                  /// ✏️ Edit button
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 18),
-                    onPressed: () {
-                      // open editor in edit mode
-                      (context.findAncestorWidgetOfExactType<MemoirWidget>()
-                              as MemoirWidget)
-                          ._openEditor(context, entry: entry);
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                entry.title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  DateFormat.Hm().format(entry.date),
+                  style: const TextStyle(color: Colors.grey),
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                entry.description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 18),
+                  onPressed: () {
+                    (context.findAncestorWidgetOfExactType<MemoirWidget>()
+                    as MemoirWidget)
+                        ._openEditor(context, entry: entry);
+                  },
                 ),
+              ],
+            ),
+
+            Text(
+              entry.title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 6),
+
+            Text(
+              entry.description,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
         ),
       ),
     );
   }
+}
 
-  String _prettyDate(DateTime d) =>
-      '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+class _DaySection extends StatelessWidget {
+  final DateTime date;
+  final List<MemoirModel> entries;
+  final MemoirBloc bloc;
+
+  const _DaySection({
+    required this.date,
+    required this.entries,
+    required this.bloc,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Text(
+            DateFormat('EEEE • MMM d, y').format(date),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.blueGrey,
+            ),
+          ),
+        ),
+        ...entries.map((e) => _MemoirCard(entry: e, bloc: bloc)),
+      ],
+    );
+  }
 }

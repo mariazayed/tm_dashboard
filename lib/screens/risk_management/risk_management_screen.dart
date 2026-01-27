@@ -222,44 +222,58 @@ class _RiskManagementScreenState
     );
   }
 
-  Widget _stats(
-      Map<String, _Stat> data, {
-        bool showPercent = true,
-      }) {
+  Widget _stats(Map<String, _Stat> data, {bool showPercent = true}) {
     return Column(
       children: data.entries.map((e) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
-            children: [
-              Text(e.key),
-              Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.end,
-                children: [
+        final stat = e.value;
+        final child = Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(e.key),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  stat.value.toStringAsFixed(2),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                if (showPercent)
                   Text(
-                    e.value.value.toStringAsFixed(2),
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold),
-                  ),
-                  if (showPercent)
-                    Text(
-                      '${e.value.percent.toStringAsFixed(2)}%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
+                    '${stat.percent.toStringAsFixed(2)}%',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
                     ),
-                ],
-              ),
-            ],
-          ),
+                  ),
+              ],
+            ),
+          ],
         );
+
+        if (stat.tooltip != null) {
+          return Tooltip(
+            message: stat.tooltip!,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: const TextStyle(color: Colors.white),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: child,
+            ),
+          );
+        } else {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: child,
+          );
+        }
       }).toList(),
     );
   }
+
 
   Widget _card(String title, Widget child) {
     return Card(
@@ -289,45 +303,92 @@ class _RiskManagementScreenState
   Widget _kpiBar(RiskMetrics m, double ruin) {
     return Row(
       children: [
-        _kpi('Capital', m.capital, '\$'),
-        _kpi('Risk / Trade', m.riskPct * 100, '%'),
-        _kpi('Win Rate', m.winRate * 100, '%'),
-        _kpi('Edge', m.edgeScore, ''),
-        _kpi('Ruin', ruin * 100, '%'),
+        _kpi(
+          'Capital',
+          m.capital,
+          '\$',
+          tooltip:
+          'Your starting capital.\nGood: higher capital allows more flexibility.\nBad: low capital increases risk per trade impact.',
+        ),
+        _kpi(
+          'Risk / Trade',
+          m.riskPct * 100,
+          '%',
+          tooltip:
+          'Percentage of capital risked per trade.\nGood: 0.5%-2% keeps drawdown low.\nBad: >5% is very risky.',
+        ),
+        _kpi(
+          'Win Rate',
+          m.winRate * 100,
+          '%',
+          tooltip:
+          'Percentage of trades that are winners.\nGood: >50% consistently.\nBad: <40% indicates low strategy efficiency.',
+        ),
+        _kpi(
+          'Edge',
+          m.edgeScore,
+          '',
+          tooltip:
+          'Edge = expectancy / risk per trade.\nGood: >0.2 means you have positive expectancy.\nBad: <0 indicates negative expectancy.',
+        ),
+        _kpi(
+          'Ruin',
+          ruin * 100,
+          '%',
+          tooltip:
+          'Risk of ruin based on your strategy.\nGood: <1% means strategy is sustainable.\nBad: >10% is dangerous.',
+        ),
       ],
     );
   }
 
 
-  Widget _kpi(String label, double value, String suffix) {
+
+  Widget _kpi(String label, double value, String suffix,
+      {required String tooltip}) {
     return Expanded(
-      child: Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+      child: Tooltip(
+        message: tooltip,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade900,
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label,
+        textStyle: const TextStyle(color: Colors.white),
+        child: Card(
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
                   style: TextStyle(
-                      color: Colors.grey.shade600, fontSize: 13)),
-              const SizedBox(height: 6),
-              Text(
-                '${value.toStringAsFixed(2)}$suffix',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade600,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 6),
+                Text(
+                  '${value.toStringAsFixed(2)}$suffix',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
   Widget _desktopMainLayout() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,48 +460,67 @@ class _RiskManagementScreenState
 
   Widget _expectancyStats(RiskMetrics m) {
     return _stats({
-      'Risk / Trade \$': _Stat(m.riskPerTrade, m.pct(m.riskPerTrade)),
-      'Reward / Trade \$': _Stat(m.rewardPerTrade, m.pct(m.rewardPerTrade)),
-      'Expectancy \$': _Stat(m.expectancy, m.pct(m.expectancy)),
-      'Expectancy %': _Stat(m.expectancyPct, m.expectancyPct),
-      'Edge Score': _Stat(m.edgeScore, 0),
+      'Risk / Trade \$': _Stat(m.riskPerTrade, m.pct(m.riskPerTrade),
+          tooltip: 'Amount risked per trade. Good: 0.5%-2% of capital. High risk is dangerous.'),
+      'Reward / Trade \$': _Stat(m.rewardPerTrade, m.pct(m.rewardPerTrade),
+          tooltip: 'Expected reward per trade based on your RRR.'),
+      'Expectancy \$': _Stat(m.expectancy, m.pct(m.expectancy),
+          tooltip: 'Average expected gain per trade. Positive is good.'),
+      'Expectancy %': _Stat(m.expectancyPct, m.expectancyPct,
+          tooltip: 'Expectancy as % of capital. Higher is better.'),
+      'Edge Score': _Stat(m.edgeScore, 0,
+          tooltip: 'Edge = expectancy / risk per trade. Positive edge is profitable.'),
     });
   }
 
+
   Widget _riskStats(RiskMetrics m) {
     return _stats({
-      'Daily Risk \$': _Stat(m.dailyRisk, m.pct(m.dailyRisk)),
-      'Daily Reward \$': _Stat(m.dailyReward, m.pct(m.dailyReward)),
-      'Weekly Risk \$': _Stat(m.weeklyRisk, m.pct(m.weeklyRisk)),
-      'Weekly Reward \$': _Stat(m.weeklyReward, m.pct(m.weeklyReward)),
-      'Monthly Risk \$': _Stat(m.monthlyRisk, m.pct(m.monthlyRisk)),
-      'Monthly Reward \$': _Stat(m.monthlyReward, m.pct(m.monthlyReward)),
+      'Daily Risk \$': _Stat(m.dailyRisk, m.pct(m.dailyRisk),
+          tooltip: 'Total capital risked per day. Keep it manageable.'),
+      'Daily Reward \$': _Stat(m.dailyReward, m.pct(m.dailyReward),
+          tooltip: 'Total reward potential per day.'),
+      'Weekly Risk \$': _Stat(m.weeklyRisk, m.pct(m.weeklyRisk),
+          tooltip: 'Total capital risked per week.'),
+      'Weekly Reward \$': _Stat(m.weeklyReward, m.pct(m.weeklyReward),
+          tooltip: 'Total reward potential per week.'),
+      'Monthly Risk \$': _Stat(m.monthlyRisk, m.pct(m.monthlyRisk),
+          tooltip: 'Total risk per month. Keep below 10%-15% of capital.'),
+      'Monthly Reward \$': _Stat(m.monthlyReward, m.pct(m.monthlyReward),
+          tooltip: 'Total reward potential per month.'),
     });
   }
+
   Widget _performanceStats(RiskMetrics m) {
     return _stats({
-      'Total Wins \$': _Stat(m.totalWins, m.pct(m.totalWins)),
-      'Total Losses \$': _Stat(m.totalLosses, m.pct(m.totalLosses)),
-      'Net P/L \$': _Stat(m.totalAmount, m.pct(m.totalAmount)),
-      'Capital Increase %':
-      _Stat(m.capitalIncreasePct, m.capitalIncreasePct),
+      'Total Wins \$': _Stat(m.totalWins, m.pct(m.totalWins),
+          tooltip: 'Total gains from winning trades.'),
+      'Total Losses \$': _Stat(m.totalLosses, m.pct(m.totalLosses),
+          tooltip: 'Total losses from losing trades. Minimize this.'),
+      'Net P/L \$': _Stat(m.totalAmount, m.pct(m.totalAmount),
+          tooltip: 'Net profit or loss. Positive is good.'),
+      'Capital Increase %': _Stat(m.capitalIncreasePct, m.capitalIncreasePct,
+          tooltip: 'Expected capital growth %.'),
     });
   }
+
   Widget _timeStats(RiskMetrics m) {
     return _stats({
-      'Days': _Stat(m.days, 0),
-      'Weeks': _Stat(m.weeks, 0),
-      'Months': _Stat(m.months, 0),
+      'Days': _Stat(m.days, 0, tooltip: 'Estimated trading days to complete all trades.'),
+      'Weeks': _Stat(m.weeks, 0, tooltip: 'Estimated weeks to complete trades.'),
+      'Months': _Stat(m.months, 0, tooltip: 'Estimated months to complete trades.'),
     }, showPercent: false);
   }
+
   Widget _distributionStats(RiskMetrics m) {
     return _stats({
-      'Winning Trades':
-      _Stat(m.winningTrades, m.winRate * 100),
-      'Losing Trades':
-      _Stat(m.losingTrades, (1 - m.winRate) * 100),
+      'Winning Trades': _Stat(m.winningTrades, m.winRate * 100,
+          tooltip: 'Number of expected winning trades. Higher win rate is better.'),
+      'Losing Trades': _Stat(m.losingTrades, (1 - m.winRate) * 100,
+          tooltip: 'Number of expected losing trades. Keep this low.'),
     });
   }
+
 
 
 
@@ -529,8 +609,11 @@ class RiskMetrics {
 class _Stat {
   final double value;
   final double percent;
-  _Stat(this.value, this.percent);
+  final String? tooltip;
+
+  _Stat(this.value, this.percent, {this.tooltip});
 }
+
 
 class EquityCurveChart extends StatelessWidget {
   final List<double> curve;

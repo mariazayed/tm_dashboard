@@ -329,6 +329,16 @@ class _MemoirCard extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+
+              const SizedBox(height: 8),
+
+              Text(
+                entry.description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
             ],
           ),
         ),

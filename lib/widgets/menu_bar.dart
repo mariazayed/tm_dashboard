@@ -104,6 +104,12 @@ class MainManu extends StatelessWidget {
           context.goNamed(RouteNames.memoir);
         },
       ),
+      MenuEntry(
+        label: 'Risk Management',
+        onPressed: () {
+          context.goNamed(RouteNames.riskManagement);
+        },
+      ),
     ];
 
     return result;

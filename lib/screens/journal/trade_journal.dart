@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tm_dashboard/enums/trade_direction_enum.dart';
+import 'package:tm_dashboard/services/trade_service.dart';
 
 import '../../models/asset_model.dart';
 import '../../services/asset_service.dart';
 
 
-enum TradeSignal { buy, sell }
 
 class TradeDraft {
   Asset asset;
-  TradeSignal signal = TradeSignal.buy;
+  TradeDirectionEnum signal = TradeDirectionEnum.LONG;
   double entryPrice = 0;
   double exitPrice = 0;
   double lot = 0.01;
@@ -21,18 +22,25 @@ class TradeDraft {
 
   TradeDraft({required this.asset});
 
-  Map<String, dynamic> toJson() => {
-    'assetId': asset.id,
-    'signal': signal.name,
-    'entryPrice': entryPrice,
-    'exitPrice': exitPrice,
-    'lot': lot,
-    'sl': sl,
-    'tp': tp,
-    'notes': notes,
-    'pips': pips,
-    'profit': profit,
-  };
+  Map<String, dynamic> toJson({
+    required DateTime entryDateTime,
+    required DateTime exitDateTime,
+  }) {
+    return {
+      'entryDateTime': entryDateTime.toIso8601String(),
+      'exitDateTime': exitDateTime.toIso8601String(),
+      'asset': asset.id,
+      'direction': signal.value,
+      'entryPrice': entryPrice,
+      'exitPrice': exitPrice,
+      'lotSize': lot,
+      'slPrice': sl,
+      'tpPrice': tp,
+      'notes': notes,
+      'pips': pips,
+      'pnl': profit,
+    };
+  }
 }
 
 /// =======================
@@ -133,7 +141,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     }
     final diff = d.exitPrice - d.entryPrice;
     final raw = diff / xauPipSize;
-    d.pips = d.signal == TradeSignal.buy ? raw : -raw;
+    d.pips = d.signal == TradeDirectionEnum.LONG ? raw : -raw;
     d.profit = d.pips * d.lot;
   }
 
@@ -167,13 +175,15 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   Future<void> _submit() async {
     if (entryDateTime == null || exitDateTime == null) return;
 
-    final payload = {
-      'entryDateTime': entryDateTime!.toIso8601String(),
-      'exitDateTime': exitDateTime!.toIso8601String(),
-      'trades': drafts.map((d) => d.toJson()).toList(),
-    };
+    final payload = drafts.map((d) => d.toJson(
+        entryDateTime: entryDateTime!,
+        exitDateTime: exitDateTime!,
+      )).toList();
 
-    // await ApiService.submitJournal(payload);
+
+    print("payload $payload");
+
+    await TradeService.create(payload);
     Navigator.pop(context);
   }
 
@@ -281,9 +291,9 @@ class _TradeCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                DropdownButton<TradeSignal>(
+                DropdownButton<TradeDirectionEnum>(
                   value: draft.signal,
-                  items: TradeSignal.values
+                  items: TradeDirectionEnum.values
                       .map((e) => DropdownMenuItem(
                     value: e,
                     child: Text(e.name.toUpperCase()),

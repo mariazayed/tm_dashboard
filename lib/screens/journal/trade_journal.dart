@@ -45,6 +45,10 @@ class TradeDraft {
   double sl = 0;
   double tp = 0;
   String notes = '';
+  String pair = 'XAUUSD';
+
+  double pips = 0;
+  double profit = 0;
 }
 
 /// =======================
@@ -65,6 +69,8 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
     final result = await showModalBottomSheet<List<TradeJournalRecord>>(
       context: context,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       backgroundColor: Colors.transparent,
       builder: (_) => const AddJournalSheet(),
     );
@@ -77,9 +83,7 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Trade Journal'),
-      ),
+      appBar: AppBar(title: const Text('TJ')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openAddJournal,
         icon: const Icon(Icons.add),
@@ -93,19 +97,11 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
         itemBuilder: (_, i) {
           final r = records[i];
           return Card(
-            elevation: 3,
-            margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              title: Text(
-                '${r.pair} • ${r.signal.name.toUpperCase()}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              title: Text('${r.pair} • ${r.signal.name.toUpperCase()}'),
               subtitle: Text(
                 'Pips: ${r.pips.toStringAsFixed(1)} | '
                     'P/L: \$${r.profit.toStringAsFixed(2)}',
-              ),
-              trailing: Text(
-                DateFormat('dd MMM').format(r.entryDateTime),
               ),
             ),
           );
@@ -132,6 +128,15 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
 
   final List<TradeDraft> drafts = [TradeDraft()];
 
+  static const double pipSizeXAU = 0.01;
+
+  void _recalculate(TradeDraft d) {
+    final diff = d.exitPrice - d.entryPrice;
+    final rawPips = diff / pipSizeXAU;
+    d.pips = d.signal == TradeSignal.buy ? rawPips : -rawPips;
+    d.profit = d.pips * d.lot;
+  }
+
   Future<void> _pickDateTime(bool isEntry) async {
     final date = await showDatePicker(
       context: context,
@@ -147,37 +152,22 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     );
     if (time == null) return;
 
-    final dt = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
-
     setState(() {
+      final dt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
       isEntry ? entryDateTime = dt : exitDateTime = dt;
     });
-  }
-
-  double _calcPips(TradeDraft d) {
-    const pipValue = 0.01; // XAUUSD
-    final diff = d.exitPrice - d.entryPrice;
-    final rawPips = diff / pipValue;
-    return d.signal == TradeSignal.buy ? rawPips : -rawPips;
-  }
-
-  double _calcProfit(double pips, double lot) {
-    return pips * lot;
   }
 
   void _submit() {
     if (entryDateTime == null || exitDateTime == null) return;
 
     final result = drafts.map((d) {
-      final pips = _calcPips(d);
-      final profit = _calcProfit(pips, d.lot);
-
       return TradeJournalRecord(
         entryDateTime: entryDateTime!,
         exitDateTime: exitDateTime!,
@@ -187,109 +177,115 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
         lot: d.lot,
         sl: d.sl,
         tp: d.tp,
-        pair: 'XAUUSD',
+        pair: d.pair,
         notes: d.notes,
-        pips: pips,
-        profit: profit,
+        pips: d.pips,
+        profit: d.profit,
       );
     }).toList();
+
+    print("result $result");
 
     Navigator.pop(context, result);
   }
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.9,
-      builder: (_, controller) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: ListView(
-            controller: controller,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: ListView(
+        children: [
+          /// Header with X button
+          Row(
             children: [
               const Text(
                 'New Trade Journal',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
-
-              /// Entry / Exit time
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _pickDateTime(true),
-                      child: Text(
-                        entryDateTime == null
-                            ? 'Entry DateTime'
-                            : DateFormat('dd MMM yyyy HH:mm')
-                            .format(entryDateTime!),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _pickDateTime(false),
-                      child: Text(
-                        exitDateTime == null
-                            ? 'Exit DateTime'
-                            : DateFormat('dd MMM yyyy HH:mm')
-                            .format(exitDateTime!),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              /// Trades list
-              ...drafts.asMap().entries.map(
-                    (e) => _TradeDraftCard(
-                  key: ValueKey(e.key),
-                  draft: e.value,
-                  onRemove: drafts.length > 1
-                      ? () => setState(() => drafts.removeAt(e.key))
-                      : null,
-                ),
-              ),
-
-              TextButton.icon(
-                onPressed: () => setState(() => drafts.add(TradeDraft())),
-                icon: const Icon(Icons.add),
-                label: const Text('Add Trade'),
-              ),
-
-              const SizedBox(height: 24),
-
-              FilledButton(
-                onPressed: _submit,
-                child: const Text('Submit Journal'),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
-        );
-      },
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _pickDateTime(true),
+                  child: Text(
+                    entryDateTime == null
+                        ? 'Entry DateTime'
+                        : DateFormat('dd MMM yyyy HH:mm')
+                        .format(entryDateTime!),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _pickDateTime(false),
+                  child: Text(
+                    exitDateTime == null
+                        ? 'Exit DateTime'
+                        : DateFormat('dd MMM yyyy HH:mm')
+                        .format(exitDateTime!),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          ...drafts.map(
+                (d) => _TradeDraftCard(
+              draft: d,
+              onChanged: () => setState(() => _recalculate(d)),
+              onRemove: drafts.length > 1
+                  ? () => setState(() => drafts.remove(d))
+                  : null,
+            ),
+          ),
+
+          TextButton.icon(
+            onPressed: () => setState(() => drafts.add(TradeDraft())),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Trade'),
+          ),
+
+          const SizedBox(height: 24),
+
+          FilledButton(
+            onPressed: _submit,
+            child: const Text('Submit Journal'),
+          ),
+        ],
+      ),
     );
   }
 }
 
 /// =======================
-/// TRADE DRAFT CARD
+/// TRADE CARD
 /// =======================
 
 class _TradeDraftCard extends StatelessWidget {
   final TradeDraft draft;
+  final VoidCallback onChanged;
   final VoidCallback? onRemove;
 
   const _TradeDraftCard({
-    super.key,
     required this.draft,
+    required this.onChanged,
     this.onRemove,
   });
 
@@ -297,7 +293,6 @@ class _TradeDraftCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -314,7 +309,18 @@ class _TradeDraftCard extends StatelessWidget {
                     ),
                   )
                       .toList(),
-                  onChanged: (v) => draft.signal = v!,
+                  onChanged: (v) {
+                    draft.signal = v!;
+                    onChanged();
+                  },
+                ),
+                const SizedBox(width: 12),
+                DropdownButton<String>(
+                  value: draft.pair,
+                  items: const [
+                    DropdownMenuItem(value: 'XAUUSD', child: Text('XAUUSD')),
+                  ],
+                  onChanged: (_) {},
                 ),
                 const Spacer(),
                 if (onRemove != null)
@@ -324,11 +330,44 @@ class _TradeDraftCard extends StatelessWidget {
                   ),
               ],
             ),
-            _numField('Entry Price', (v) => draft.entryPrice = v),
-            _numField('Exit Price', (v) => draft.exitPrice = v),
-            _numField('Lot', (v) => draft.lot = v),
-            _numField('SL', (v) => draft.sl = v),
-            _numField('TP', (v) => draft.tp = v),
+            _num('Entry Price', (v) {
+              draft.entryPrice = v;
+              onChanged();
+            }),
+            _num('Exit Price', (v) {
+              draft.exitPrice = v;
+              onChanged();
+            }),
+            _num('Lot', (v) {
+              draft.lot = v;
+              onChanged();
+            }),
+            _num('SL', (v) => draft.sl = v),
+            _num('TP', (v) => draft.tp = v),
+
+            /// Calculated fields
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Pips: ${draft.pips.toStringAsFixed(1)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'P/L: \$${draft.profit.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: draft.profit >= 0
+                          ? Colors.green
+                          : Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
             TextField(
               decoration: const InputDecoration(labelText: 'Notes'),
               onChanged: (v) => draft.notes = v,
@@ -339,7 +378,7 @@ class _TradeDraftCard extends StatelessWidget {
     );
   }
 
-  Widget _numField(String label, Function(double) onChanged) {
+  Widget _num(String label, Function(double) onChanged) {
     return TextField(
       keyboardType: TextInputType.number,
       decoration: InputDecoration(labelText: label),

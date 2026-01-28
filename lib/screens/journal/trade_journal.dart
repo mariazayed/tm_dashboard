@@ -287,11 +287,15 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   @override
   void initState() {
     super.initState();
-    final defaultAsset = widget.assets.firstWhere(
-          (a) => a.symbol == 'XAUUSD',
-      orElse: () => widget.assets.first,
-    );
-    drafts = [TradeDraft(asset: defaultAsset)];
+    if (widget.assets.isEmpty) {
+      drafts = [];
+    } else {
+      final defaultAsset = widget.assets.firstWhere(
+            (a) => a.symbol == 'XAUUSD',
+        orElse: () => widget.assets.first,
+      );
+      drafts = [TradeDraft(asset: defaultAsset)];
+    }
   }
 
   void _recalc(TradeDraft d) {
@@ -329,18 +333,23 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
         time.hour,
         time.minute,
       );
-      entry ? entryDateTime = dt : exitDateTime = dt;
+      if (entry) {
+        entryDateTime = dt;
+      } else {
+        exitDateTime = dt;
+      }
     });
   }
 
   Future<void> _submit() async {
-    if (entryDateTime == null || exitDateTime == null) return;
+    if (entryDateTime == null || exitDateTime == null || drafts.isEmpty) return;
 
-    final payload = drafts.map((d) => d.toJson(
-        entryDateTime: entryDateTime!,
-        exitDateTime: exitDateTime!,
-      )).toList();
-
+    final payload = drafts
+        .map((d) => d.toJson(
+      entryDateTime: entryDateTime!,
+      exitDateTime: exitDateTime!,
+    ))
+        .toList();
 
     print("payload $payload");
 
@@ -371,7 +380,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
               ),
             ],
           ),
-
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -379,8 +388,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
                   onPressed: () => _pickDateTime(true),
                   child: Text(entryDateTime == null
                       ? 'Entry DateTime'
-                      : DateFormat('dd MMM yyyy HH:mm')
-                      .format(entryDateTime!)),
+                      : DateFormat('dd MMM yyyy HH:mm').format(entryDateTime!)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -389,15 +397,12 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
                   onPressed: () => _pickDateTime(false),
                   child: Text(exitDateTime == null
                       ? 'Exit DateTime'
-                      : DateFormat('dd MMM yyyy HH:mm')
-                      .format(exitDateTime!)),
+                      : DateFormat('dd MMM yyyy HH:mm').format(exitDateTime!)),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
           ...drafts.map((d) => _TradeCard(
             draft: d,
             assets: widget.assets,
@@ -406,15 +411,16 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
                 ? () => setState(() => drafts.remove(d))
                 : null,
           )),
-
+          const SizedBox(height: 12),
           TextButton.icon(
-            onPressed: widget.assets.isEmpty ? null : () {
-              setState(() => drafts.add(TradeDraft(asset: drafts.first.asset)));
-            },
+            onPressed: widget.assets.isEmpty
+                ? null
+                : () => setState(() =>
+                drafts.add(TradeDraft(asset: drafts.first.asset))),
             icon: const Icon(Icons.add),
             label: const Text('Add Trade'),
           ),
-
+          const SizedBox(height: 12),
           FilledButton(
             onPressed: _submit,
             child: const Text('Submit Journal'),
@@ -461,28 +467,31 @@ class _TradeCard extends StatelessWidget {
                   ))
                       .toList(),
                   onChanged: (v) {
-                    draft.signal = v!;
-                    onChanged();
+                    if (v != null) {
+                      draft.signal = v;
+                      onChanged();
+                    }
                   },
                 ),
                 const SizedBox(width: 12),
-          DropdownButtonFormField<Asset>(
-            value: assets.contains(draft.asset) ? draft.asset : null,
-            items: assets.map((a) {
-              return DropdownMenuItem(
-                value: a,
-                child: Text('${a.symbol} • ${a.name}'),
-              );
-            }).toList(),
-            onChanged: (v) {
-              if (v != null) {
-                draft.asset = v;
-                onChanged();
-              }
-            },
-            decoration: const InputDecoration(labelText: 'Pair'),
-          ),
-          const Spacer(),
+                Expanded(
+                  child: DropdownButtonFormField<Asset>(
+                    value: assets.contains(draft.asset) ? draft.asset : null,
+                    items: assets
+                        .map((a) => DropdownMenuItem(
+                      value: a,
+                      child: Text('${a.symbol} • ${a.name}'),
+                    ))
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        draft.asset = v;
+                        onChanged();
+                      }
+                    },
+                    decoration: const InputDecoration(labelText: 'Pair'),
+                  ),
+                ),
                 if (onRemove != null)
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -506,13 +515,15 @@ class _TradeCard extends StatelessWidget {
             _num('TP', (v) => draft.tp = v),
             Row(
               children: [
-                Expanded(child: Text('Pips: ${draft.pips.toStringAsFixed(1) ?? '0.0'}')),
+                Expanded(
+                  child: Text(
+                      'Pips: ${draft.pips.toStringAsFixed(1)}'), // always safe
+                ),
                 Expanded(
                   child: Text(
                     'P/L: \$${draft.profit.toStringAsFixed(2)}',
                     style: TextStyle(
-                        color:
-                        draft.profit >= 0 ? Colors.green : Colors.red),
+                        color: draft.profit >= 0 ? Colors.green : Colors.red),
                   ),
                 ),
               ],
@@ -535,3 +546,114 @@ class _TradeCard extends StatelessWidget {
     );
   }
 }
+
+/// =======================
+/// TRADE CARD
+/// =======================
+
+// class _TradeCard extends StatelessWidget {
+//   final TradeDraft draft;
+//   final List<Asset> assets;
+//   final VoidCallback onChanged;
+//   final VoidCallback? onRemove;
+//
+//   const _TradeCard({
+//     required this.draft,
+//     required this.assets,
+//     required this.onChanged,
+//     this.onRemove,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Card(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       child: Padding(
+//         padding: const EdgeInsets.all(12),
+//         child: Column(
+//           children: [
+//             Row(
+//               children: [
+//                 DropdownButton<TradeDirectionEnum>(
+//                   value: draft.signal,
+//                   items: TradeDirectionEnum.values
+//                       .map((e) => DropdownMenuItem(
+//                     value: e,
+//                     child: Text(e.name.toUpperCase()),
+//                   ))
+//                       .toList(),
+//                   onChanged: (v) {
+//                     draft.signal = v!;
+//                     onChanged();
+//                   },
+//                 ),
+//                 const SizedBox(width: 12),
+//           DropdownButtonFormField<Asset>(
+//             value: assets.contains(draft.asset) ? draft.asset : null,
+//             items: assets.map((a) {
+//               return DropdownMenuItem(
+//                 value: a,
+//                 child: Text('${a.symbol} • ${a.name}'),
+//               );
+//             }).toList(),
+//             onChanged: (v) {
+//               if (v != null) {
+//                 draft.asset = v;
+//                 onChanged();
+//               }
+//             },
+//             decoration: const InputDecoration(labelText: 'Pair'),
+//           ),
+//           const Spacer(),
+//                 if (onRemove != null)
+//                   IconButton(
+//                     icon: const Icon(Icons.close),
+//                     onPressed: onRemove,
+//                   ),
+//               ],
+//             ),
+//             _num('Entry Price', (v) {
+//               draft.entryPrice = v;
+//               onChanged();
+//             }),
+//             _num('Exit Price', (v) {
+//               draft.exitPrice = v;
+//               onChanged();
+//             }),
+//             _num('Lot', (v) {
+//               draft.lot = v;
+//               onChanged();
+//             }),
+//             _num('SL', (v) => draft.sl = v),
+//             _num('TP', (v) => draft.tp = v),
+//             Row(
+//               children: [
+//                 Expanded(child: Text('Pips: ${draft.pips.toStringAsFixed(1) ?? '0.0'}')),
+//                 Expanded(
+//                   child: Text(
+//                     'P/L: \$${draft.profit.toStringAsFixed(2)}',
+//                     style: TextStyle(
+//                         color:
+//                         draft.profit >= 0 ? Colors.green : Colors.red),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//             TextField(
+//               decoration: const InputDecoration(labelText: 'Notes'),
+//               onChanged: (v) => draft.notes = v,
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+//
+//   Widget _num(String label, Function(double) onChanged) {
+//     return TextField(
+//       keyboardType: TextInputType.number,
+//       decoration: InputDecoration(labelText: label),
+//       onChanged: (v) => onChanged(double.tryParse(v) ?? 0),
+//     );
+//   }
+// }

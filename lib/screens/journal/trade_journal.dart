@@ -1,66 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// =======================
-/// SERVER MODELS
-/// =======================
+import '../../models/asset_model.dart';
+import '../../services/asset_service.dart';
 
-class TradingAsset {
-  final String id;
-  final String name;
-  final String symbol;
-
-  TradingAsset({
-    required this.id,
-    required this.name,
-    required this.symbol,
-  });
-}
-
-/// =======================
-/// DOMAIN MODELS
-/// =======================
 
 enum TradeSignal { buy, sell }
 
-class TradeJournalRecord {
-  final DateTime entryDateTime;
-  final DateTime exitDateTime;
-
-  final String assetId;
-  final String assetName;
-  final String assetSymbol;
-
-  final TradeSignal signal;
-  final double entryPrice;
-  final double exitPrice;
-  final double lot;
-  final double sl;
-  final double tp;
-  final String notes;
-
-  final double pips;
-  final double profit;
-
-  TradeJournalRecord({
-    required this.entryDateTime,
-    required this.exitDateTime,
-    required this.assetId,
-    required this.assetName,
-    required this.assetSymbol,
-    required this.signal,
-    required this.entryPrice,
-    required this.exitPrice,
-    required this.lot,
-    required this.sl,
-    required this.tp,
-    required this.notes,
-    required this.pips,
-    required this.profit,
-  });
-}
-
 class TradeDraft {
+  Asset asset;
   TradeSignal signal = TradeSignal.buy;
   double entryPrice = 0;
   double exitPrice = 0;
@@ -68,13 +16,23 @@ class TradeDraft {
   double sl = 0;
   double tp = 0;
   String notes = '';
-
-  TradingAsset asset;
-
   double pips = 0;
   double profit = 0;
 
   TradeDraft({required this.asset});
+
+  Map<String, dynamic> toJson() => {
+    'assetId': asset.id,
+    'signal': signal.name,
+    'entryPrice': entryPrice,
+    'exitPrice': exitPrice,
+    'lot': lot,
+    'sl': sl,
+    'tp': tp,
+    'notes': notes,
+    'pips': pips,
+    'profit': profit,
+  };
 }
 
 /// =======================
@@ -89,17 +47,16 @@ class TradeJournalScreen extends StatefulWidget {
 }
 
 class _TradeJournalScreenState extends State<TradeJournalScreen> {
-  final List<TradeJournalRecord> records = [];
+  late Future<List<Asset>> assetsFuture;
 
-  /// Simulated server response
-  final List<TradingAsset> assets = [
-    TradingAsset(id: '1', name: 'Gold', symbol: 'XAUUSD'),
-    TradingAsset(id: '2', name: 'Euro / Dollar', symbol: 'EURUSD'),
-    TradingAsset(id: '3', name: 'GBP / Dollar', symbol: 'GBPUSD'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    assetsFuture = AssetService.fetchAssets();
+  }
 
-  void _openAddJournal() async {
-    final result = await showModalBottomSheet<List<TradeJournalRecord>>(
+  void _openAddJournal(List<Asset> assets) {
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       isDismissible: false,
@@ -107,42 +64,29 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => AddJournalSheet(assets: assets),
     );
-
-    if (result != null) {
-      setState(() => records.addAll(result));
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Trade Journal')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openAddJournal,
-        icon: const Icon(Icons.add),
-        label: const Text('Add Journal'),
-      ),
-      body: records.isEmpty
-          ? const Center(child: Text('No trades yet'))
-          : ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: records.length,
-        itemBuilder: (_, i) {
-          final r = records[i];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              title: Text(
-                '${r.assetSymbol} • ${r.signal.name.toUpperCase()}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                'Pips: ${r.pips.toStringAsFixed(1)} | '
-                    'P/L: \$${r.profit.toStringAsFixed(2)}',
-              ),
-              trailing: Text(
-                DateFormat('dd MMM').format(r.entryDateTime),
-              ),
+      appBar: AppBar(title: const Text('TJ')),
+      body: FutureBuilder<List<Asset>>(
+        future: assetsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
+          }
+
+          final assets = snapshot.data ?? <Asset>[];
+
+          return Center(
+            child: FilledButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('Add Journal'),
+              onPressed: () => _openAddJournal(assets),
             ),
           );
         },
@@ -156,7 +100,7 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
 /// =======================
 
 class AddJournalSheet extends StatefulWidget {
-  final List<TradingAsset> assets;
+  final List<Asset> assets;
 
   const AddJournalSheet({super.key, required this.assets});
 
@@ -167,7 +111,6 @@ class AddJournalSheet extends StatefulWidget {
 class _AddJournalSheetState extends State<AddJournalSheet> {
   DateTime? entryDateTime;
   DateTime? exitDateTime;
-
   late List<TradeDraft> drafts;
 
   static const double xauPipSize = 0.01;
@@ -182,21 +125,19 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     drafts = [TradeDraft(asset: defaultAsset)];
   }
 
-  void _recalculate(TradeDraft d) {
+  void _recalc(TradeDraft d) {
     if (d.asset.symbol != 'XAUUSD') {
       d.pips = 0;
       d.profit = 0;
       return;
     }
-
     final diff = d.exitPrice - d.entryPrice;
-    final rawPips = diff / xauPipSize;
-
-    d.pips = d.signal == TradeSignal.buy ? rawPips : -rawPips;
+    final raw = diff / xauPipSize;
+    d.pips = d.signal == TradeSignal.buy ? raw : -raw;
     d.profit = d.pips * d.lot;
   }
 
-  Future<void> _pickDateTime(bool isEntry) async {
+  Future<void> _pickDateTime(bool entry) async {
     final date = await showDatePicker(
       context: context,
       firstDate: DateTime(2020),
@@ -219,33 +160,21 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
         time.hour,
         time.minute,
       );
-      isEntry ? entryDateTime = dt : exitDateTime = dt;
+      entry ? entryDateTime = dt : exitDateTime = dt;
     });
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (entryDateTime == null || exitDateTime == null) return;
 
-    final result = drafts.map((d) {
-      return TradeJournalRecord(
-        entryDateTime: entryDateTime!,
-        exitDateTime: exitDateTime!,
-        assetId: d.asset.id,
-        assetName: d.asset.name,
-        assetSymbol: d.asset.symbol,
-        signal: d.signal,
-        entryPrice: d.entryPrice,
-        exitPrice: d.exitPrice,
-        lot: d.lot,
-        sl: d.sl,
-        tp: d.tp,
-        notes: d.notes,
-        pips: d.pips,
-        profit: d.profit,
-      );
-    }).toList();
+    final payload = {
+      'entryDateTime': entryDateTime!.toIso8601String(),
+      'exitDateTime': exitDateTime!.toIso8601String(),
+      'trades': drafts.map((d) => d.toJson()).toList(),
+    };
 
-    Navigator.pop(context, result);
+    // await ApiService.submitJournal(payload);
+    Navigator.pop(context);
   }
 
   @override
@@ -258,7 +187,6 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
       ),
       child: ListView(
         children: [
-          /// Header
           Row(
             children: [
               const Text(
@@ -273,31 +201,25 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
             ],
           ),
 
-          const SizedBox(height: 12),
-
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => _pickDateTime(true),
-                  child: Text(
-                    entryDateTime == null
-                        ? 'Entry DateTime'
-                        : DateFormat('dd MMM yyyy HH:mm')
-                        .format(entryDateTime!),
-                  ),
+                  child: Text(entryDateTime == null
+                      ? 'Entry DateTime'
+                      : DateFormat('dd MMM yyyy HH:mm')
+                      .format(entryDateTime!)),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => _pickDateTime(false),
-                  child: Text(
-                    exitDateTime == null
-                        ? 'Exit DateTime'
-                        : DateFormat('dd MMM yyyy HH:mm')
-                        .format(exitDateTime!),
-                  ),
+                  child: Text(exitDateTime == null
+                      ? 'Exit DateTime'
+                      : DateFormat('dd MMM yyyy HH:mm')
+                      .format(exitDateTime!)),
                 ),
               ),
             ],
@@ -305,16 +227,14 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
 
           const SizedBox(height: 24),
 
-          ...drafts.map(
-                (d) => _TradeDraftCard(
-              draft: d,
-              assets: widget.assets,
-              onChanged: () => setState(() => _recalculate(d)),
-              onRemove: drafts.length > 1
-                  ? () => setState(() => drafts.remove(d))
-                  : null,
-            ),
-          ),
+          ...drafts.map((d) => _TradeCard(
+            draft: d,
+            assets: widget.assets,
+            onChanged: () => setState(() => _recalc(d)),
+            onRemove: drafts.length > 1
+                ? () => setState(() => drafts.remove(d))
+                : null,
+          )),
 
           TextButton.icon(
             onPressed: () => setState(() => drafts.add(
@@ -323,8 +243,6 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
             icon: const Icon(Icons.add),
             label: const Text('Add Trade'),
           ),
-
-          const SizedBox(height: 24),
 
           FilledButton(
             onPressed: _submit,
@@ -337,16 +255,16 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
 }
 
 /// =======================
-/// TRADE DRAFT CARD
+/// TRADE CARD
 /// =======================
 
-class _TradeDraftCard extends StatelessWidget {
+class _TradeCard extends StatelessWidget {
   final TradeDraft draft;
-  final List<TradingAsset> assets;
+  final List<Asset> assets;
   final VoidCallback onChanged;
   final VoidCallback? onRemove;
 
-  const _TradeDraftCard({
+  const _TradeCard({
     required this.draft,
     required this.assets,
     required this.onChanged,
@@ -366,12 +284,10 @@ class _TradeDraftCard extends StatelessWidget {
                 DropdownButton<TradeSignal>(
                   value: draft.signal,
                   items: TradeSignal.values
-                      .map(
-                        (e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(e.name.toUpperCase()),
-                    ),
-                  )
+                      .map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.name.toUpperCase()),
+                  ))
                       .toList(),
                   onChanged: (v) {
                     draft.signal = v!;
@@ -379,15 +295,13 @@ class _TradeDraftCard extends StatelessWidget {
                   },
                 ),
                 const SizedBox(width: 12),
-                DropdownButton<TradingAsset>(
+                DropdownButton<Asset>(
                   value: draft.asset,
                   items: assets
-                      .map(
-                        (a) => DropdownMenuItem(
-                      value: a,
-                      child: Text('${a.symbol} • ${a.name}'),
-                    ),
-                  )
+                      .map((a) => DropdownMenuItem(
+                    value: a,
+                    child: Text('${a.symbol} • ${a.name}'),
+                  ))
                       .toList(),
                   onChanged: (v) {
                     draft.asset = v!;
@@ -402,7 +316,6 @@ class _TradeDraftCard extends StatelessWidget {
                   ),
               ],
             ),
-
             _num('Entry Price', (v) {
               draft.entryPrice = v;
               onChanged();
@@ -417,30 +330,19 @@ class _TradeDraftCard extends StatelessWidget {
             }),
             _num('SL', (v) => draft.sl = v),
             _num('TP', (v) => draft.tp = v),
-
-            const SizedBox(height: 8),
-
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'Pips: ${draft.pips.toStringAsFixed(1)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
+                Expanded(child: Text('Pips: ${draft.pips.toStringAsFixed(1)}')),
                 Expanded(
                   child: Text(
                     'P/L: \$${draft.profit.toStringAsFixed(2)}',
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color:
-                      draft.profit >= 0 ? Colors.green : Colors.red,
-                    ),
+                        color:
+                        draft.profit >= 0 ? Colors.green : Colors.red),
                   ),
                 ),
               ],
             ),
-
             TextField(
               decoration: const InputDecoration(labelText: 'Notes'),
               onChanged: (v) => draft.notes = v,

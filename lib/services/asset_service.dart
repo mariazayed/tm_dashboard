@@ -4,7 +4,7 @@ import 'package:tm_dashboard/constants/api_constants.dart';
 
 import '../models/asset_model.dart';
 
-class AssetApi {
+class AssetService {
   /// Create asset
   static Future<void> createAsset({
     required String name,

@@ -25,7 +25,7 @@ class _AssetFormState extends State<AssetForm> {
     setState(() => _loading = true);
 
     try {
-      await AssetApi.createAsset(
+      await AssetService.createAsset(
         name: _nameController.text.trim(),
         symbol: _symbolController.text.trim().toUpperCase(),
       );
@@ -95,7 +95,7 @@ class _AssetSymbolsListState extends State<AssetSymbolsList> {
   }
 
   void _loadAssets() {
-    _assetsFuture = AssetApi.fetchAssets();
+    _assetsFuture = AssetService.fetchAssets();
   }
 
   @override

@@ -1,11 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tm_dashboard/enums/trade_direction_enum.dart';
+import 'package:tm_dashboard/models/trade_model.dart';
 import 'package:tm_dashboard/services/trade_service.dart';
 
 import '../../models/asset_model.dart';
 import '../../services/asset_service.dart';
 
+class TradeJournal {
+  final DateTime entryDateTime;
+  final DateTime exitDateTime;
+  final List<TradeModel> trades;
+
+  TradeJournal({
+    required this.entryDateTime,
+    required this.exitDateTime,
+    required this.trades,
+  });
+
+  double get totalProfit =>
+      trades.fold(0, (sum, t) => sum + t.profit);
+}
+
+List<TradeJournal> groupTrades(List<TradeModel> trades) {
+  final map = <String, List<TradeModel>>{};
+
+  for (final t in trades) {
+    final key =
+        '${t.entryDateTime.toIso8601String()}_${t.exitDateTime.toIso8601String()}';
+    map.putIfAbsent(key, () => []).add(t);
+  }
+
+  return map.values.map((group) {
+    return TradeJournal(
+      entryDateTime: group.first.entryDateTime,
+      exitDateTime: group.first.exitDateTime,
+      trades: group,
+    );
+  }).toList();
+}
 
 
 class TradeDraft {
@@ -47,6 +80,121 @@ class TradeDraft {
 /// MAIN PAGE
 /// =======================
 
+class JournalsScreen extends StatefulWidget {
+  final List<Asset> assets;
+  const JournalsScreen({super.key, required this.assets});
+
+  @override
+  State<JournalsScreen> createState() => _JournalsScreenState();
+}
+
+class _JournalsScreenState extends State<JournalsScreen> {
+  late Future<List<TradeJournal>> future;
+
+  @override
+  void initState() {
+    super.initState();
+    future = _load();
+  }
+
+  Future<List<TradeJournal>> _load() async {
+    final trades = await TradeService.fetchTrades();
+    return groupTrades(trades);
+  }
+
+  Future<void> _openAddJournal() async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddJournalSheet(assets: widget.assets),
+    );
+
+    setState(() {
+      future = _load();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Trade Journals'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _openAddJournal,
+          ),
+        ],
+      ),
+      body: FutureBuilder<List<TradeJournal>>(
+        future: future,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final journals = snapshot.data!;
+          if (journals.isEmpty) {
+            return const Center(child: Text('No journals yet'));
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: journals.length,
+            itemBuilder: (_, i) => _JournalCard(journal: journals[i]),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _JournalCard extends StatelessWidget {
+  final TradeJournal journal;
+  const _JournalCard({required this.journal});
+
+  @override
+  Widget build(BuildContext context) {
+    final profitColor =
+    journal.totalProfit >= 0 ? Colors.green : Colors.red;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: 16),
+      child: ExpansionTile(
+        title: Text(
+          DateFormat('dd MMM yyyy HH:mm')
+              .format(journal.entryDateTime),
+        ),
+        subtitle: Text(
+          'Trades: ${journal.trades.length} • '
+              'P/L: ${journal.totalProfit.toStringAsFixed(2)} \$',
+          style: TextStyle(color: profitColor),
+        ),
+        children: journal.trades.map((t) {
+          return ListTile(
+            title: Text('${t.asset.symbol} ${t.direction.name.toUpperCase()}'),
+            subtitle: Text(
+              'Entry ${t.entryPrice} → Exit ${t.exitPrice}',
+            ),
+            trailing: Text(
+              '${t.profit.toStringAsFixed(2)} \$',
+              style: TextStyle(
+                color: t.profit >= 0 ? Colors.green : Colors.red,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+
 class TradeJournalScreen extends StatefulWidget {
   const TradeJournalScreen({super.key});
 
@@ -55,50 +203,48 @@ class TradeJournalScreen extends StatefulWidget {
 }
 
 class _TradeJournalScreenState extends State<TradeJournalScreen> {
-  late Future<List<Asset>> assetsFuture;
+  late final Future<List<Asset>> futureAssets;
 
   @override
   void initState() {
     super.initState();
-    assetsFuture = AssetService.fetchAssets();
-  }
 
-  void _openAddJournal(List<Asset> assets) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
-      builder: (_) => AddJournalSheet(assets: assets),
-    );
+// Ensure the field is ALWAYS initialized, even if fetchAssets throws synchronously.
+    futureAssets = () {
+      try {
+        return AssetService.fetchAssets();
+      } catch (e, st) {
+        return Future<List<Asset>>.error(e, st);
+      }
+    }();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('TJ')),
-      body: FutureBuilder<List<Asset>>(
-        future: assetsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text(snapshot.error.toString()));
-          }
+    return FutureBuilder<List<Asset>>(
+      future: futureAssets,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-          final assets = snapshot.data ?? <Asset>[];
-
-          return Center(
-            child: FilledButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Add Journal'),
-              onPressed: () => _openAddJournal(assets),
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Text(
+                'Failed to load assets:\n${snapshot.error}',
+                textAlign: TextAlign.center,
+              ),
             ),
           );
-        },
-      ),
+        }
+
+        final assets = snapshot.data ?? const <Asset>[];
+
+        return JournalsScreen(assets: assets);
+      },
     );
   }
 }
@@ -305,20 +451,23 @@ class _TradeCard extends StatelessWidget {
                   },
                 ),
                 const SizedBox(width: 12),
-                DropdownButton<Asset>(
-                  value: draft.asset,
-                  items: assets
-                      .map((a) => DropdownMenuItem(
-                    value: a,
-                    child: Text('${a.symbol} • ${a.name}'),
-                  ))
-                      .toList(),
-                  onChanged: (v) {
-                    draft.asset = v!;
-                    onChanged();
-                  },
-                ),
-                const Spacer(),
+          DropdownButtonFormField<Asset>(
+            value: draft.asset,
+            items: assets.map((a) {
+              return DropdownMenuItem(
+                value: a,
+                child: Text('${a.symbol} • ${a.name}'),
+              );
+            }).toList(),
+            onChanged: (v) {
+              if (v != null) {
+                draft.asset = v;
+                onChanged();
+              }
+            },
+            decoration: const InputDecoration(labelText: 'Pair'),
+          ),
+          const Spacer(),
                 if (onRemove != null)
                   IconButton(
                     icon: const Icon(Icons.close),

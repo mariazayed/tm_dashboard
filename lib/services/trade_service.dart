@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:tm_dashboard/models/trade_model.dart';
 
 import '../constants/api_constants.dart';
 
@@ -15,5 +16,16 @@ class TradeService {
     if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception('Failed to create trades');
     }
+  }
+
+  static Future<List<TradeModel>> fetchTrades() async {
+    final response = await http.get(Uri.parse(ApiConstants.tradeURL));
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch trades');
+    }
+
+    final List data = jsonDecode(response.body);
+    return data.map((e) => TradeModel.fromJson(e)).toList();
   }
 }

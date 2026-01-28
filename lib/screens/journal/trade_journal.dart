@@ -98,9 +98,14 @@ class _JournalsScreenState extends State<JournalsScreen> {
   }
 
   Future<List<TradeJournal>> _load() async {
-    final trades = await TradeService.fetchTrades();
-    return groupTrades(trades);
+    try {
+      final trades = await TradeService.fetchTrades();
+      return groupTrades(trades);
+    } catch (e, st) {
+      return Future<List<TradeJournal>>.error(e, st);
+    }
   }
+
 
   Future<void> _openAddJournal() async {
     await showModalBottomSheet(
@@ -121,7 +126,7 @@ class _JournalsScreenState extends State<JournalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trade Journals'),
+        title: const Text('TJ'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -132,8 +137,18 @@ class _JournalsScreenState extends State<JournalsScreen> {
       body: FutureBuilder<List<TradeJournal>>(
         future: future,
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            print(snapshot.error);
+            return Center(
+              child: Text(
+                'Failed to load journals:\n${snapshot.error}',
+                textAlign: TextAlign.center,
+              ),
+            );
           }
 
           final journals = snapshot.data!;
@@ -393,9 +408,9 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
           )),
 
           TextButton.icon(
-            onPressed: () => setState(() => drafts.add(
-              TradeDraft(asset: drafts.first.asset),
-            )),
+            onPressed: widget.assets.isEmpty ? null : () {
+              setState(() => drafts.add(TradeDraft(asset: drafts.first.asset)));
+            },
             icon: const Icon(Icons.add),
             label: const Text('Add Trade'),
           ),
@@ -452,7 +467,7 @@ class _TradeCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
           DropdownButtonFormField<Asset>(
-            value: draft.asset,
+            value: assets.contains(draft.asset) ? draft.asset : null,
             items: assets.map((a) {
               return DropdownMenuItem(
                 value: a,
@@ -491,7 +506,7 @@ class _TradeCard extends StatelessWidget {
             _num('TP', (v) => draft.tp = v),
             Row(
               children: [
-                Expanded(child: Text('Pips: ${draft.pips.toStringAsFixed(1)}')),
+                Expanded(child: Text('Pips: ${draft.pips.toStringAsFixed(1) ?? '0.0'}')),
                 Expanded(
                   child: Text(
                     'P/L: \$${draft.profit.toStringAsFixed(2)}',

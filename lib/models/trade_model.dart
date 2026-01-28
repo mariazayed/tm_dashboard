@@ -28,13 +28,13 @@ class TradeModel {
     return TradeModel(
       entryDateTime: DateTime.parse(json['entryDateTime']),
       exitDateTime: DateTime.parse(json['exitDateTime']),
-      asset: json['asset'],
-      direction: json['direction'],
+      asset: Asset.fromJson(json['asset']),
+      direction: TradeDirectionEnum.fromValue(json['direction']),
       entryPrice: (json['entryPrice'] as num).toDouble(),
       exitPrice: (json['exitPrice'] as num).toDouble(),
-      lot: (json['lot'] as num).toDouble(),
+      lot: (json['lotSize'] as num).toDouble(),
       pips: (json['pips'] as num).toDouble(),
-      profit: (json['profit'] as num).toDouble(),
+      profit: (json['pnl'] as num).toDouble(),
     );
   }
 }

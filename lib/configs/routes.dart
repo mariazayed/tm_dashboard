@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 import 'package:tm_dashboard/screens/calendar/calendar_screen.dart';
 import 'package:tm_dashboard/screens/home/home_screen.dart';
+import 'package:tm_dashboard/screens/journal/trade_journal.dart';
 import 'package:tm_dashboard/screens/memoir/memoir_screen.dart';
 
 import '../constants/route_names.dart';
@@ -33,6 +34,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.riskManagement,
               path: 'risk-management',
               builder: (context, state) => RiskManagementScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.tradeJournal,
+              path: 'trade-journal',
+              builder: (context, state) => TradeJournalScreen(),
             ),
           ],
         ),

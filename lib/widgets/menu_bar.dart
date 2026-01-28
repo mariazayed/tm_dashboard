@@ -10,9 +10,9 @@ class MenuEntry {
     this.onPressed,
     this.menuChildren,
   }) : assert(
-  menuChildren == null || onPressed == null,
-  'onPressed is ignored if menuChildren are provided',
-  );
+         menuChildren == null || onPressed == null,
+         'onPressed is ignored if menuChildren are provided',
+       );
   final String label;
 
   final MenuSerializableShortcut? shortcut;
@@ -38,10 +38,10 @@ class MenuEntry {
   }
 
   static Map<MenuSerializableShortcut, Intent> shortcuts(
-      List<MenuEntry> selections,
-      ) {
+    List<MenuEntry> selections,
+  ) {
     final Map<MenuSerializableShortcut, Intent> result =
-    <MenuSerializableShortcut, Intent>{};
+        <MenuSerializableShortcut, Intent>{};
     for (final MenuEntry selection in selections) {
       if (selection.menuChildren != null) {
         result.addAll(MenuEntry.shortcuts(selection.menuChildren!));
@@ -102,6 +102,12 @@ class MainManu extends StatelessWidget {
         label: 'Memoir',
         onPressed: () {
           context.goNamed(RouteNames.memoir);
+        },
+      ),
+      MenuEntry(
+        label: 'Trade Journaling',
+        onPressed: () {
+          context.goNamed(RouteNames.tradeJournal);
         },
       ),
       MenuEntry(

@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:tm_dashboard/screens/assets/AssetsScreen.dart';
 import 'package:tm_dashboard/screens/calendar/calendar_screen.dart';
 import 'package:tm_dashboard/screens/home/home_screen.dart';
 import 'package:tm_dashboard/screens/journal/trade_journal.dart';
@@ -39,6 +40,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.tradeJournal,
               path: 'trade-journal',
               builder: (context, state) => TradeJournalScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.assets,
+              path: 'assets',
+              builder: (context, state) => AssetScreen(),
             ),
           ],
         ),

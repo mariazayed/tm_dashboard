@@ -113,13 +113,26 @@ class _AssetSymbolsListState extends State<AssetSymbolsList> {
 
         final assets = snapshot.data!;
 
-        return ListView.builder(
+        return ListView.separated(
           itemCount: assets.length,
+          separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
+            final asset = assets[index];
+
             return ListTile(
-              leading: const Icon(Icons.account_balance),
-              title: Text(assets[index].symbol),
-              subtitle: Text(assets[index].name),
+              leading: CircleAvatar(
+                child: Text(asset.id),
+              ),
+              title: Text(
+                asset.symbol,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              subtitle: Text(
+                'ID: ${asset.id} • ${asset.name}',
+              ),
             );
           },
         );

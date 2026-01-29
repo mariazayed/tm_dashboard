@@ -282,45 +282,123 @@ class _SummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final children = [
-      _SummaryCard(title: 'Daily', data: daily),
-      _SummaryCard(title: 'Weekly', data: weekly),
-      _SummaryCard(title: 'Monthly', data: monthly),
+    final cards = [
+      _ElegantSummaryCard(title: 'Today', data: daily),
+      _ElegantSummaryCard(title: 'This Week', data: weekly),
+      _ElegantSummaryCard(title: 'This Month', data: monthly),
     ];
 
-    return wide
-        ? Row(children: children.map((e) => Expanded(child: e)).toList())
-        : Column(children: children);
+    return GridView.count(
+      crossAxisCount: wide ? 3 : 1,
+      shrinkWrap: true,
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      physics: const NeverScrollableScrollPhysics(),
+      children: cards,
+    );
   }
 }
 
-class _SummaryCard extends StatelessWidget {
+class _ElegantSummaryCard extends StatelessWidget {
   final String title;
   final SummaryData data;
 
-  const _SummaryCard({required this.title, required this.data});
+  const _ElegantSummaryCard({
+    required this.title,
+    required this.data,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.all(8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text('Profits: ${data.profits.toStringAsFixed(2)}'),
-            Text('Losses: ${data.losses.toStringAsFixed(2)}'),
-            const Divider(),
-            Text('PNL: ${data.pnl.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+    final pnlColor = data.pnl >= 0 ? Colors.green : Colors.red;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            pnlColor.withOpacity(0.15),
+            Colors.transparent,
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        border: Border.all(color: pnlColor.withOpacity(0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(letterSpacing: 1.2),
+          ),
+          const SizedBox(height: 12),
+
+          /// PnL
+          Text(
+            data.pnl.toStringAsFixed(2),
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: pnlColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          /// Breakdown
+          Row(
+            children: [
+              _MiniStat(
+                label: 'Profit',
+                value: data.profits,
+                color: Colors.green,
+              ),
+              const SizedBox(width: 16),
+              _MiniStat(
+                label: 'Loss',
+                value: data.losses,
+                color: Colors.red,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
+
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
+        Text(
+          value.toStringAsFixed(2),
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 
 /// ------------------------------
 /// Capital List
@@ -333,23 +411,84 @@ class _CapitalList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListView.separated(
-        itemCount: capitals.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (_, i) {
-          final c = capitals[i];
-          return ListTile(
-            leading: Icon(
-              c.amount >= 0 ? Icons.trending_up : Icons.trending_down,
-              color: c.amount >= 0 ? Colors.green : Colors.red,
+    return ListView.separated(
+      itemCount: capitals.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) {
+        final c = capitals[i];
+        final isPositive = c.amount >= 0;
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isPositive
+                  ? Colors.green.withOpacity(0.3)
+                  : Colors.red.withOpacity(0.3),
             ),
-            title: Text(c.reason.name),
-            subtitle: Text(c.dateTime.toLocal().toString()),
-            trailing: Text(c.amount.toStringAsFixed(2)),
-          );
-        },
-      ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// Header row
+              Row(
+                children: [
+                  Icon(
+                    isPositive
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
+                    color: isPositive ? Colors.green : Colors.red,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    c.reason.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const Spacer(),
+                  Text(
+                    c.amount.toStringAsFixed(2),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isPositive ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 6),
+
+              /// Date
+              Text(
+                c.dateTime.toLocal().toString(),
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: Colors.grey),
+              ),
+
+              /// Notes (optional)
+              if (c.notes != null && c.notes!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    c.notes!,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }
+

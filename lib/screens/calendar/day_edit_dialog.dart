@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../bloc/calendar_state.dart';
+import 'calendar_state.dart';
 import '../../models/day_model.dart';
 import 'day_status.dart';
 

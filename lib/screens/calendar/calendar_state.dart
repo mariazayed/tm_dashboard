@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tm_dashboard/enums/day_of_week_enum.dart';
 import 'package:tm_dashboard/services/day_service.dart';
 
-import '../models/day_model.dart';
+import '../../models/day_model.dart';
 
 class CalendarState {
   final DateTime currentMonth;

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tm_dashboard/constants/app_theme.dart';
 import 'package:tm_dashboard/screens/calendar/calendar_screen.dart';
 
-import 'bloc/calendar_state.dart';
+import 'screens/calendar/calendar_state.dart';
 import 'configs/routes.dart';
 
 void main() {

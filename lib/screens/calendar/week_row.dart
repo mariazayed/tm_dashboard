@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../bloc/calendar_state.dart';
+import 'calendar_state.dart';
 import '../../models/day_model.dart';
 import 'day_edit_dialog.dart';
 

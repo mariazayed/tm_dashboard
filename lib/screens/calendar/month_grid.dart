@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tm_dashboard/screens/calendar/week_row.dart';
 
-import '../../bloc/calendar_state.dart';
+import 'calendar_state.dart';
 import '../../models/day_model.dart';
 import 'dashed_border.dart';
 

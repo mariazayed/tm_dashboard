@@ -156,8 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
               duration: const Duration(milliseconds: 800),
               transitionBuilder: (child, animation) {
                 return SlideTransition(
-                  position: Tween<Offset>(
-                      begin: const Offset(1, 0), end: Offset.zero)
+                  position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
                       .animate(animation),
                   child: FadeTransition(opacity: animation, child: child),
                 );
@@ -165,10 +164,20 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(
                 _notes[_currentIndex].text,
                 key: ValueKey<int>(_currentIndex), // animate text only
-                style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontFamily: 'Roboto',          // clean modern font
+                  fontSize: 20,                  // slightly larger
+                  fontWeight: FontWeight.w500,   // medium weight
+                  height: 1.4,                   // subtle line spacing
+                  color: Colors.grey.shade900,   // dark, soft black
+                  shadows: [
+                    Shadow(
+                      offset: const Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black12,     // very subtle shadow
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

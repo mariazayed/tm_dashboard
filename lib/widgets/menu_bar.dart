@@ -122,6 +122,12 @@ class MainManu extends StatelessWidget {
           context.goNamed(RouteNames.assets);
         },
       ),
+      MenuEntry(
+        label: 'Capitals',
+        onPressed: () {
+          context.goNamed(RouteNames.capitalsManagement);
+        },
+      ),
     ];
 
     return result;

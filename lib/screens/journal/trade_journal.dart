@@ -99,7 +99,7 @@ class _JournalsScreenState extends State<JournalsScreen> {
 
   Future<List<TradeJournal>> _load() async {
     try {
-      final trades = await TradeService.fetchTrades();
+      final trades = await TradeService.getAll();
       return groupTrades(trades);
     } catch (e, st) {
       return Future<List<TradeJournal>>.error(e, st);

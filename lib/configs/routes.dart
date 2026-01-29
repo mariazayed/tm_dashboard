@@ -6,6 +6,7 @@ import 'package:tm_dashboard/screens/journal/trade_journal.dart';
 import 'package:tm_dashboard/screens/memoir/memoir_screen.dart';
 
 import '../constants/route_names.dart';
+import '../screens/capital_management/capital_management.dart';
 import '../screens/risk_management/risk_management_screen.dart';
 import '../widgets/menu_bar.dart';
 
@@ -45,6 +46,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.assets,
               path: 'assets',
               builder: (context, state) => AssetScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.capitalsManagement,
+              path: 'capitals-management',
+              builder: (context, state) => CapitalManagementScreen(),
             ),
           ],
         ),

@@ -20,6 +20,16 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   Timer? _timer;
 
+  // Modern light colors for sticky notes
+  final List<Color> _noteColors = [
+    Colors.yellow.shade100,
+    Colors.blue.shade50,
+    Colors.green.shade50,
+    Colors.pink.shade50,
+    Colors.orange.shade50,
+    Colors.purple.shade50,
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       } else {
         setState(() => _isLoading = false);
-        throw Exception('Failed to load notes');
       }
     } catch (e) {
       setState(() => _isLoading = false);
@@ -63,13 +72,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildStickyNote({required Widget child}) {
+  Widget _buildStickyNote({required Widget child, required Color color}) {
     return Container(
       width: 300,
       height: 300, // square sticky note
-      padding: const EdgeInsets.all(16), // simple padding
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: color, // dynamic background color
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
@@ -83,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Positioned.fill(
             child: CustomPaint(
-              painter: _NotebookLinesOnlyPainter(), // only lines now
+              painter: _NotebookLinesOnlyPainter(),
             ),
           ),
           child,
@@ -92,50 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showAllNotes() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey.shade100,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _notes.length,
-            itemBuilder: (context, index) {
-              final note = _notes[index];
-              return Container(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.yellow.shade200,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(2, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  note.text,
-                  style: const TextStyle(fontSize: 16, color: Colors.black87),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final Color currentColor = _noteColors[_currentIndex % _noteColors.length];
+
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
@@ -149,45 +118,56 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const CircularProgressIndicator()
             : _notes.isEmpty
             ? const Text('No notes available')
-            : GestureDetector(
-          onTap: _showAllNotes,
-          child: _buildStickyNote(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 800),
-              transitionBuilder: (child, animation) {
-                return SlideTransition(
-                  position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
-                      .animate(animation),
-                  child: FadeTransition(opacity: animation, child: child),
-                );
-              },
-              child: Text(
-                _notes[_currentIndex].text,
-                key: ValueKey<int>(_currentIndex), // animate text only
-                style: TextStyle(
-                  fontFamily: 'Roboto',          // clean modern font
-                  fontSize: 20,                  // slightly larger
-                  fontWeight: FontWeight.w500,   // medium weight
-                  height: 1.4,                   // subtle line spacing
-                  color: Colors.grey.shade900,   // dark, soft black
-                  shadows: [
-                    Shadow(
-                      offset: const Offset(1, 1),
-                      blurRadius: 2,
-                      color: Colors.black12,     // very subtle shadow
+            : AnimatedContainer(
+              duration: const Duration(milliseconds: 500), // smooth fade
+              curve: Curves.easeInOut,
+              width: 300,
+              height: 300,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: currentColor, // dynamic background color
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 6,
+                    offset: Offset(3, 3),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _NotebookLinesOnlyPainter(),
                     ),
-                  ],
-                ),
+                  ),
+                  Text(
+                    _notes[_currentIndex].text,
+                    style: TextStyle(
+                      fontFamily: 'Roboto',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                      color: Colors.grey.shade900,
+                      shadows: const [
+                        Shadow(
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                          color: Colors.black12,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ),
       ),
     );
   }
 }
 
-// Custom painter for horizontal notebook lines only
+// Notebook lines painter (no spirals)
 class _NotebookLinesOnlyPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

@@ -14,8 +14,10 @@ class ReminderNotesScreen extends StatefulWidget {
 
 class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
   List<ReminderNoteModel> _notes = [];
+  List<String> _draftNotes = [];
   bool _isLoading = true;
   bool _isAdding = false;
+
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -41,17 +43,33 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
     }
   }
 
-  Future<void> _addNote(String text) async {
-    try {
-      ReminderNoteModel noteModel = ReminderNoteModel(text: text);
-      await ReminderNotesService.create([noteModel.toJson()]);
+  void _addDraftNote() {
+    final text = _controller.text.trim();
+    if (text.isNotEmpty) {
+      setState(() {
+        _draftNotes.add(text);
         _controller.clear();
-        _fetchNotes();
+      });
+    }
+  }
+
+  Future<void> _submitAllDrafts() async {
+    if (_draftNotes.isEmpty) return;
+
+    try {
+
+      List<dynamic> notes = _draftNotes.map((text) => ReminderNoteModel(text: text).toJson()
+      ).toList();
+
+      await ReminderNotesService.create([...notes]);
+
         setState(() {
+          _draftNotes.clear();
           _isAdding = false;
         });
+        _fetchNotes();
     } catch (e) {
-      debugPrint('Error adding note: $e');
+      debugPrint('Error submitting notes: $e');
     }
   }
 
@@ -68,12 +86,10 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
         onRefresh: _fetchNotes,
-        child: ListView.builder(
+        child: ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: _notes.length,
-          itemBuilder: (context, index) {
-            final note = _notes[index];
-            return Card(
+          children: [
+            ..._notes.map((note) => Card(
               elevation: 2,
               margin: const EdgeInsets.symmetric(vertical: 8),
               shape: RoundedRectangleBorder(
@@ -86,8 +102,21 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
                   style: const TextStyle(fontSize: 16),
                 ),
               ),
-            );
-          },
+            )),
+            if (_draftNotes.isNotEmpty)
+              const SizedBox(height: 16),
+            ..._draftNotes.map((draft) => Card(
+              color: Colors.blue.shade50,
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Text(
+                  draft,
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+              ),
+            )),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -102,37 +131,55 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
           ? Container(
         padding: const EdgeInsets.all(16),
         color: Colors.white,
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  hintText: 'Enter new note...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: 'Enter new note...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                    ),
                   ),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
                 ),
-              ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: _addDraftNote,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  child: const Text('Add'),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: () {
-                final text = _controller.text.trim();
-                if (text.isNotEmpty) {
-                  _addNote(text);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            if (_draftNotes.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: ElevatedButton(
+                  onPressed: _submitAllDrafts,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Submit All',
+                      style: TextStyle(fontSize: 16, color: Colors.white),
+                    ),
+                  ),
                 ),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
               ),
-              child: const Text('Add'),
-            )
           ],
         ),
       )

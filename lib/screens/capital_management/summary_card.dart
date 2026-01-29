@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'stat.dart';
+import 'capital_stat.dart';
 import 'summary_data.dart';
 
 class SummaryCard extends StatelessWidget {
@@ -55,13 +55,13 @@ class SummaryCard extends StatelessWidget {
           /// Breakdown
           Row(
             children: [
-              Stat(
+              CapitalStat(
                 label: 'Profit',
                 value: data.profits,
                 color: Colors.green,
               ),
               const SizedBox(width: 16),
-              Stat(
+              CapitalStat(
                 label: 'Loss',
                 value: data.losses,
                 color: Colors.red,

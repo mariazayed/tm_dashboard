@@ -15,7 +15,7 @@ class ReminderNotesScreen extends StatefulWidget {
 class _ReminderNotesScreenState extends State<ReminderNotesScreen>
     with SingleTickerProviderStateMixin {
   List<ReminderNoteModel> _notes = [];
-  List<String> _draftNotes = [];
+  final List<String> _draftNotes = [];
   bool _isLoading = true;
   bool _isAdding = false;
 

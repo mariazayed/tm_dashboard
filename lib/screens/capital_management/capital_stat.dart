@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class Stat extends StatelessWidget {
+class CapitalStat extends StatelessWidget {
   final String label;
   final double value;
   final Color color;
 
-  const Stat({super.key,
+  const CapitalStat({super.key,
     required this.label,
     required this.value,
     required this.color,

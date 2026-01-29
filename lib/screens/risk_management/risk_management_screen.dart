@@ -2,9 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'risk_equity_curve_chart.dart';
+import 'risk_metrics.dart';
+import 'risk_stat.dart';
 
 class RiskManagementScreen extends StatefulWidget {
   const RiskManagementScreen({super.key});
@@ -222,7 +222,7 @@ class _RiskManagementScreenState
     );
   }
 
-  Widget _stats(Map<String, _Stat> data, {bool showPercent = true}) {
+  Widget _stats(Map<String, RiskStat> data, {bool showPercent = true}) {
     return Column(
       children: data.entries.map((e) {
         final stat = e.value;
@@ -435,7 +435,7 @@ class _RiskManagementScreenState
               height: 420,
               child: equityCurve.isEmpty
                   ? _emptyState()
-                  : EquityCurveChart(equityCurve,      startingCapital: max(v(capitalCtrl), 1),
+                  : RiskEquityCurveChart(equityCurve,      startingCapital: max(v(capitalCtrl), 1),
               ),
             ),
           ),
@@ -451,7 +451,7 @@ class _RiskManagementScreenState
         if (equityCurve.isNotEmpty)
           _card(
             'Equity Curve',
-            SizedBox(height: 300, child: EquityCurveChart(equityCurve,      startingCapital: max(v(capitalCtrl), 1),
+            SizedBox(height: 300, child: RiskEquityCurveChart(equityCurve,      startingCapital: max(v(capitalCtrl), 1),
             )),
           ),
       ],
@@ -492,15 +492,15 @@ class _RiskManagementScreenState
 
   Widget _expectancyStats(RiskMetrics m) {
     return _stats({
-      'Risk / Trade \$': _Stat(m.riskPerTrade, m.pct(m.riskPerTrade),
+      'Risk / Trade \$': RiskStat(m.riskPerTrade, m.pct(m.riskPerTrade),
           tooltip: 'Amount risked per trade. Good: 0.5%-2% of capital. High risk is dangerous.'),
-      'Reward / Trade \$': _Stat(m.rewardPerTrade, m.pct(m.rewardPerTrade),
+      'Reward / Trade \$': RiskStat(m.rewardPerTrade, m.pct(m.rewardPerTrade),
           tooltip: 'Expected reward per trade based on your RRR.'),
-      'Expectancy \$': _Stat(m.expectancy, m.pct(m.expectancy),
+      'Expectancy \$': RiskStat(m.expectancy, m.pct(m.expectancy),
           tooltip: 'Average expected gain per trade. Positive is good.'),
-      'Expectancy %': _Stat(m.expectancyPct, m.expectancyPct,
+      'Expectancy %': RiskStat(m.expectancyPct, m.expectancyPct,
           tooltip: 'Expectancy as % of capital. Higher is better.'),
-      'Edge Score': _Stat(m.edgeScore, 0,
+      'Edge Score': RiskStat(m.edgeScore, 0,
           tooltip: 'Edge = expectancy / risk per trade. Positive edge is profitable.'),
     });
   }
@@ -539,262 +539,97 @@ class _RiskManagementScreenState
 
   Widget _riskStats(RiskMetrics m) {
     return _stats({
-      'Daily Risk \$': _Stat(m.dailyRisk, m.pct(m.dailyRisk),
+      'Daily Risk \$': RiskStat(m.dailyRisk, m.pct(m.dailyRisk),
           tooltip: 'Total capital risked per day. Keep it manageable.'),
-      'Daily Reward \$': _Stat(m.dailyReward, m.pct(m.dailyReward),
+      'Daily Reward \$': RiskStat(m.dailyReward, m.pct(m.dailyReward),
           tooltip: 'Total reward potential per day.'),
-      'Weekly Risk \$': _Stat(m.weeklyRisk, m.pct(m.weeklyRisk),
+      'Weekly Risk \$': RiskStat(m.weeklyRisk, m.pct(m.weeklyRisk),
           tooltip: 'Total capital risked per week.'),
-      'Weekly Reward \$': _Stat(m.weeklyReward, m.pct(m.weeklyReward),
+      'Weekly Reward \$': RiskStat(m.weeklyReward, m.pct(m.weeklyReward),
           tooltip: 'Total reward potential per week.'),
-      'Monthly Risk \$': _Stat(m.monthlyRisk, m.pct(m.monthlyRisk),
+      'Monthly Risk \$': RiskStat(m.monthlyRisk, m.pct(m.monthlyRisk),
           tooltip: 'Total risk per month. Keep below 10%-15% of capital.'),
-      'Monthly Reward \$': _Stat(m.monthlyReward, m.pct(m.monthlyReward),
+      'Monthly Reward \$': RiskStat(m.monthlyReward, m.pct(m.monthlyReward),
           tooltip: 'Total reward potential per month.'),
     });
   }
 
   Widget _performanceStats(RiskMetrics m) {
     return _stats({
-      'Total Wins \$': _Stat(m.totalWins, m.pct(m.totalWins),
+      'Total Wins \$': RiskStat(m.totalWins, m.pct(m.totalWins),
           tooltip: 'Total gains from winning trades.'),
-      'Total Losses \$': _Stat(m.totalLosses, m.pct(m.totalLosses),
+      'Total Losses \$': RiskStat(m.totalLosses, m.pct(m.totalLosses),
           tooltip: 'Total losses from losing trades. Minimize this.'),
-      'Net P/L \$': _Stat(m.totalAmount, m.pct(m.totalAmount),
+      'Net P/L \$': RiskStat(m.totalAmount, m.pct(m.totalAmount),
           tooltip: 'Net profit or loss. Positive is good.'),
-      'Capital Increase %': _Stat(m.capitalIncreasePct, m.capitalIncreasePct,
+      'Capital Increase %': RiskStat(m.capitalIncreasePct, m.capitalIncreasePct,
           tooltip: 'Expected capital growth %.'),
     });
   }
 
   Widget _timeStats(RiskMetrics m) {
     return _stats({
-      'Days': _Stat(m.days, 0, tooltip: 'Estimated trading days to complete all trades.'),
-      'Weeks': _Stat(m.weeks, 0, tooltip: 'Estimated weeks to complete trades.'),
-      'Months': _Stat(m.months, 0, tooltip: 'Estimated months to complete trades.'),
+      'Days': RiskStat(m.days, 0, tooltip: 'Estimated trading days to complete all trades.'),
+      'Weeks': RiskStat(m.weeks, 0, tooltip: 'Estimated weeks to complete trades.'),
+      'Months': RiskStat(m.months, 0, tooltip: 'Estimated months to complete trades.'),
     }, showPercent: false);
   }
 
   Widget _distributionStats(RiskMetrics m) {
     return _stats({
-      'Winning Trades': _Stat(m.winningTrades, m.winRate * 100,
+      'Winning Trades': RiskStat(m.winningTrades, m.winRate * 100,
           tooltip: 'Number of expected winning trades. Higher win rate is better.'),
-      'Losing Trades': _Stat(m.losingTrades, (1 - m.winRate) * 100,
+      'Losing Trades': RiskStat(m.losingTrades, (1 - m.winRate) * 100,
           tooltip: 'Number of expected losing trades. Keep this low.'),
     });
   }
 
-
-
-
-}
-
-class RiskMetrics {
-  final double capital;
-  final double riskPct;
-  final double winRate;
-  final double rrr;
-  final double trades;
-  final double tradesPerDay;
-
-  late final double winningTrades;
-  late final double losingTrades;
-
-  late final double riskPerTrade;
-  late final double rewardPerTrade;
-
-  late final double expectancy;
-  late final double expectancyPct;
-  late final double edgeScore;
-
-  late final double dailyRisk;
-  late final double dailyReward;
-  late final double weeklyRisk;
-  late final double weeklyReward;
-  late final double monthlyRisk;
-  late final double monthlyReward;
-
-  late final double totalWins;
-  late final double totalLosses;
-  late final double totalAmount;
-
-  late final double days;
-  late final double weeks;
-  late final double months;
-
-  late final double capitalIncreasePct;
-
-  RiskMetrics({
-    required this.capital,
-    required this.riskPct,
-    required this.winRate,
-    required this.rrr,
-    required this.trades,
-    required this.tradesPerDay,
+  double riskOfRuin({
+    required double winRate,
+    required double capital,
+    required double riskPerTrade,
   }) {
-    winningTrades = trades * winRate;
-    losingTrades = trades - winningTrades;
+    final lossRate = 1 - winRate;
+    if (winRate <= 0 || lossRate <= 0) return 1;
 
-    riskPerTrade = capital * riskPct;
-    rewardPerTrade = riskPerTrade * rrr;
-
-    expectancy =
-        (winRate * rewardPerTrade) -
-            ((1 - winRate) * riskPerTrade);
-
-    expectancyPct = expectancy / capital * 100;
-    edgeScore = expectancy / riskPerTrade;
-
-    dailyRisk = riskPerTrade * tradesPerDay;
-    dailyReward = rewardPerTrade * tradesPerDay;
-
-    weeklyRisk = dailyRisk * 5;
-    weeklyReward = dailyReward * 5;
-
-    monthlyRisk = dailyRisk * 20;
-    monthlyReward = dailyReward * 20;
-
-    totalWins = winningTrades * rewardPerTrade;
-    totalLosses = losingTrades * riskPerTrade;
-    totalAmount = totalWins - totalLosses;
-
-    days = trades / tradesPerDay;
-    weeks = days / 5;
-    months = days / 20;
-
-    capitalIncreasePct = (totalAmount / capital) * 100;
+    return pow(
+      lossRate / winRate,
+      capital / riskPerTrade,
+    ).toDouble();
   }
 
-  double pct(double value) => (value / capital) * 100;
-}
+  List<double> simulateEquityCurve({
+    required double startingCapital,
+    required double trades,
+    required double winRate,
+    required double riskPct,
+    required double rrr,
+  }) {
+    final random = Random();
+    double equity = startingCapital;
+    final curve = <double>[equity];
 
-
-class _Stat {
-  final double value;
-  final double percent;
-  final String? tooltip;
-
-  _Stat(this.value, this.percent, {this.tooltip});
-}
-
-
-class EquityCurveChart extends StatelessWidget {
-  final List<double> equityCurve;
-  final double startingCapital;
-
-  const EquityCurveChart(
-      this.equityCurve, {
-        required this.startingCapital,
-        super.key,
-      });
-
-  @override
-  Widget build(BuildContext context) {
-    if (equityCurve.isEmpty) {
-      return const Center(child: Text('No data'));
+    for (int i = 0; i < trades; i++) {
+      final risk = equity * riskPct;
+      final win = random.nextDouble() <= winRate;
+      equity += win ? risk * rrr : -risk;
+      curve.add(equity);
     }
 
-    final minY = equityCurve.reduce((a, b) => a < b ? a : b) * 0.95;
-    final maxY = equityCurve.reduce((a, b) => a > b ? a : b) * 1.05;
-
-    return LineChart(
-      LineChartData(
-        minY: minY,
-        maxY: maxY,
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true, reservedSize: 50),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true, interval: (equityCurve.length / 5).ceilToDouble()),
-          ),
-        ),
-        gridData: FlGridData(show: true, horizontalInterval: (maxY - minY) / 5),
-        borderData: FlBorderData(
-          show: true,
-          border: const Border(
-            left: BorderSide(color: Colors.grey, width: 1),
-            bottom: BorderSide(color: Colors.grey, width: 1),
-            top: BorderSide(color: Colors.transparent),
-            right: BorderSide(color: Colors.transparent),
-          ),
-        ),
-        lineBarsData: [
-          LineChartBarData(
-            spots: List.generate(
-              equityCurve.length,
-                  (index) => FlSpot(index.toDouble(), equityCurve[index]),
-            ),
-            isCurved: true,
-            barWidth: 3,
-            dotData: FlDotData(show: false),
-            color: Colors.black87, // main line color
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: equityCurve.map((e) {
-                  return e >= startingCapital
-                      ? Colors.greenAccent.withOpacity(0.3)
-                      : Colors.redAccent.withOpacity(0.3);
-                }).toList(),
-                stops: List.generate(equityCurve.length, (i) => i / (equityCurve.length - 1)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-double riskOfRuin({
-  required double winRate,
-  required double capital,
-  required double riskPerTrade,
-}) {
-  final lossRate = 1 - winRate;
-  if (winRate <= 0 || lossRate <= 0) return 1;
-
-  return pow(
-    lossRate / winRate,
-    capital / riskPerTrade,
-  ).toDouble();
-}
-
-List<double> simulateEquityCurve({
-  required double startingCapital,
-  required double trades,
-  required double winRate,
-  required double riskPct,
-  required double rrr,
-}) {
-  final random = Random();
-  double equity = startingCapital;
-  final curve = <double>[equity];
-
-  for (int i = 0; i < trades; i++) {
-    final risk = equity * riskPct;
-    final win = random.nextDouble() <= winRate;
-    equity += win ? risk * rrr : -risk;
-    curve.add(equity);
+    return curve;
   }
 
-  return curve;
-}
+  double maxDrawdown(List<double> curve) {
+    double peak = curve.first;
+    double maxDD = 0;
 
-double maxDrawdown(List<double> curve) {
-  double peak = curve.first;
-  double maxDD = 0;
+    for (final v in curve) {
+      if (v > peak) peak = v;
+      final dd = (peak - v) / peak;
+      maxDD = max(maxDD, dd);
+    }
 
-  for (final v in curve) {
-    if (v > peak) peak = v;
-    final dd = (peak - v) / peak;
-    maxDD = max(maxDD, dd);
+    return maxDD * 100;
   }
-
-  return maxDD * 100;
 }
 

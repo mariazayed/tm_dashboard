@@ -1,146 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../models/asset_model.dart';
-import '../../services/asset_service.dart';
-
-class AssetForm extends StatefulWidget {
-  final VoidCallback onAssetCreated;
-
-  const AssetForm({super.key, required this.onAssetCreated});
-
-  @override
-  State<AssetForm> createState() => _AssetFormState();
-}
-
-class _AssetFormState extends State<AssetForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _symbolController = TextEditingController();
-
-  bool _loading = false;
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _loading = true);
-
-    try {
-      await AssetService.createAsset(
-        name: _nameController.text.trim(),
-        symbol: _symbolController.text.trim().toUpperCase(),
-      );
-
-      _nameController.clear();
-      _symbolController.clear();
-
-      widget.onAssetCreated();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Asset created successfully')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    } finally {
-      setState(() => _loading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: _nameController,
-            decoration: const InputDecoration(labelText: 'Asset Name'),
-            validator: (v) => v!.isEmpty ? 'Required' : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _symbolController,
-            decoration: const InputDecoration(labelText: 'Symbol'),
-            validator: (v) => v!.isEmpty ? 'Required' : null,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loading ? null : _submit,
-            child: _loading
-                ? const CircularProgressIndicator()
-                : const Text('Create Asset'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-class AssetSymbolsList extends StatefulWidget {
-  const AssetSymbolsList({super.key});
-
-  @override
-  State<AssetSymbolsList> createState() => _AssetSymbolsListState();
-}
-
-class _AssetSymbolsListState extends State<AssetSymbolsList> {
-  late Future<List<Asset>> _assetsFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAssets();
-  }
-
-  void _loadAssets() {
-    _assetsFuture = AssetService.fetchAssets();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Asset>>(
-      future: _assetsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(child: Text(snapshot.error.toString()));
-        }
-
-        final assets = snapshot.data!;
-
-        return ListView.separated(
-          itemCount: assets.length,
-          separatorBuilder: (_, __) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final asset = assets[index];
-
-            return ListTile(
-              leading: CircleAvatar(
-                child: Text(asset.id),
-              ),
-              title: Text(
-                asset.symbol,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              subtitle: Text(
-                'ID: ${asset.id} • ${asset.name}',
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
+import 'AssetForm.dart';
+import 'AssetsList.dart';
 
 class AssetScreen extends StatefulWidget {
   const AssetScreen({super.key});
@@ -150,7 +11,7 @@ class AssetScreen extends StatefulWidget {
 }
 
 class _AssetScreenState extends State<AssetScreen> {
-  final GlobalKey<_AssetSymbolsListState> _listKey = GlobalKey();
+  final GlobalKey<AssetsListState> _listKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +23,7 @@ class _AssetScreenState extends State<AssetScreen> {
           children: [
             AssetForm(
               onAssetCreated: () {
-                _listKey.currentState?._loadAssets();
+                _listKey.currentState?.loadAssets();
               },
             ),
             const SizedBox(height: 20),
@@ -172,7 +33,7 @@ class _AssetScreenState extends State<AssetScreen> {
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: AssetSymbolsList(key: _listKey),
+              child: AssetsList(key: _listKey),
             ),
           ],
         ),

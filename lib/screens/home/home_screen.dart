@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStickyNote({required Widget child}) {
     return Container(
       width: 300,
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16), // extra top padding for spiral rings
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -78,15 +78,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         border: Border(
-          left: BorderSide(color: Colors.grey.shade400, width: 4), // simulate spiral binding edge
+          left: BorderSide(color: Colors.grey.shade400, width: 4), // simulate spiral binding
         ),
       ),
       child: Stack(
         children: [
-          // Notebook lines + spiral holes
+          // Notebook lines
           Positioned.fill(
             child: CustomPaint(
-              painter: _NotebookWithSpiralsPainter(),
+              painter: _NotebookLinesPainter(),
             ),
           ),
           // Text content
@@ -95,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
   void _showAllNotes() {
     showModalBottomSheet(
       context: context,
@@ -193,36 +194,6 @@ class _NotebookLinesPainter extends CustomPainter {
     const double lineSpacing = 24; // spacing between lines
     for (double y = lineSpacing; y < size.height; y += lineSpacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// Custom painter to draw notebook lines and spiral rings at the top
-class _NotebookWithSpiralsPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = Colors.grey.shade300
-      ..strokeWidth = 1;
-
-    const double lineSpacing = 24;
-    for (double y = lineSpacing; y < size.height; y += lineSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
-    }
-
-    // Spiral rings at the top
-    final spiralPaint = Paint()
-      ..color = Colors.grey.shade600
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    const double ringSpacing = 20; // space between spiral holes
-    const double ringRadius = 4;
-    for (double x = 20; x < size.width - 20; x += ringSpacing) {
-      canvas.drawCircle(Offset(x, ringRadius + 4), ringRadius, spiralPaint);
     }
   }
 

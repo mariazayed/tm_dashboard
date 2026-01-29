@@ -6,7 +6,7 @@ import 'package:tm_dashboard/screens/journal/trade_journal.dart';
 import 'package:tm_dashboard/screens/memoir/memoir_screen.dart';
 
 import '../constants/route_names.dart';
-import '../screens/capital_management/capital_management.dart';
+import '../screens/capital_management/capital_management_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
 import '../widgets/menu_bar.dart';

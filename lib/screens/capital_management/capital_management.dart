@@ -282,19 +282,94 @@ class _SummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = [
-      _ElegantSummaryCard(title: 'Today', data: daily),
-      _ElegantSummaryCard(title: 'This Week', data: weekly),
-      _ElegantSummaryCard(title: 'This Month', data: monthly),
-    ];
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
+        ),
+      ),
+      child: Column(
+        children: [
+          _SummaryRow(label: 'TODAY', data: daily),
+          _SummaryRow(label: 'WEEK', data: weekly),
+          _SummaryRow(label: 'MONTH', data: monthly),
+        ],
+      ),
+    );
+  }
+}
 
-    return GridView.count(
-      crossAxisCount: wide ? 3 : 1,
-      shrinkWrap: true,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      physics: const NeverScrollableScrollPhysics(),
-      children: cards,
+class _SummaryRow extends StatelessWidget {
+  final String label;
+  final SummaryData data;
+
+  const _SummaryRow({
+    required this.label,
+    required this.data,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pnlColor =
+    data.pnl > 0 ? Colors.green : data.pnl < 0 ? Colors.red : Colors.grey;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium
+                  ?.copyWith(letterSpacing: 1.2),
+            ),
+          ),
+          _ValueCell(
+            value: data.profits,
+            color: Colors.green,
+          ),
+          _ValueCell(
+            value: data.losses,
+            color: Colors.red,
+          ),
+          _ValueCell(
+            value: data.pnl,
+            color: pnlColor,
+            bold: true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ValueCell extends StatelessWidget {
+  final double value;
+  final Color color;
+  final bool bold;
+
+  const _ValueCell({
+    required this.value,
+    required this.color,
+    this.bold = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Text(
+        value.toStringAsFixed(2),
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          color: color,
+          fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
     );
   }
 }
@@ -413,82 +488,84 @@ class _CapitalList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       itemCount: capitals.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, __) =>
+          Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
       itemBuilder: (_, i) {
         final c = capitals[i];
         final isPositive = c.amount >= 0;
 
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isPositive
-                  ? Colors.green.withOpacity(0.3)
-                  : Colors.red.withOpacity(0.3),
-            ),
-          ),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// Header row
+              /// Main row
               Row(
                 children: [
-                  Icon(
-                    isPositive
-                        ? Icons.arrow_upward
-                        : Icons.arrow_downward,
-                    color: isPositive ? Colors.green : Colors.red,
-                    size: 18,
+                  SizedBox(
+                    width: 110,
+                    child: Text(
+                      _formatDate(c.dateTime),
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    c.reason.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  SizedBox(
+                    width: 100,
+                    child: Text(
+                      c.reason.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
                   ),
-                  const Spacer(),
-                  Text(
-                    c.amount.toStringAsFixed(2),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isPositive ? Colors.green : Colors.red,
+                  Expanded(
+                    child: Text(
+                      c.notes ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.grey),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      c.amount.toStringAsFixed(2),
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        color: isPositive ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: const [
+                          FontFeature.tabularFigures()
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 6),
-
-              /// Date
-              Text(
-                c.dateTime.toLocal().toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: Colors.grey),
-              ),
-
-              /// Notes (optional)
-              if (c.notes != null && c.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              /// Notes (expanded view)
+              if (c.notes != null && c.notes!.length > 40)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6, left: 110),
                   child: Text(
                     c.notes!,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: Colors.grey),
                   ),
                 ),
-              ],
             ],
           ),
         );
       },
     );
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }
 

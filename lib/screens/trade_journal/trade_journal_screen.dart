@@ -16,7 +16,7 @@ class TradeJournalScreen extends StatefulWidget {
 }
 
 class _TradeJournalScreenState extends State<TradeJournalScreen> {
-  late final List<Asset> assets;
+  List<Asset>? assets;
   late Future<List<TradeJournal>> future;
 
   @override
@@ -39,7 +39,7 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
   Future<List<TradeJournal>> _load() async {
     try {
       final trades = await TradeService.getAll();
-      assets = await AssetService.fetchAssets();
+      assets ??= await AssetService.fetchAssets();
       return groupTrades(trades);
     } catch (e, st) {
       return Future<List<TradeJournal>>.error(e, st);
@@ -53,7 +53,7 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (_) => AddJournalSheet(assets: assets),
+      builder: (_) => AddJournalSheet(assets: assets!),
     );
 
     setState(() {

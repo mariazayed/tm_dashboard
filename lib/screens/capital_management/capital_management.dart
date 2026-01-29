@@ -14,24 +14,16 @@ import '../../models/capital_model.dart';
 /// - Shows Daily / Weekly / Monthly summary
 /// - Deposit & Withdraw actions with dialogs
 
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
-import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
 class CapitalManagementScreen extends StatefulWidget {
   const CapitalManagementScreen({super.key});
 
   @override
-  State<CapitalManagementScreen> createState() =>
-      _CapitalManagementScreenState();
+  State<CapitalManagementScreen> createState() => _CapitalManagementScreenState();
 }
 
-class _CapitalManagementScreenState
-    extends State<CapitalManagementScreen> {
+class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
   bool _loading = true;
-  final List<CapitalModel> _capitals = [];
+  List<CapitalModel> _capitals = [];
 
   @override
   void initState() {
@@ -40,190 +32,228 @@ class _CapitalManagementScreenState
   }
 
   Future<void> _fetchCapitals() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    setState(() => _loading = true);
 
-    _capitals.addAll([
-      CapitalModel(
-        dateTime: DateTime.now().subtract(const Duration(days: 2)),
-        reason: CapitalReasonEnum.DEPOSIT,
-        amount: 5000,
-        notes: 'Initial funding',
-      ),
-      CapitalModel(
-        dateTime: DateTime.now().subtract(const Duration(days: 1)),
-        reason: CapitalReasonEnum.WITHDRAW,
-        amount: -120,
-        notes: 'Broker commission',
-      ),
-    ]);
+    _capitals = await CapitalService.getAll();
 
     setState(() => _loading = false);
   }
 
+  /// ------------------------------
+  /// Calculations
+  /// ------------------------------
+
+  double _sum({required DateTime from, CapitalReasonEnum? filter}) {
+    return _capitals
+        .where((c) => c.dateTime.isAfter(from))
+        .where((c) => filter == null || c.reason == filter)
+        .fold(0.0, (a, b) => a + b.amount);
+  }
+
+  DateTime get _today => DateTime.now().subtract(const Duration(days: 1));
+  DateTime get _week => DateTime.now().subtract(const Duration(days: 7));
+  DateTime get _month => DateTime.now().subtract(const Duration(days: 30));
+
+  /// ------------------------------
+  /// Actions
+  /// ------------------------------
+
+  Future<void> _openCapitalDialog(CapitalReasonEnum reason) async {
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController notesController = TextEditingController();
+    DateTime selectedDateTime = DateTime.now();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                reason == CapitalReasonEnum.DEPOSIT ? 'Deposit' : 'Withdraw',
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    /// Amount
+                    TextField(
+                      controller: amountController,
+                      keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        hintText: 'Enter amount',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    /// DateTime Picker
+                    InkWell(
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDateTime,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+
+                        if (date == null) return;
+
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime:
+                          TimeOfDay.fromDateTime(selectedDateTime),
+                        );
+
+                        if (time == null) return;
+
+                        setState(() {
+                          selectedDateTime = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          );
+                        });
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date & Time',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(selectedDateTime.toString()),
+                            const Icon(Icons.calendar_today, size: 18),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    /// Notes
+                    TextField(
+                      controller: notesController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Optional notes...',
+                        alignLabelWithHint: true,
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final value =
+                    double.tryParse(amountController.text);
+
+                    if (value == null) return;
+
+                    final model = CapitalModel(
+                      dateTime: selectedDateTime,
+                      reason: reason,
+                      amount: value,
+                      notes: notesController.text.trim().isEmpty
+                          ? null
+                          : notesController.text.trim(),
+                    );
+
+                    await CapitalService.create([
+                      {
+                        ...model.toJson(),
+                      }
+                    ]);
+
+                    if (mounted) Navigator.pop(context);
+                    _fetchCapitals();
+                  },
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  /// ------------------------------
+  /// UI
+  /// ------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          'Capital Management',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.w600,
+      appBar: AppBar(title: const Text('Capital Overview')),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'deposit',
+            onPressed: () => _openCapitalDialog(CapitalReasonEnum.DEPOSIT),
+            icon: const Icon(Icons.add),
+            label: const Text('Deposit'),
           ),
-        ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'withdraw',
+            backgroundColor: Colors.redAccent,
+            onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
+            icon: const Icon(Icons.remove),
+            label: const Text('Withdraw'),
+          ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const _TableHeader(),
-            const SizedBox(height: 6),
-            Expanded(
-              child: ListView.separated(
-                itemCount: _capitals.length,
-                separatorBuilder: (_, __) =>
-                const SizedBox(height: 4),
-                itemBuilder: (_, i) =>
-                    _CapitalRow(_capitals[i]),
-              ),
+          : LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 900;
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _SummarySection(
+                  daily: _summary(_today),
+                  weekly: _summary(_week),
+                  monthly: _summary(_month),
+                  wide: isWide,
+                ),
+                const SizedBox(height: 24),
+                Expanded(child: _CapitalList(capitals: _capitals)),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
-}
 
+  SummaryData _summary(DateTime from) {
+    final profits = _sum(from: from, filter: CapitalReasonEnum.PROFIT);
+    final losses = _sum(from: from, filter: CapitalReasonEnum.LOSS);
 
-class _TableHeader extends StatelessWidget {
-  const _TableHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFDADDE3)),
-      ),
-      child: const Row(
-        children: [
-          _HeaderCell('DATE', flex: 2),
-          _HeaderCell('TYPE'),
-          _HeaderCell('NOTES', flex: 3),
-          _HeaderCell('AMOUNT', align: TextAlign.right),
-        ],
-      ),
+    return SummaryData(
+      profits: profits,
+      losses: losses,
+      pnl: profits + losses,
     );
   }
 }
-
-class _HeaderCell extends StatelessWidget {
-  final String text;
-  final int flex;
-  final TextAlign align;
-
-  const _HeaderCell(
-      this.text, {
-        this.flex = 1,
-        this.align = TextAlign.left,
-      });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      flex: flex,
-      child: Text(
-        text,
-        textAlign: align,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.black54,
-          letterSpacing: 0.6,
-        ),
-      ),
-    );
-  }
-}
-
-
-class _CapitalRow extends StatelessWidget {
-  final CapitalModel capital;
-
-  const _CapitalRow(this.capital);
-
-  @override
-  Widget build(BuildContext context) {
-    final isPositive = capital.amount >= 0;
-    final amountColor =
-    isPositive ? const Color(0xFF1A7F37) : const Color(0xFFB42318);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE1E4EA)),
-      ),
-      child: Row(
-        children: [
-          _Cell(
-            DateFormat('yyyy-MM-dd HH:mm')
-                .format(capital.dateTime),
-            flex: 2,
-          ),
-          _Cell(capital.reason.name),
-          _Cell(capital.notes ?? '-', flex: 3),
-          _Cell(
-            capital.amount.toStringAsFixed(2),
-            align: TextAlign.right,
-            color: amountColor,
-            mono: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Cell extends StatelessWidget {
-  final String text;
-  final int flex;
-  final TextAlign align;
-  final Color? color;
-  final bool mono;
-
-  const _Cell(
-      this.text, {
-        this.flex = 1,
-        this.align = TextAlign.left,
-        this.color,
-        this.mono = false,
-      });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      flex: flex,
-      child: Text(
-        text,
-        textAlign: align,
-        style: TextStyle(
-          fontSize: 13,
-          color: color ?? Colors.black87,
-          fontFamily: mono ? 'monospace' : null,
-        ),
-      ),
-    );
-  }
-}
-
-
 
 /// ------------------------------
 /// Summary Models & Widgets
@@ -460,11 +490,5 @@ class _CapitalList extends StatelessWidget {
       },
     );
   }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-  }
 }
-
 

@@ -10,16 +10,19 @@ class CalendarScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        children: [
-          const SizedBox(height: 12),
-          const Header(),
-          const SizedBox(height: 8),
-          const WeekLabels(),
-          const SizedBox(height: 8),
-          Expanded(child: MonthGrid()),
-        ],
+    return Scaffold(
+      appBar: AppBar(title: const Text('Calendar')),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            const Header(),
+            const SizedBox(height: 8),
+            const WeekLabels(),
+            const SizedBox(height: 8),
+            Expanded(child: MonthGrid()),
+          ],
+        ),
       ),
     );
   }

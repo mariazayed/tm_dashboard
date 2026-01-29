@@ -17,6 +17,9 @@ import '../../models/capital_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 class CapitalManagementScreen extends StatefulWidget {
   const CapitalManagementScreen({super.key});
 
@@ -44,31 +47,32 @@ class _CapitalManagementScreenState
         dateTime: DateTime.now().subtract(const Duration(days: 2)),
         reason: CapitalReasonEnum.DEPOSIT,
         amount: 5000,
-        notes: 'Initial capital',
+        notes: 'Initial funding',
       ),
       CapitalModel(
         dateTime: DateTime.now().subtract(const Duration(days: 1)),
         reason: CapitalReasonEnum.WITHDRAW,
         amount: -120,
-        notes: 'Commission',
+        notes: 'Broker commission',
       ),
     ]);
 
     setState(() => _loading = false);
   }
 
-  /// ------------------------------
-  /// UI
-  /// ------------------------------
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8FA),
       appBar: AppBar(
+        backgroundColor: Colors.white,
         elevation: 0,
         title: const Text(
           'Capital Management',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: _loading
@@ -77,13 +81,13 @@ class _CapitalManagementScreenState
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _TableHeader(),
-            const SizedBox(height: 8),
+            const _TableHeader(),
+            const SizedBox(height: 6),
             Expanded(
               child: ListView.separated(
                 itemCount: _capitals.length,
                 separatorBuilder: (_, __) =>
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 itemBuilder: (_, i) =>
                     _CapitalRow(_capitals[i]),
               ),
@@ -95,15 +99,18 @@ class _CapitalManagementScreenState
   }
 }
 
+
 class _TableHeader extends StatelessWidget {
+  const _TableHeader();
+
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-      // decoration: BoxDecoration(
-      //   color: const Color(0xFF14161A),
-      //   border: Border.all(color: const Color(0xFF1F2228)),
-      // ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFDADDE3)),
+      ),
       child: const Row(
         children: [
           _HeaderCell('DATE', flex: 2),
@@ -135,15 +142,16 @@ class _HeaderCell extends StatelessWidget {
         text,
         textAlign: align,
         style: const TextStyle(
-          color: Colors.grey,
           fontSize: 12,
-          letterSpacing: 0.8,
           fontWeight: FontWeight.w600,
+          color: Colors.black54,
+          letterSpacing: 0.6,
         ),
       ),
     );
   }
 }
+
 
 class _CapitalRow extends StatelessWidget {
   final CapitalModel capital;
@@ -152,15 +160,16 @@ class _CapitalRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isPositive = capital.amount >= 0;
     final amountColor =
-    capital.amount >= 0 ? Colors.greenAccent : Colors.redAccent;
+    isPositive ? const Color(0xFF1A7F37) : const Color(0xFFB42318);
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-      // decoration: BoxDecoration(
-      //   color: const Color(0xFF111317),
-      //   border: Border.all(color: const Color(0xFF1A1D22)),
-      // ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE1E4EA)),
+      ),
       child: Row(
         children: [
           _Cell(
@@ -204,15 +213,16 @@ class _Cell extends StatelessWidget {
       child: Text(
         text,
         textAlign: align,
-        // style: TextStyle(
-        //   color: color ?? Colors.white,
-        //   fontSize: 13,
-        //   fontFamily: mono ? 'monospace' : null,
-        // ),
+        style: TextStyle(
+          fontSize: 13,
+          color: color ?? Colors.black87,
+          fontFamily: mono ? 'monospace' : null,
+        ),
       ),
     );
   }
 }
+
 
 
 /// ------------------------------

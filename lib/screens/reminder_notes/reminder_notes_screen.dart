@@ -3,16 +3,17 @@ import 'package:tm_dashboard/models/reminder_note_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:tm_dashboard/services/reminder_notes_service.dart';
+import '../../services/reminder_notes_service.dart';
 
 class ReminderNotesScreen extends StatefulWidget {
-  const ReminderNotesScreen({super.key});
+  const ReminderNotesScreen({Key? key}) : super(key: key);
 
   @override
   State<ReminderNotesScreen> createState() => _ReminderNotesScreenState();
 }
 
-class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
+class _ReminderNotesScreenState extends State<ReminderNotesScreen>
+    with SingleTickerProviderStateMixin {
   List<ReminderNoteModel> _notes = [];
   List<String> _draftNotes = [];
   bool _isLoading = true;
@@ -27,14 +28,30 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
   }
 
   Future<void> _fetchNotes() async {
+    // Step 1: update loading state synchronously
     setState(() {
       _isLoading = true;
     });
+
     try {
-        setState(() async {
-          _notes = await ReminderNotesService.getAll();
+      // Step 2: perform async work outside of setState
+      final response =  await ReminderNotesService.getAll();
+
+      if (response.isNotEmpty) {
+        final notes = response;
+
+        // Step 3: update state synchronously after async work
+        setState(() {
+          _notes = notes;
           _isLoading = false;
         });
+      } else {
+        // handle error
+        setState(() {
+          _isLoading = false;
+        });
+        throw Exception('Failed to load notes');
+      }
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -55,7 +72,6 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
 
   Future<void> _submitAllDrafts() async {
     if (_draftNotes.isEmpty) return;
-
     try {
 
       List<dynamic> notes = _draftNotes.map((text) => ReminderNoteModel(text: text).toJson()
@@ -73,14 +89,44 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
     }
   }
 
+  Widget _buildNoteCard(String text, {bool isDraft = false}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: isDraft ? Colors.blue.shade50 : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 16,
+            color: isDraft ? Colors.black87 : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: const Text('Reminder Notes'),
         elevation: 0,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        foregroundColor: Colors.black87,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -89,37 +135,13 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            ..._notes.map((note) => Card(
-              elevation: 2,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  note.text,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-            )),
-            if (_draftNotes.isNotEmpty)
-              const SizedBox(height: 16),
-            ..._draftNotes.map((draft) => Card(
-              color: Colors.blue.shade50,
-              margin: const EdgeInsets.symmetric(vertical: 4),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  draft,
-                  style: const TextStyle(fontSize: 16, color: Colors.black87),
-                ),
-              ),
-            )),
+            ..._notes.map((note) => _buildNoteCard(note.text)),
+            ..._draftNotes.map((draft) => _buildNoteCard(draft, isDraft: true)),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blueAccent,
         onPressed: () {
           setState(() {
             _isAdding = !_isAdding;
@@ -130,7 +152,17 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
       bottomSheet: _isAdding
           ? Container(
         padding: const EdgeInsets.all(16),
-        color: Colors.white,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 12,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -139,12 +171,15 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Enter new note...',
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
                       ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     ),
                   ),
                 ),
@@ -156,6 +191,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    backgroundColor: Colors.blueAccent,
                   ),
                   child: const Text('Add'),
                 ),

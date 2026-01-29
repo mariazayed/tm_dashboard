@@ -46,7 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
 
         if (_notes.isNotEmpty) {
-          // Start rotating sticky notes every 5 seconds
           _timer?.cancel();
           _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
             setState(() {
@@ -64,39 +63,25 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildStickyNote(String text, {Key? key}) {
-    final random = Random();
-    final rotation = (random.nextDouble() * 0.1 - 0.05); // small rotation
-
-    return Transform.rotate(
-      key: key, // assign the key here
-      angle: rotation,
-      child: Container(
-        width: 250,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.yellow.shade300,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 8,
-              offset: const Offset(3, 4),
-            ),
-          ],
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            color: Colors.black87,
-            fontWeight: FontWeight.w500,
+  Widget _buildStickyNote({required Widget child}) {
+    // Static sticky note UI (like Windows Sticky Notes)
+    return Container(
+      width: 300,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.yellow.shade300,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 6,
+            offset: Offset(3, 3),
           ),
-        ),
+        ],
       ),
+      child: child,
     );
   }
-
 
   void _showAllNotes() {
     showModalBottomSheet(
@@ -120,11 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 decoration: BoxDecoration(
                   color: Colors.yellow.shade200,
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black12,
                       blurRadius: 4,
-                      offset: const Offset(2, 3),
+                      offset: Offset(2, 2),
                     ),
                   ],
                 ),
@@ -157,20 +142,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const Text('No notes available')
             : GestureDetector(
           onTap: _showAllNotes,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 800),
-            transitionBuilder: (child, animation) {
-              return SlideTransition(
-                position: Tween<Offset>(
-                    begin: const Offset(1, 0), end: Offset.zero)
-                    .animate(animation),
-                child: FadeTransition(opacity: animation, child: child),
-              );
-            },
-            child: _buildStickyNote(
-              _notes[_currentIndex].text,
-              // Give each child a unique key to animate properly
-              key: ValueKey<int>(_currentIndex),
+          child: _buildStickyNote(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 800),
+              transitionBuilder: (child, animation) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                      begin: const Offset(1, 0), end: Offset.zero)
+                      .animate(animation),
+                  child: FadeTransition(opacity: animation, child: child),
+                );
+              },
+              child: Text(
+                _notes[_currentIndex].text,
+                key: ValueKey<int>(_currentIndex), // animate text only
+                style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500),
+              ),
             ),
           ),
         ),

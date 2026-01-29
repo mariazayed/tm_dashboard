@@ -204,7 +204,7 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
           FloatingActionButton.extended(
             heroTag: 'deposit',
             onPressed: () => _openCapitalDialog(CapitalReasonEnum.DEPOSIT),
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.trending_up), // deposit (capital in)
             label: const Text('Deposit'),
           ),
           const SizedBox(height: 12),
@@ -212,11 +212,12 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
             heroTag: 'withdraw',
             backgroundColor: Colors.redAccent,
             onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
-            icon: const Icon(Icons.remove),
+            icon: const Icon(Icons.trending_down), // withdraw (capital out)
             label: const Text('Withdraw'),
           ),
         ],
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(
@@ -288,13 +289,22 @@ class _SummarySection extends StatelessWidget {
       _ElegantSummaryCard(title: 'This Month', data: monthly),
     ];
 
-    return GridView.count(
-      crossAxisCount: wide ? 3 : 1,
-      shrinkWrap: true,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      physics: const NeverScrollableScrollPhysics(),
-      children: cards,
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(child: _ElegantSummaryCard(title: 'Today', data: daily)),
+          const VerticalDivider(width: 24),
+          Expanded(child: _ElegantSummaryCard(title: 'Week', data: weekly)),
+          const VerticalDivider(width: 24),
+          Expanded(child: _ElegantSummaryCard(title: 'Month', data: monthly)),
+        ],
+      ),
     );
   }
 }
@@ -412,6 +422,7 @@ class _CapitalList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      padding: const EdgeInsets.only(bottom: 120),
       itemCount: capitals.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (_, i) {

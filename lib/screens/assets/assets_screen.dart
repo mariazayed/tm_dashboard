@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'AssetForm.dart';
-import 'AssetsList.dart';
+import 'asset_form.dart';
+import 'assets_list.dart';
 
 class AssetScreen extends StatefulWidget {
   const AssetScreen({super.key});

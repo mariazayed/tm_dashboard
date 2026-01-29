@@ -6,4 +6,5 @@ class ApiConstants {
   static const String memoirURL = '$baseURL/memoir';
   static const String assetURL = '$baseURL/asset';
   static const String capitalURL = '$baseURL/capital';
+  static const String reminderNotesURL = '$baseURL/reminderNotes';
 }

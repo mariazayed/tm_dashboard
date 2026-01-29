@@ -125,11 +125,16 @@ class MainManu extends StatelessWidget {
       MenuEntry(
         label: 'Capitals',
         onPressed: () {
-          context.goNamed(RouteNames.capitalsManagement);
+          context.goNamed(RouteNames.capitalManagement);
+        },
+      ),
+      MenuEntry(
+        label: 'Reminder Notes',
+        onPressed: () {
+          context.goNamed(RouteNames.reminderNotes);
         },
       ),
     ];
-
     return result;
   }
 }

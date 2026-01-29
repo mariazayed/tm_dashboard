@@ -33,9 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchNotes() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final response = await ReminderNotesService.getAll();
@@ -57,31 +55,28 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
         throw Exception('Failed to load notes');
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
       debugPrint('Error fetching notes: $e');
     }
   }
 
-  Widget _buildStickyNote(String text) {
+  Widget _buildStickyNote(String text, {Key? key}) {
     final random = Random();
     final rotation = (random.nextDouble() * 0.1 - 0.05); // small rotation
 
     return Transform.rotate(
+      key: key, // assign the key here
       angle: rotation,
       child: Container(
         width: 250,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.yellow.shade300,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
@@ -102,6 +97,49 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+  void _showAllNotes() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey.shade100,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _notes.length,
+            itemBuilder: (context, index) {
+              final note = _notes[index];
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.yellow.shade200,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: const Offset(2, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  note.text,
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,7 +155,25 @@ class _HomeScreenState extends State<HomeScreen> {
             ? const CircularProgressIndicator()
             : _notes.isEmpty
             ? const Text('No notes available')
-            : _buildStickyNote(_notes[_currentIndex].text),
+            : GestureDetector(
+          onTap: _showAllNotes,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 800),
+            transitionBuilder: (child, animation) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                    begin: const Offset(1, 0), end: Offset.zero)
+                    .animate(animation),
+                child: FadeTransition(opacity: animation, child: child),
+              );
+            },
+            child: _buildStickyNote(
+              _notes[_currentIndex].text,
+              // Give each child a unique key to animate properly
+              key: ValueKey<int>(_currentIndex),
+            ),
+          ),
+        ),
       ),
     );
   }

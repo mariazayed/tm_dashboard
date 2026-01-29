@@ -1,9 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:tm_dashboard/screens/calendar/widgets/header.dart';
-import 'package:tm_dashboard/screens/calendar/widgets/week_labels.dart';
 
-import 'widgets/month_grid.dart';
+import 'header.dart';
+import 'month_grid.dart';
+import 'week_labels.dart';
 
 class CalendarScreen extends StatelessWidget {
   const CalendarScreen({super.key});

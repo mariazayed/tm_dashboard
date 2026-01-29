@@ -1,18 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:tm_dashboard/services/capital_service.dart';
 
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
-
-/// ------------------------------
-/// Capital Overview Screen
-/// ------------------------------
-/// - Fetches all capital records from server
-/// - Lists them chronologically
-/// - Shows Daily / Weekly / Monthly summary
-/// - Deposit & Withdraw actions with dialogs
+import '../../services/capital_service.dart';
+import 'summary_data.dart';
+import 'summary_section.dart';
 
 class CapitalManagementScreen extends StatefulWidget {
   const CapitalManagementScreen({super.key});
@@ -228,7 +222,7 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _SummarySection(
+                SummarySection(
                   daily: _summary(_today),
                   weekly: _summary(_week),
                   monthly: _summary(_month),
@@ -256,158 +250,9 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
   }
 }
 
-/// ------------------------------
-/// Summary Models & Widgets
-/// ------------------------------
 
-class SummaryData {
-  final double profits;
-  final double losses;
-  final double pnl;
 
-  SummaryData({required this.profits, required this.losses, required this.pnl});
-}
 
-class _SummarySection extends StatelessWidget {
-  final SummaryData daily;
-  final SummaryData weekly;
-  final SummaryData monthly;
-  final bool wide;
-
-  const _SummarySection({
-    required this.daily,
-    required this.weekly,
-    required this.monthly,
-    required this.wide,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cards = [
-      _ElegantSummaryCard(title: 'Today', data: daily),
-      _ElegantSummaryCard(title: 'This Week', data: weekly),
-      _ElegantSummaryCard(title: 'This Month', data: monthly),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(child: _ElegantSummaryCard(title: 'Today', data: daily)),
-          const VerticalDivider(width: 24),
-          Expanded(child: _ElegantSummaryCard(title: 'Week', data: weekly)),
-          const VerticalDivider(width: 24),
-          Expanded(child: _ElegantSummaryCard(title: 'Month', data: monthly)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ElegantSummaryCard extends StatelessWidget {
-  final String title;
-  final SummaryData data;
-
-  const _ElegantSummaryCard({
-    required this.title,
-    required this.data,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final pnlColor = data.pnl >= 0 ? Colors.green : Colors.red;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            pnlColor.withOpacity(0.15),
-            Colors.transparent,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: pnlColor.withOpacity(0.4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(letterSpacing: 1.2),
-          ),
-          const SizedBox(height: 12),
-
-          /// PnL
-          Text(
-            data.pnl.toStringAsFixed(2),
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: pnlColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          /// Breakdown
-          Row(
-            children: [
-              _MiniStat(
-                label: 'Profit',
-                value: data.profits,
-                color: Colors.green,
-              ),
-              const SizedBox(width: 16),
-              _MiniStat(
-                label: 'Loss',
-                value: data.losses,
-                color: Colors.red,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniStat extends StatelessWidget {
-  final String label;
-  final double value;
-  final Color color;
-
-  const _MiniStat({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
-        Text(
-          value.toStringAsFixed(2),
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 
 /// ------------------------------

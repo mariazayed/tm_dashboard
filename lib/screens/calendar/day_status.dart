@@ -147,7 +147,6 @@ class _DayStatusState extends State<DayStatus> {
     widget.cubit.updateDay(updated);
 
     if (widget.day.exists) {
-      print('updated.toJson() ${updated.toJson()}');
       _dayService.update(widget.day.id, updated.toJson());
     } else {
       print('updated2.toJson() ${updated.toJson()}');

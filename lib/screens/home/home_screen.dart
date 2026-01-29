@@ -64,12 +64,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStickyNote({required Widget child}) {
-    // Static sticky note UI (like Windows Sticky Notes)
     return Container(
       width: 300,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.yellow.shade300,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
           BoxShadow(
@@ -78,8 +77,22 @@ class _HomeScreenState extends State<HomeScreen> {
             offset: Offset(3, 3),
           ),
         ],
+        border: Border(
+          left: BorderSide(color: Colors.grey.shade400, width: 4), // simulate spiral binding
+        ),
       ),
-      child: child,
+      child: Stack(
+        children: [
+          // Notebook lines
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _NotebookLinesPainter(),
+            ),
+          ),
+          // Text content
+          child,
+        ],
+      ),
     );
   }
 
@@ -167,4 +180,23 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+
+// Custom painter to draw notebook lines
+class _NotebookLinesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.shade300
+      ..strokeWidth = 1;
+
+    const double lineSpacing = 24; // spacing between lines
+    for (double y = lineSpacing; y < size.height; y += lineSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -1,14 +1,14 @@
 import 'package:go_router/go_router.dart';
-import 'package:tm_dashboard/screens/assets/assets_screen.dart';
-import 'package:tm_dashboard/screens/calendar/calendar_screen.dart';
-import 'package:tm_dashboard/screens/home/home_screen.dart';
-import 'package:tm_dashboard/screens/journal/trade_journal.dart';
-import 'package:tm_dashboard/screens/memoir/memoir_screen.dart';
 
 import '../constants/route_names.dart';
+import '../screens/assets/assets_screen.dart';
+import '../screens/calendar/calendar_screen.dart';
 import '../screens/capital_management/capital_management_screen.dart';
+import '../screens/home/home_screen.dart';
+import '../screens/memoir/memoir_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
+import '../screens/trade_journal/trade_journal_screen.dart';
 import '../widgets/menu_bar.dart';
 
 final GoRouter routes = GoRouter(

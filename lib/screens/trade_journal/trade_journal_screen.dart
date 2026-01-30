@@ -23,17 +23,16 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
   void initState() {
     super.initState();
 
-// Ensure the field is ALWAYS initialized, even if fetchAssets throws synchronously.
-//     futureAssets = () {
-//       try {
-//         return AssetService.fetchAssets();
-//       } catch (e, st) {
-//         return Future<List<Asset>>.error(e, st);
-//       }
-//     }();
+    // Ensure the field is ALWAYS initialized, even if fetchAssets throws synchronously.
+    //     futureAssets = () {
+    //       try {
+    //         return AssetService.fetchAssets();
+    //       } catch (e, st) {
+    //         return Future<List<Asset>>.error(e, st);
+    //       }
+    //     }();
 
     future = _load();
-
   }
 
   Future<List<TradeJournal>> _load() async {
@@ -65,12 +64,9 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('TJ'),
+        title: const Text('Trade Journal'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _openAddJournal,
-          ),
+          IconButton(icon: const Icon(Icons.add), onPressed: _openAddJournal),
         ],
       ),
       body: FutureBuilder<List<TradeJournal>>(

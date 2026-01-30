@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import 'calendar_state.dart';
 import '../../../models/day_model.dart';
 import '../../../services/day_service.dart';
+import 'calendar_state.dart';
 
 class DayStatus extends StatefulWidget {
   final DayModel day;
@@ -63,16 +63,13 @@ class _DayStatusState extends State<DayStatus> {
         /// -------- Status Chips --------
         Wrap(
           spacing: 12,
+
           children: [
             FilterChip(
               label: const Text("Weekend"),
               selected: weekend,
               onSelected: (v) => setState(() {
                 weekend = v;
-                if (v) {
-                  noWork = false;
-                  ended = false;
-                }
               }),
             ),
             FilterChip(
@@ -80,10 +77,6 @@ class _DayStatusState extends State<DayStatus> {
               selected: noWork,
               onSelected: (v) => setState(() {
                 noWork = v;
-                if (v) {
-                  weekend = false;
-                  ended = false;
-                }
               }),
             ),
             FilterChip(
@@ -91,10 +84,6 @@ class _DayStatusState extends State<DayStatus> {
               selected: ended,
               onSelected: (v) => setState(() {
                 ended = v;
-                if (v) {
-                  weekend = false;
-                  noWork = false;
-                }
               }),
             ),
           ],

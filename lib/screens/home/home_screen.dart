@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:tm_dashboard/models/reminder_note_model.dart';
 import 'package:tm_dashboard/services/reminder_notes_service.dart';
 
@@ -75,25 +72,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStickyNote({required Widget child, required Color color}) {
     return Container(
       width: 300,
-      height: 300, // square sticky note
+      height: 300,
+      // square sticky note
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color, // dynamic background color
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 6,
-            offset: Offset(3, 3),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(3, 3)),
         ],
       ),
       child: Stack(
         children: [
           Positioned.fill(
-            child: CustomPaint(
-              painter: _NotebookLinesOnlyPainter(),
-            ),
+            child: CustomPaint(painter: _NotebookLinesOnlyPainter()),
           ),
           child,
         ],
@@ -108,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('Sticky Notes'),
+        title: const Text('Dashboard'),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
@@ -119,49 +111,48 @@ class _HomeScreenState extends State<HomeScreen> {
             : _notes.isEmpty
             ? const Text('No notes available')
             : AnimatedContainer(
-              duration: const Duration(milliseconds: 500), // smooth fade
-              curve: Curves.easeInOut,
-              width: 300,
-              height: 300,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: currentColor, // dynamic background color
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 6,
-                    offset: Offset(3, 3),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _NotebookLinesOnlyPainter(),
+                duration: const Duration(milliseconds: 500),
+                // smooth fade
+                curve: Curves.easeInOut,
+                width: 300,
+                height: 300,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: currentColor, // dynamic background color
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 6,
+                      offset: Offset(3, 3),
                     ),
-                  ),
-                  Text(
-                    _notes[_currentIndex].text,
-                    style: TextStyle(
-                      fontFamily: 'Roboto',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      height: 1.4,
-                      color: Colors.grey.shade900,
-                      shadows: const [
-                        Shadow(
-                          offset: Offset(1, 1),
-                          blurRadius: 2,
-                          color: Colors.black12,
-                        ),
-                      ],
+                  ],
+                ),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CustomPaint(painter: _NotebookLinesOnlyPainter()),
                     ),
-                  ),
-                ],
+                    Text(
+                      _notes[_currentIndex].text,
+                      style: TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                        color: Colors.grey.shade900,
+                        shadows: const [
+                          Shadow(
+                            offset: Offset(1, 1),
+                            blurRadius: 2,
+                            color: Colors.black12,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
       ),
     );
   }

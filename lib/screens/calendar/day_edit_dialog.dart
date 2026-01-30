@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'calendar_state.dart';
 import '../../models/day_model.dart';
+import 'calendar_state.dart';
 import 'day_status.dart';
 
 class DayEditDialog extends StatefulWidget {
@@ -55,7 +55,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Overview & notes",
+                          "Day Overview",
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],

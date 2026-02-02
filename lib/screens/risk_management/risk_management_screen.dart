@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 import 'risk_equity_curve_chart.dart';
 import 'risk_metrics.dart';
@@ -23,10 +22,33 @@ class _RiskManagementScreenState
   final tradesCtrl = TextEditingController(text: '100');
   final tradesPerDayCtrl = TextEditingController(text: '3');
 
+  // One controller per card (keyed by title) so Scrollbar <-> ScrollView always match.
+  final Map<String, ScrollController> _cardScrollControllers = {};
+
+  ScrollController _getCardScrollController(String key) {
+    return _cardScrollControllers.putIfAbsent(key, () => ScrollController());
+  }
+
+  double v(TextEditingController c) => double.tryParse(c.text) ?? 0;
+
   List<double> equityCurve = [];
 
-  double v(TextEditingController c) =>
-      double.tryParse(c.text) ?? 0;
+  @override
+  void dispose() {
+    capitalCtrl.dispose();
+    riskCtrl.dispose();
+    winRateCtrl.dispose();
+    rrrCtrl.dispose();
+    tradesCtrl.dispose();
+    tradesPerDayCtrl.dispose();
+
+    for (final c in _cardScrollControllers.values) {
+      c.dispose();
+    }
+    _cardScrollControllers.clear();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -287,21 +309,48 @@ class _RiskManagementScreenState
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge),
-            const SizedBox(height: 12),
-            child,
-          ],
+        child: LayoutBuilder(
+            builder: (context, constraints) {
+              // If this card is inside a Grid tile (bounded height), allow the body to scroll
+              // to prevent RenderFlex overflow. If height is unbounded (normal flow), keep it natural.
+              final header = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 12),
+                ],
+              );
+
+              if (constraints.hasBoundedHeight) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    header,
+                    Expanded(
+                      child: Scrollbar(
+                        thumbVisibility: false,
+                        child: SingleChildScrollView(
+                          child: child,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  header,
+                  child,
+                ],
+              );
+            },
         ),
       ),
-    );
-  }
+      );
+            }
+
 
   Widget _kpiBar(RiskMetrics m, double ruin) {
     return Row(

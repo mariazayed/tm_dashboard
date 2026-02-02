@@ -15,12 +15,12 @@ class RiskManagementScreen extends StatefulWidget {
 
 class _RiskManagementScreenState
     extends State<RiskManagementScreen> {
-  final capitalCtrl = TextEditingController(text: '10000');
-  final riskCtrl = TextEditingController(text: '1');
+  final capitalCtrl = TextEditingController(text: '1000');
+  final riskCtrl = TextEditingController(text: '4');
   final winRateCtrl = TextEditingController(text: '50');
   final rrrCtrl = TextEditingController(text: '2');
-  final tradesCtrl = TextEditingController(text: '100');
-  final tradesPerDayCtrl = TextEditingController(text: '3');
+  final tradesCtrl = TextEditingController(text: '20');
+  final tradesPerDayCtrl = TextEditingController(text: '2');
 
   // Ensure this is ALWAYS initialized (not late without init, not nullable).
   final Map<String, ScrollController> _cardScrollControllers =

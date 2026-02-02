@@ -478,9 +478,9 @@ class _RiskManagementScreenState
       'Final Capital \$': RiskStat(m.finalCapital, 0),
       'Net P/L \$': RiskStat(
         m.finalCapital - m.capital,
-        m.totalReturnPct,
+        m.avgTradeReturnPct,
       ),
-      'Total Return %': RiskStat(m.totalReturnPct, m.totalReturnPct),
+      'Total Return %': RiskStat(m.avgTradeReturnPct, m.avgTradeReturnPct),
     });
   }
 

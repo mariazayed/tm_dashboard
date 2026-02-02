@@ -22,11 +22,13 @@ class _RiskManagementScreenState
   final tradesCtrl = TextEditingController(text: '100');
   final tradesPerDayCtrl = TextEditingController(text: '3');
 
-  // One controller per card (keyed by title) so Scrollbar <-> ScrollView always match.
-  final Map<String, ScrollController> _cardScrollControllers = {};
+  // Ensure this is ALWAYS initialized (not late without init, not nullable).
+  final Map<String, ScrollController> _cardScrollControllers =
+  <String, ScrollController>{};
 
   ScrollController _getCardScrollController(String key) {
-    return _cardScrollControllers.putIfAbsent(key, () => ScrollController());
+    // Avoid calling putIfAbsent on a potentially uninitialized map and keep it simple.
+    return _cardScrollControllers[key] ??= ScrollController();
   }
 
   double v(TextEditingController c) => double.tryParse(c.text) ?? 0;
@@ -35,17 +37,17 @@ class _RiskManagementScreenState
 
   @override
   void dispose() {
+    for (final controller in _cardScrollControllers.values) {
+      controller.dispose();
+    }
+    _cardScrollControllers.clear();
+
     capitalCtrl.dispose();
     riskCtrl.dispose();
     winRateCtrl.dispose();
     rrrCtrl.dispose();
     tradesCtrl.dispose();
     tradesPerDayCtrl.dispose();
-
-    for (final c in _cardScrollControllers.values) {
-      c.dispose();
-    }
-    _cardScrollControllers.clear();
 
     super.dispose();
   }
@@ -310,46 +312,48 @@ class _RiskManagementScreenState
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: LayoutBuilder(
-            builder: (context, constraints) {
-              // If this card is inside a Grid tile (bounded height), allow the body to scroll
-              // to prevent RenderFlex overflow. If height is unbounded (normal flow), keep it natural.
-              final header = Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 12),
-                ],
-              );
+          builder: (context, constraints) {
+            final header = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 12),
+              ],
+            );
 
-              if (constraints.hasBoundedHeight) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    header,
-                    Expanded(
-                      child: Scrollbar(
-                        thumbVisibility: false,
-                        child: SingleChildScrollView(
-                          child: child,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }
+            if (constraints.hasBoundedHeight) {
+              final controller = _getCardScrollController(title);
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   header,
-                  child,
+                  Expanded(
+                    child: Scrollbar(
+                      controller: controller,
+                      thumbVisibility: false,
+                      child: SingleChildScrollView(
+                        controller: controller,
+                        child: child,
+                      ),
+                    ),
+                  ),
                 ],
               );
-            },
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                header,
+                child,
+              ],
+            );
+          },
         ),
       ),
-      );
-            }
+    );
+  }
 
 
   Widget _kpiBar(RiskMetrics m, double ruin) {

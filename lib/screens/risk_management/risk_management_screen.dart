@@ -54,67 +54,6 @@ class _RiskManagementScreenState
 
   @override
   Widget build(BuildContext context) {
-    final double capital = max(v(capitalCtrl), 1);
-    final riskPct = v(riskCtrl) / 100;
-    final winRate = v(winRateCtrl) / 100;
-    final double rrr = max(v(rrrCtrl), 1);
-    final double trades = v(tradesCtrl);
-    final tradesPerDay = max(v(tradesPerDayCtrl), 1);
-
-    /// ───── TRADE DISTRIBUTION ─────
-    final winningTrades = trades * winRate;
-    final losingTrades = trades - winningTrades;
-
-    /// ───── PER TRADE ─────
-    final riskPerTrade = capital * riskPct;
-    final rewardPerTrade = riskPerTrade * rrr;
-
-    /// EXPECTANCY & EDGE
-    final expectancy =
-        (winRate * rewardPerTrade) -
-            ((1 - winRate) * riskPerTrade);
-    final expectancyPct = expectancy / capital * 100;
-    final edgeScore = expectancy / riskPerTrade;
-
-    /// ───── DAILY / WEEKLY / MONTHLY ─────
-    final dailyRisk = riskPerTrade * tradesPerDay;
-    final dailyReward = rewardPerTrade * tradesPerDay;
-
-    final weeklyRisk = dailyRisk * 5;
-    final weeklyReward = dailyReward * 5;
-
-    final monthlyRisk = dailyRisk * 20;
-    final monthlyReward = dailyReward * 20;
-
-    /// ───── TOTAL PERFORMANCE ─────
-    final totalWins = winningTrades * rewardPerTrade;
-    final totalLosses = losingTrades * riskPerTrade;
-    final totalAmount = totalWins - totalLosses;
-
-    /// ───── TIME ESTIMATION ─────
-    final days = trades / tradesPerDay;
-    final weeks = days / 5;
-    final months = days / 20;
-
-    /// ───── CAPITAL GROWTH ─────
-    final capitalIncreasePct =
-        (totalAmount / capital) * 100;
-
-    /// % helper
-    double pct(double v) => (v / capital) * 100;
-
-    /// RISK OF RUIN
-    // final ruin = riskOfRuin(
-    //   winRate: winRate,
-    //   capital: capital,
-    //   riskPerTrade: riskPerTrade,
-    // );
-
-    /// SIMULATION METRICS
-    final double maxDD = equityCurve.isNotEmpty
-        ? maxDrawdown(equityCurve)
-        : 0;
-
     final metrics = RiskMetrics(
       capital: max(v(capitalCtrl), 1),
       riskPct: v(riskCtrl) / 100,
@@ -588,7 +527,6 @@ class _RiskManagementScreenState
         return Colors.black;
     }
   }
-
 
   Widget _riskStats(RiskMetrics m) {
     return _stats({

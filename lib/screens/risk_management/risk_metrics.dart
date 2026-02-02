@@ -1,78 +1,146 @@
+import 'dart:math';
+
 class RiskMetrics {
   final double capital;
-  final double riskPct;
-  final double winRate;
+  final double winRate;     // 0–1
+  final double riskPct;     // 0–1
   final double rrr;
-  final double trades;
-  final double tradesPerDay;
+  final int trades;
+  final int tradesPerDay;
 
-  late final double winningTrades;
-  late final double losingTrades;
+  late final List<double> equityCurve;
 
-  late final double riskPerTrade;
-  late final double rewardPerTrade;
+  late final double finalCapital;
+  late final double totalReturnPct;
+  late final double maxDrawdownPct;
 
-  late final double expectancy;
-  late final double expectancyPct;
-  late final double edgeScore;
+  late final double avgRiskPerTrade;     // real average $
+  late final double avgRewardPerTrade;   // real average $
+  late final double avgTradeReturnPct;   // real %
 
-  late final double dailyRisk;
-  late final double dailyReward;
-  late final double weeklyRisk;
-  late final double weeklyReward;
-  late final double monthlyRisk;
-  late final double monthlyReward;
+  late final int wins;
+  late final int losses;
 
-  late final double totalWins;
-  late final double totalLosses;
-  late final double totalAmount;
+  late final double expectancyR;
+  late final double averageRPerTrade;
+
+  late final double riskOfRuin;
 
   late final double days;
   late final double weeks;
   late final double months;
 
-  late final double capitalIncreasePct;
-
   RiskMetrics({
     required this.capital,
-    required this.riskPct,
     required this.winRate,
+    required this.riskPct,
     required this.rrr,
     required this.trades,
     required this.tradesPerDay,
   }) {
-    winningTrades = trades * winRate;
-    losingTrades = trades - winningTrades;
+    equityCurve = simulateEquityCurve();
+    // Compute single-source-of-truth values once
+    finalCapital = equityCurve.last;
 
-    riskPerTrade = capital * riskPct;
-    rewardPerTrade = riskPerTrade * rrr;
+    maxDrawdownPct = _maxDrawdown(equityCurve);
 
-    expectancy =
-        (winRate * rewardPerTrade) -
-            ((1 - winRate) * riskPerTrade);
+    double totalRisk = 0;
+    double totalReward = 0;
+    int w = 0;
+    int l = 0;
 
-    expectancyPct = expectancy / capital * 100;
-    edgeScore = expectancy / riskPerTrade;
+    for (int i = 1; i < equityCurve.length; i++) {
+      final prev = equityCurve[i - 1];
+      final curr = equityCurve[i];
+      final change = curr - prev;
+      final risk = prev * riskPct;
 
-    dailyRisk = riskPerTrade * tradesPerDay;
-    dailyReward = rewardPerTrade * tradesPerDay;
+      totalRisk += risk;
 
-    weeklyRisk = dailyRisk * 5;
-    weeklyReward = dailyReward * 5;
+      if (change > 0) {
+        totalReward += change;
+        w++;
+      } else {
+        l++;
+      }
+    }
 
-    monthlyRisk = dailyRisk * 20;
-    monthlyReward = dailyReward * 20;
+    wins = w;
+    losses = l;
 
-    totalWins = winningTrades * rewardPerTrade;
-    totalLosses = losingTrades * riskPerTrade;
-    totalAmount = totalWins - totalLosses;
+    avgRiskPerTrade = totalRisk / trades;
+    avgRewardPerTrade = totalReward / max(1, wins);
+
+    final ratio = equityCurve.last / equityCurve.first;
+    avgTradeReturnPct =
+        ((pow(ratio, 1.0 / trades)).toDouble() - 1) * 100;
+
+    totalReturnPct =
+        ((finalCapital - capital) / capital) * 100;
+
+    expectancyR = (winRate * rrr) - (1 - winRate);
+    averageRPerTrade = _averageRMultiple();
 
     days = trades / tradesPerDay;
     weeks = days / 5;
     months = days / 20;
 
-    capitalIncreasePct = (totalAmount / capital) * 100;
+    riskOfRuin = _riskOfRuin();
   }
 
-  double pct(double value) => (value / capital) * 100;
+  // ---------- True trading model (compounding) ----------
+  List<double> simulateEquityCurve() {
+    final random = Random();
+    double equity = capital;
+    final curve = <double>[equity];
+
+    for (int i = 0; i < trades; i++) {
+      final risk = equity * riskPct;
+      final win = random.nextDouble() <= winRate;
+      equity += win ? risk * rrr : -risk;
+      curve.add(equity);
+    }
+
+    return curve;
+  }
+
+  // ---------- Correct drawdown ----------
+  double _maxDrawdown(List<double> curve) {
+    double peak = curve.first;
+    double maxDD = 0;
+
+    for (final v in curve) {
+      if (v > peak) peak = v;
+      final dd = (peak - v) / peak;
+      maxDD = max(maxDD, dd);
+    }
+
+    return maxDD * 100;
+  }
+
+  // ---------- Average R multiple actually achieved ----------
+  double _averageRMultiple() {
+    double totalR = 0;
+
+    for (int i = 1; i < equityCurve.length; i++) {
+      final prev = equityCurve[i - 1];
+      final curr = equityCurve[i];
+      final change = curr - prev;
+      final risk = prev * riskPct;
+
+      totalR += change / risk;
+    }
+
+    return totalR / trades;
+  }
+
+  double _riskOfRuin() {
+    final lossRate = 1 - winRate;
+    if (winRate <= 0 || lossRate <= 0) return 1;
+
+    return pow(
+      lossRate / winRate,
+      capital / avgRiskPerTrade,
+    ).toDouble();
+  }
 }

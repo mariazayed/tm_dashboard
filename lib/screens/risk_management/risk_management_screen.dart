@@ -59,14 +59,8 @@ class _RiskManagementScreenState
       riskPct: v(riskCtrl) / 100,
       winRate: v(winRateCtrl) / 100,
       rrr: max(v(rrrCtrl), 1),
-      trades: v(tradesCtrl),
-      tradesPerDay: max(v(tradesPerDayCtrl), 1),
-    );
-
-    final ruin = riskOfRuin(
-      winRate: metrics.winRate,
-      capital: metrics.capital,
-      riskPerTrade: metrics.riskPerTrade,
+      trades: v(tradesCtrl).toInt(),
+      tradesPerDay: max(v(tradesPerDayCtrl).toInt(), 1),
     );
 
     return Scaffold(
@@ -81,7 +75,7 @@ class _RiskManagementScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _kpiBar(metrics, ruin),
+                _kpiBar(metrics, metrics.riskOfRuin),
                 const SizedBox(height: 24),
 
                 if (isDesktop)
@@ -96,24 +90,6 @@ class _RiskManagementScreenState
           );
         },
       ),
-    );
-  }
-
-  Widget _responsiveGrid({
-    required int columns,
-    required List<Widget> children,
-  }) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.35,
-      ),
-      itemCount: children.length,
-      itemBuilder: (_, i) => children[i],
     );
   }
 
@@ -162,9 +138,6 @@ class _RiskManagementScreenState
       child: _f(l, c),
     );
   }
-
-
-  // ───────── UI HELPERS ─────────
 
   Widget _f(String l, TextEditingController c) {
     return Padding(
@@ -240,7 +213,6 @@ class _RiskManagementScreenState
     );
   }
 
-
   Widget _card(String title, Widget child) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -293,51 +265,6 @@ class _RiskManagementScreenState
       ),
     );
   }
-
-
-  Widget _kpiBar(RiskMetrics m, double ruin) {
-    return Row(
-      children: [
-        _kpi(
-          'Capital',
-          m.capital,
-          '\$',
-          tooltip:
-          'Your starting capital.\nGood: higher capital allows more flexibility.\nBad: low capital increases risk per trade impact.',
-        ),
-        _kpi(
-          'Risk / Trade',
-          m.riskPct * 100,
-          '%',
-          tooltip:
-          'Percentage of capital risked per trade.\nGood: 0.5%-2% keeps drawdown low.\nBad: >5% is very risky.',
-        ),
-        _kpi(
-          'Win Rate',
-          m.winRate * 100,
-          '%',
-          tooltip:
-          'Percentage of trades that are winners.\nGood: >50% consistently.\nBad: <40% indicates low strategy efficiency.',
-        ),
-        _kpi(
-          'Edge',
-          m.edgeScore,
-          '',
-          tooltip:
-          'Edge = expectancy / risk per trade.\nGood: >0.2 means you have positive expectancy.\nBad: <0 indicates negative expectancy.',
-        ),
-        _kpi(
-          'Ruin',
-          ruin * 100,
-          '%',
-          tooltip:
-          'Risk of ruin based on your strategy.\nGood: <1% means strategy is sustainable.\nBad: >10% is dangerous.',
-        ),
-      ],
-    );
-  }
-
-
 
   Widget _kpi(String label, double value, String suffix,
       {required String tooltip}) {
@@ -410,7 +337,6 @@ class _RiskManagementScreenState
     );
   }
 
-
   Widget _desktopMainLayout() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,18 +408,88 @@ class _RiskManagementScreenState
     );
   }
 
+  Widget _kpiBar(RiskMetrics m, double ruin) {
+    return Row(
+      children: [
+        _kpi(
+          'Capital',
+          m.capital,
+          '\$',
+          tooltip:
+          'Your starting capital.\nGood: higher capital allows more flexibility.\nBad: low capital increases risk per trade impact.',
+        ),
+        _kpi(
+          'Risk / Trade',
+          m.riskPct * 100,
+          '%',
+          tooltip:
+          'Percentage of capital risked per trade.\nGood: 0.5%-2% keeps drawdown low.\nBad: >5% is very risky.',
+        ),
+        _kpi(
+          'Win Rate',
+          m.winRate * 100,
+          '%',
+          tooltip:
+          'Percentage of trades that are winners.\nGood: >50% consistently.\nBad: <40% indicates low strategy efficiency.',
+        ),
+        // _kpi(
+        //   'Edge',
+        //   m.edgeScore,
+        //   '',
+        //   tooltip:
+        //   'Edge = expectancy / risk per trade.\nGood: >0.2 means you have positive expectancy.\nBad: <0 indicates negative expectancy.',
+        // ),
+        _kpi(
+          'Ruin',
+          ruin * 100,
+          '%',
+          tooltip:
+          'Risk of ruin based on your strategy.\nGood: <1% means strategy is sustainable.\nBad: >10% is dangerous.',
+        ),
+      ],
+    );
+  }
+
   Widget _expectancyStats(RiskMetrics m) {
     return _stats({
-      'Risk / Trade \$': RiskStat(m.riskPerTrade, m.pct(m.riskPerTrade),
+      'Average Risk / Trade \$': RiskStat(m.averageRPerTrade, m.averageRPerTrade,
           tooltip: 'Amount risked per trade. Good: 0.5%-2% of capital. High risk is dangerous.'),
-      'Reward / Trade \$': RiskStat(m.rewardPerTrade, m.pct(m.rewardPerTrade),
+      'Average Reward / Trade \$': RiskStat(m.avgRewardPerTrade, m.avgRewardPerTrade,
           tooltip: 'Expected reward per trade based on your RRR.'),
-      'Expectancy \$': RiskStat(m.expectancy, m.pct(m.expectancy),
+      'Expectancy \$': RiskStat(m.expectancyR, m.expectancyR,
           tooltip: 'Average expected gain per trade. Positive is good.'),
-      'Expectancy %': RiskStat(m.expectancyPct, m.expectancyPct,
+      'Expectancy %': RiskStat(m.expectancyR, m.expectancyR,
           tooltip: 'Expectancy as % of capital. Higher is better.'),
-      'Edge Score': RiskStat(m.edgeScore, 0,
-          tooltip: 'Edge = expectancy / risk per trade. Positive edge is profitable.'),
+    });
+  }
+
+  Widget _riskStats(RiskMetrics m) {
+    return _stats({
+      'Max Drawdown %': RiskStat(m.maxDrawdownPct, m.maxDrawdownPct),
+      'Risk % Per Trade': RiskStat(m.riskPct * 100, m.riskPct * 100),
+      'Trades': RiskStat(m.trades.toDouble(), 0),
+      'Trades / Day': RiskStat(m.tradesPerDay.toDouble(), 0),
+    });
+  }
+
+  Widget _performanceStats(RiskMetrics m) {
+    return _stats({
+      'Start Capital \$': RiskStat(m.capital, 0),
+      'Final Capital \$': RiskStat(m.finalCapital, 0),
+      'Net P/L \$': RiskStat(
+        m.finalCapital - m.capital,
+        m.totalReturnPct,
+      ),
+      'Total Return %': RiskStat(m.totalReturnPct, m.totalReturnPct),
+    });
+  }
+
+  Widget _distributionStats(RiskMetrics m) {
+    return _stats({
+      'Winning Trades': RiskStat(m.wins.toDouble(),
+          (m.wins / m.trades) * 100),
+      'Losing Trades': RiskStat(m.losses.toDouble(),
+          (m.losses / m.trades) * 100),
     });
   }
 
@@ -528,65 +524,12 @@ class _RiskManagementScreenState
     }
   }
 
-  Widget _riskStats(RiskMetrics m) {
-    return _stats({
-      'Daily Risk \$': RiskStat(m.dailyRisk, m.pct(m.dailyRisk),
-          tooltip: 'Total capital risked per day. Keep it manageable.'),
-      'Daily Reward \$': RiskStat(m.dailyReward, m.pct(m.dailyReward),
-          tooltip: 'Total reward potential per day.'),
-      'Weekly Risk \$': RiskStat(m.weeklyRisk, m.pct(m.weeklyRisk),
-          tooltip: 'Total capital risked per week.'),
-      'Weekly Reward \$': RiskStat(m.weeklyReward, m.pct(m.weeklyReward),
-          tooltip: 'Total reward potential per week.'),
-      'Monthly Risk \$': RiskStat(m.monthlyRisk, m.pct(m.monthlyRisk),
-          tooltip: 'Total risk per month. Keep below 10%-15% of capital.'),
-      'Monthly Reward \$': RiskStat(m.monthlyReward, m.pct(m.monthlyReward),
-          tooltip: 'Total reward potential per month.'),
-    });
-  }
-
-  Widget _performanceStats(RiskMetrics m) {
-    return _stats({
-      'Total Wins \$': RiskStat(m.totalWins, m.pct(m.totalWins),
-          tooltip: 'Total gains from winning trades.'),
-      'Total Losses \$': RiskStat(m.totalLosses, m.pct(m.totalLosses),
-          tooltip: 'Total losses from losing trades. Minimize this.'),
-      'Net P/L \$': RiskStat(m.totalAmount, m.pct(m.totalAmount),
-          tooltip: 'Net profit or loss. Positive is good.'),
-      'Capital Increase %': RiskStat(m.capitalIncreasePct, m.capitalIncreasePct,
-          tooltip: 'Expected capital growth %.'),
-    });
-  }
-
   Widget _timeStats(RiskMetrics m) {
     return _stats({
       'Days': RiskStat(m.days, 0, tooltip: 'Estimated trading days to complete all trades.'),
       'Weeks': RiskStat(m.weeks, 0, tooltip: 'Estimated weeks to complete trades.'),
       'Months': RiskStat(m.months, 0, tooltip: 'Estimated months to complete trades.'),
     }, showPercent: false);
-  }
-
-  Widget _distributionStats(RiskMetrics m) {
-    return _stats({
-      'Winning Trades': RiskStat(m.winningTrades, m.winRate * 100,
-          tooltip: 'Number of expected winning trades. Higher win rate is better.'),
-      'Losing Trades': RiskStat(m.losingTrades, (1 - m.winRate) * 100,
-          tooltip: 'Number of expected losing trades. Keep this low.'),
-    });
-  }
-
-  double riskOfRuin({
-    required double winRate,
-    required double capital,
-    required double riskPerTrade,
-  }) {
-    final lossRate = 1 - winRate;
-    if (winRate <= 0 || lossRate <= 0) return 1;
-
-    return pow(
-      lossRate / winRate,
-      capital / riskPerTrade,
-    ).toDouble();
   }
 
   List<double> simulateEquityCurve({
@@ -608,19 +551,6 @@ class _RiskManagementScreenState
     }
 
     return curve;
-  }
-
-  double maxDrawdown(List<double> curve) {
-    double peak = curve.first;
-    double maxDD = 0;
-
-    for (final v in curve) {
-      if (v > peak) peak = v;
-      final dd = (peak - v) / peak;
-      maxDD = max(maxDD, dd);
-    }
-
-    return maxDD * 100;
   }
 }
 

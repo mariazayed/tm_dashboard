@@ -553,4 +553,3 @@ class _RiskManagementScreenState
     return curve;
   }
 }
-

@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:tm_dashboard/models/reminder_note_model.dart';
 import 'package:tm_dashboard/services/reminder_notes_service.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _DashboardScreenState extends State<DashboardScreen> {
   List<ReminderNoteModel> _notes = [];
   bool _isLoading = true;
   int _currentIndex = 0;

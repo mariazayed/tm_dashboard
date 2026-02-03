@@ -22,7 +22,7 @@ class MemoirWidget extends StatelessWidget {
       ..sort((a, b) => b.compareTo(a)); // newest first
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Memoir Calendar')),
+      appBar: AppBar(title: const Text('Memoir')),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: sortedDates.length,

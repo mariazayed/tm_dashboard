@@ -11,6 +11,7 @@ class TradeModel {
   final double lot;
   final double pips;
   final double profit;
+  String? notes;
 
   TradeModel({
     required this.entryDateTime,
@@ -22,9 +23,11 @@ class TradeModel {
     required this.lot,
     required this.pips,
     required this.profit,
+    this.notes,
   });
 
   factory TradeModel.fromJson(Map<String, dynamic> json) {
+    print("json['notes'] ${json['notes']}");
     return TradeModel(
       entryDateTime: DateTime.parse(json['entryDateTime']),
       exitDateTime: DateTime.parse(json['exitDateTime']),
@@ -35,6 +38,7 @@ class TradeModel {
       lot: (json['lotSize'] as num).toDouble(),
       pips: (json['pips'] as num).toDouble(),
       profit: (json['pnl'] as num).toDouble(),
+      notes: json['notes'] ?? "",
     );
   }
 }

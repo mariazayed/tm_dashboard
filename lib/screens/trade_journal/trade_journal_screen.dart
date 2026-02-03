@@ -64,7 +64,7 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Trade Journal'),
+        title: const Text('TJ'),
         actions: [
           IconButton(icon: const Icon(Icons.add), onPressed: _openAddJournal),
         ],

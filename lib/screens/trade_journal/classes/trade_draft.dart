@@ -1,7 +1,11 @@
+import 'package:flutter/cupertino.dart';
+
 import '../../../enums/trade_direction_enum.dart';
 import '../../../models/asset_model.dart';
 
 class TradeDraft {
+  final String id = UniqueKey().toString();
+
   Asset asset;
   TradeDirectionEnum signal = TradeDirectionEnum.LONG;
   double entryPrice = 0;

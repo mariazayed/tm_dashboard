@@ -90,8 +90,6 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     ))
         .toList();
 
-    print("payload $payload");
-
     await TradeService.create(payload);
     Navigator.pop(context);
   }
@@ -171,7 +169,8 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
           // Trade cards
           ...drafts.map(
                 (d) => Padding(
-              padding: const EdgeInsets.only(bottom: 28),
+                  key: ValueKey(d.id),
+                  padding: const EdgeInsets.only(bottom: 28),
               child: TradeCard(
                 draft: d,
                 assets: widget.assets,

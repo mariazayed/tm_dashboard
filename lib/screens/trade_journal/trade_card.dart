@@ -4,13 +4,14 @@ import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
 import 'classes/trade_draft.dart';
 
-class TradeCard extends StatelessWidget {
+class TradeCard extends StatefulWidget {
   final TradeDraft draft;
   final List<Asset> assets;
   final VoidCallback onChanged;
   final VoidCallback? onRemove;
 
-  const TradeCard({super.key,
+  const TradeCard({
+    super.key,
     required this.draft,
     required this.assets,
     required this.onChanged,
@@ -18,7 +19,43 @@ class TradeCard extends StatelessWidget {
   });
 
   @override
+  State<TradeCard> createState() => _TradeCardState();
+}
+
+class _TradeCardState extends State<TradeCard> {
+  late final TextEditingController entryCtrl;
+  late final TextEditingController exitCtrl;
+  late final TextEditingController lotCtrl;
+  late final TextEditingController slCtrl;
+  late final TextEditingController tpCtrl;
+  late final TextEditingController notesCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    entryCtrl = TextEditingController(text: widget.draft.entryPrice.toString());
+    exitCtrl  = TextEditingController(text: widget.draft.exitPrice.toString());
+    lotCtrl   = TextEditingController(text: widget.draft.lot.toString());
+    slCtrl    = TextEditingController(text: widget.draft.sl.toString());
+    tpCtrl    = TextEditingController(text: widget.draft.tp.toString());
+    notesCtrl = TextEditingController(text: widget.draft.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    entryCtrl.dispose();
+    exitCtrl.dispose();
+    lotCtrl.dispose();
+    slCtrl.dispose();
+    tpCtrl.dispose();
+    notesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final d = widget.draft;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
@@ -26,102 +63,84 @@ class TradeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Direction + Asset
+            // Direction + Asset (unchanged)
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 DropdownButton<TradeDirectionEnum>(
-                  value: draft.signal,
+                  value: d.signal,
                   items: TradeDirectionEnum.values
-                      .map(
-                        (e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(e.name.toUpperCase()),
-                    ),
-                  )
+                      .map((e) => DropdownMenuItem(
+                    value: e,
+                    child: Text(e.name.toUpperCase()),
+                  ))
                       .toList(),
                   onChanged: (v) {
                     if (v != null) {
-                      draft.signal = v;
-                      onChanged();
+                      d.signal = v;
+                      widget.onChanged();
                     }
                   },
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<Asset>(
-                    value: assets.contains(draft.asset) ? draft.asset : null,
-                    items: assets
-                        .map(
-                          (a) => DropdownMenuItem(
-                        value: a,
-                        child: Text('${a.symbol} • ${a.name}'),
-                      ),
-                    )
+                    value: widget.assets.contains(d.asset) ? d.asset : null,
+                    items: widget.assets
+                        .map((a) => DropdownMenuItem(
+                      value: a,
+                      child: Text('${a.symbol} • ${a.name}'),
+                    ))
                         .toList(),
                     onChanged: (v) {
                       if (v != null) {
-                        draft.asset = v;
-                        onChanged();
+                        d.asset = v;
+                        widget.onChanged();
                       }
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Pair',
-                      isDense: true,
-                    ),
+                    decoration: const InputDecoration(labelText: 'Pair'),
                   ),
                 ),
-                if (onRemove != null) ...[
-                  const SizedBox(width: 8),
+                if (widget.onRemove != null)
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: onRemove,
+                    onPressed: widget.onRemove,
                   ),
-                ],
               ],
             ),
 
             const SizedBox(height: 20),
 
-            // Prices
-            _num('Entry Price', (v) {
-              draft.entryPrice = v;
-              onChanged();
+            _num('Entry Price', entryCtrl, (v) {
+              d.entryPrice = v;
+              widget.onChanged();
             }),
             const SizedBox(height: 16),
-            _num('Exit Price', (v) {
-              draft.exitPrice = v;
-              onChanged();
+            _num('Exit Price', exitCtrl, (v) {
+              d.exitPrice = v;
+              widget.onChanged();
             }),
 
             const SizedBox(height: 20),
 
-            // Position details
-            _num('Lot', (v) {
-              draft.lot = v;
-              onChanged();
+            _num('Lot', lotCtrl, (v) {
+              d.lot = v;
+              widget.onChanged();
             }),
             const SizedBox(height: 16),
-            _num('SL', (v) => draft.sl = v),
+            _num('SL', slCtrl, (v) => d.sl = v),
             const SizedBox(height: 16),
-            _num('TP', (v) => draft.tp = v),
+            _num('TP', tpCtrl, (v) => d.tp = v),
 
             const SizedBox(height: 24),
 
-            // Pips & P/L
             Row(
               children: [
+                Expanded(child: Text('Pips: ${d.pips.toStringAsFixed(1)}')),
                 Expanded(
                   child: Text(
-                    'Pips: ${draft.pips.toStringAsFixed(1)}',
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'P/L: \$${draft.profit.toStringAsFixed(2)}',
+                    'P/L: \$${d.profit.toStringAsFixed(2)}',
                     style: TextStyle(
-                      color:
-                      draft.profit >= 0 ? Colors.green : Colors.red,
+                      color: d.profit >= 0 ? Colors.green : Colors.red,
                     ),
                   ),
                 ),
@@ -130,14 +149,11 @@ class TradeCard extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Notes
             TextField(
-              decoration: const InputDecoration(
-                labelText: 'Notes',
-                alignLabelWithHint: true,
-              ),
+              controller: notesCtrl,
               maxLines: 3,
-              onChanged: (v) => draft.notes = v,
+              decoration: const InputDecoration(labelText: 'Notes'),
+              onChanged: (v) => d.notes = v,
             ),
           ],
         ),
@@ -145,8 +161,13 @@ class TradeCard extends StatelessWidget {
     );
   }
 
-  Widget _num(String label, Function(double) onChanged) {
+  Widget _num(
+      String label,
+      TextEditingController ctrl,
+      Function(double) onChanged,
+      ) {
     return TextField(
+      controller: ctrl,
       keyboardType: TextInputType.number,
       decoration: InputDecoration(labelText: label),
       onChanged: (v) => onChanged(double.tryParse(v) ?? 0),

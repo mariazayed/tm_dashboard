@@ -27,7 +27,6 @@ class TradeModel {
   });
 
   factory TradeModel.fromJson(Map<String, dynamic> json) {
-    print("json['notes'] ${json['notes']}");
     return TradeModel(
       entryDateTime: DateTime.parse(json['entryDateTime']),
       exitDateTime: DateTime.parse(json['exitDateTime']),

@@ -99,18 +99,19 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: ListView(
         children: [
+          // Header
           Row(
             children: [
               const Text(
                 'New Trade Journal',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               IconButton(
@@ -119,50 +120,93 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 32),
+
+          // Date pickers
           Row(
             children: [
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => _pickDateTime(true),
-                  child: Text(entryDateTime == null
-                      ? 'Entry DateTime'
-                      : DateFormat('dd MMM yyyy HH:mm').format(entryDateTime!)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 8,
+                    ),
+                    child: Text(
+                      entryDateTime == null
+                          ? 'Entry DateTime'
+                          : DateFormat('dd MMM yyyy HH:mm')
+                          .format(entryDateTime!),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 20),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => _pickDateTime(false),
-                  child: Text(exitDateTime == null
-                      ? 'Exit DateTime'
-                      : DateFormat('dd MMM yyyy HH:mm').format(exitDateTime!)),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 8,
+                    ),
+                    child: Text(
+                      exitDateTime == null
+                          ? 'Exit DateTime'
+                          : DateFormat('dd MMM yyyy HH:mm')
+                          .format(exitDateTime!),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          ...drafts.map((d) => TradeCard(
-            draft: d,
-            assets: widget.assets,
-            onChanged: () => setState(() => _recalc(d)),
-            onRemove: drafts.length > 1
-                ? () => setState(() => drafts.remove(d))
-                : null,
-          )),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 40),
+
+          // Trade cards
+          ...drafts.map(
+                (d) => Padding(
+              padding: const EdgeInsets.only(bottom: 28),
+              child: TradeCard(
+                draft: d,
+                assets: widget.assets,
+                onChanged: () => setState(() => _recalc(d)),
+                onRemove: drafts.length > 1
+                    ? () => setState(() => drafts.remove(d))
+                    : null,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Add trade
           TextButton.icon(
             onPressed: widget.assets.isEmpty
                 ? null
-                : () => setState(() =>
-                drafts.add(TradeDraft(asset: drafts.first.asset))),
+                : () => setState(
+                  () => drafts.add(
+                TradeDraft(asset: drafts.first.asset),
+              ),
+            ),
             icon: const Icon(Icons.add),
             label: const Text('Add Trade'),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 32),
+
+          // Submit
           FilledButton(
             onPressed: _submit,
-            child: const Text('Submit Journal'),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Text('Submit Journal'),
+            ),
           ),
         ],
       ),

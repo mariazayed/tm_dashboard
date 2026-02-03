@@ -5,7 +5,7 @@ import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
 import '../../services/trade_service.dart';
 import 'trade_card.dart';
-import 'trade_draft.dart';
+import 'classes/trade_draft.dart';
 
 class AddJournalSheet extends StatefulWidget {
   final List<Asset> assets;

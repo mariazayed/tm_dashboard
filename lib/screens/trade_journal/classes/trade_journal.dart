@@ -1,4 +1,4 @@
-import '../../models/trade_model.dart';
+import '../../../models/trade_model.dart';
 
 class TradeJournal {
   final DateTime entryDateTime;

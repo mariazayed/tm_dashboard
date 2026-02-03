@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
-import 'trade_draft.dart';
+import 'classes/trade_draft.dart';
 
 class TradeCard extends StatelessWidget {
   final TradeDraft draft;

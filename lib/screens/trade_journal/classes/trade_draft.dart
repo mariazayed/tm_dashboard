@@ -1,5 +1,5 @@
-import '../../enums/trade_direction_enum.dart';
-import '../../models/asset_model.dart';
+import '../../../enums/trade_direction_enum.dart';
+import '../../../models/asset_model.dart';
 
 class TradeDraft {
   Asset asset;

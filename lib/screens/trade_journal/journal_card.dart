@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'trade_journal.dart';
+import 'classes/trade_journal.dart';
 
 class JournalCard extends StatelessWidget {
   final TradeJournal journal;

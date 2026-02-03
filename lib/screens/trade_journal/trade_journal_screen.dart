@@ -6,7 +6,7 @@ import '../../services/asset_service.dart';
 import '../../services/trade_service.dart';
 import 'add_journal_sheet.dart';
 import 'journal_card.dart';
-import 'trade_journal.dart';
+import 'classes/trade_journal.dart';
 
 class TradeJournalScreen extends StatefulWidget {
   const TradeJournalScreen({super.key});

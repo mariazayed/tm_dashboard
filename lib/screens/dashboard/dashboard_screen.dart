@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:tm_dashboard/models/reminder_note_model.dart';
@@ -45,16 +46,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final response = await ReminderNotesService.getAll();
       if (response.isNotEmpty) {
-        final notes = response;
+        final notes = List.of(response)..shuffle(Random());
 
         setState(() {
           _notes = notes;
+          _currentIndex = 0;
           _isLoading = false;
         });
 
         if (_notes.isNotEmpty) {
           _timer?.cancel();
-          _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+          _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
             setState(() {
               _currentIndex = (_currentIndex + 1) % _notes.length;
             });
@@ -67,30 +69,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() => _isLoading = false);
       debugPrint('Error fetching notes: $e');
     }
-  }
-
-  Widget _buildStickyNote({required Widget child, required Color color}) {
-    return Container(
-      width: 300,
-      height: 300,
-      // square sticky note
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color, // dynamic background color
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(3, 3)),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _NotebookLinesOnlyPainter()),
-          ),
-          child,
-        ],
-      ),
-    );
   }
 
   @override
@@ -131,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: CustomPaint(painter: _NotebookLinesOnlyPainter()),
+                      child: CustomPaint(painter: _NotebookLinesPainter()),
                     ),
                     Text(
                       _notes[_currentIndex].text,
@@ -158,8 +136,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// Notebook lines painter (no spirals)
-class _NotebookLinesOnlyPainter extends CustomPainter {
+class _NotebookLinesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final linePaint = Paint()

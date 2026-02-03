@@ -21,7 +21,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   DateTime? exitDateTime;
   late List<TradeDraft> drafts;
 
-  static const double xauPipSize = 0.01;
+  static const double xauPipSize = 0.1;
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     final diff = d.exitPrice - d.entryPrice;
     final raw = diff / xauPipSize;
     d.pips = d.signal == TradeDirectionEnum.LONG ? raw : -raw;
-    d.profit = d.pips * d.lot;
+    d.profit = d.pips * d.lot * 10;
   }
 
   Future<void> _pickDateTime(bool entry) async {

@@ -62,79 +62,108 @@ class MainManu extends StatelessWidget {
 
   const MainManu({super.key, required this.child});
 
+  static const double _drawerBreakpoint = 900;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // appBar: AppBar(title: const Text("Trader Beast Dashboard")),
-      body: Column(
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Expanded(
-                child: MenuBar(children: MenuEntry.build(_getMenus(context))),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallScreen = constraints.maxWidth < _drawerBreakpoint;
+
+        return Scaffold(
+          appBar: isSmallScreen
+              ? AppBar(
+            title: const Text('TM 🧠'),
+          )
+              : null,
+
+          drawer: isSmallScreen
+              ? Drawer(
+            child: SafeArea(
+              child: ListView(
+                children: _buildDrawerItems(context),
               ),
+            ),
+          )
+              : null,
+
+          body: Column(
+            children: [
+              // Top menu only on large screens
+              if (!isSmallScreen)
+                Row(
+                  children: [
+                    Expanded(
+                      child: MenuBar(
+                        children:
+                        MenuEntry.build(_getMenus(context)),
+                      ),
+                    ),
+                  ],
+                ),
+
+              // PAGE CONTENT
+              Expanded(child: child),
             ],
           ),
-
-          // PAGE CONTENT
-          Expanded(child: child),
-        ],
-      ),
+        );
+      },
     );
   }
 
+  /// Drawer items
+  List<Widget> _buildDrawerItems(BuildContext context) {
+    return _getMenus(context)
+        .map(
+          (e) => ListTile(
+        title: Text(e.label),
+        onTap: () {
+          Navigator.pop(context); // close drawer
+          e.onPressed?.call();
+        },
+      ),
+    )
+        .toList();
+  }
+
+  /// Shared menu definition
   List<MenuEntry> _getMenus(BuildContext context) {
-    final List<MenuEntry> result = <MenuEntry>[
+    return <MenuEntry>[
       MenuEntry(
         label: 'Home',
-        onPressed: () {
-          context.goNamed(RouteNames.home);
-        },
+        onPressed: () => context.goNamed(RouteNames.home),
       ),
       MenuEntry(
         label: 'Calendar',
-        onPressed: () {
-          context.goNamed(RouteNames.calendar);
-        },
+        onPressed: () => context.goNamed(RouteNames.calendar),
       ),
       MenuEntry(
         label: 'Memoir',
-        onPressed: () {
-          context.goNamed(RouteNames.memoir);
-        },
+        onPressed: () => context.goNamed(RouteNames.memoir),
       ),
       MenuEntry(
         label: 'Trade Journaling',
-        onPressed: () {
-          context.goNamed(RouteNames.tradeJournal);
-        },
+        onPressed: () => context.goNamed(RouteNames.tradeJournal),
       ),
       MenuEntry(
         label: 'Risk Management',
-        onPressed: () {
-          context.goNamed(RouteNames.riskManagement);
-        },
+        onPressed: () => context.goNamed(RouteNames.riskManagement),
       ),
       MenuEntry(
         label: 'Assets',
-        onPressed: () {
-          context.goNamed(RouteNames.assets);
-        },
+        onPressed: () => context.goNamed(RouteNames.assets),
       ),
       MenuEntry(
         label: 'Capitals',
-        onPressed: () {
-          context.goNamed(RouteNames.capitalManagement);
-        },
+        onPressed: () =>
+            context.goNamed(RouteNames.capitalManagement),
       ),
       MenuEntry(
         label: 'Reminder Notes',
-        onPressed: () {
-          context.goNamed(RouteNames.reminderNotes);
-        },
+        onPressed: () =>
+            context.goNamed(RouteNames.reminderNotes),
       ),
     ];
-    return result;
   }
 }
+

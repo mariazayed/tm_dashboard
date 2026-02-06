@@ -1,10 +1,10 @@
-import '../enums/trade_tag_enum.dart';
+import '../enums/strategy_tag_enum.dart';
 import 'base_static_data_model.dart';
 
-class TradeTagModel extends BaseStaticDataModel {
-  TradeTagEnum id;
+class StrategyTagModel extends BaseStaticDataModel {
+  StrategyTagEnum id;
 
-  TradeTagModel({
+  StrategyTagModel({
     required this.id,
     required super.order,
     required super.enName,
@@ -12,9 +12,9 @@ class TradeTagModel extends BaseStaticDataModel {
     required super.description,
   });
 
-  factory TradeTagModel.fromJson(dynamic json) {
-    return TradeTagModel(
-      id: TradeTagEnum.fromValue(json["id"]),
+  factory StrategyTagModel.fromJson(dynamic json) {
+    return StrategyTagModel(
+      id: StrategyTagEnum.fromValue(json["id"]),
       arName: json["arName"],
       enName: json["enName"],
       order: json["order"],

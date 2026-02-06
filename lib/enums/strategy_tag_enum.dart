@@ -1,4 +1,4 @@
-enum TradeTagEnum {
+enum StrategyTagEnum {
   TREND_TRADE(1),
   REVERSAL_TRADE(2),
   LIQUIDITY_SWEEP_TRADE(3),
@@ -7,14 +7,14 @@ enum TradeTagEnum {
   NEWS_TRADE(6),
   SMC_TRADE(7);
 
-  const TradeTagEnum(this.value);
+  const StrategyTagEnum(this.value);
 
   final int value;
 
-  static TradeTagEnum fromValue(int value) {
-    for (var type in TradeTagEnum.values) {
+  static StrategyTagEnum fromValue(int value) {
+    for (var type in StrategyTagEnum.values) {
       if (type.value == value) return type;
     }
-    throw ArgumentError('Invalid TradeTagEnum value: $value');
+    throw ArgumentError('Invalid StrategyTagEnum value: $value');
   }
 }

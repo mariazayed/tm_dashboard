@@ -2,9 +2,9 @@ import 'package:tm_dashboard/models/probability_model.dart';
 import 'package:tm_dashboard/models/scaling_rule_model.dart';
 import 'package:tm_dashboard/models/session_model.dart';
 import 'package:tm_dashboard/models/stop_loss_placement_reason_model.dart';
+import 'package:tm_dashboard/models/strategy_tag_model.dart';
 import 'package:tm_dashboard/models/take_profit_placement_reason_model.dart';
 import 'package:tm_dashboard/models/trade_direction_model.dart';
-import 'package:tm_dashboard/models/trade_tag_model.dart';
 import 'package:tm_dashboard/models/trade_update_model.dart';
 import 'package:tm_dashboard/models/volatility_model.dart';
 
@@ -34,7 +34,7 @@ class StaticDataResponse {
   List<TakeProfitPlacementReasonModel> takeProfitPlacementReasons;
   List<EntryTypeModel> entryTypes;
   List<SessionModel> sessions;
-  List<TradeTagModel> tradeTags;
+  List<StrategyTagModel> tradeTags;
   List<TradeUpdateModel> tradeUpdates;
   List<ExitReasonModel> exitReasons;
 
@@ -167,10 +167,10 @@ class StaticDataResponse {
           .toList();
     }
 
-    List<TradeTagModel> tradeTags = [];
-    if (json['tradeTags'] != null) {
-      tradeTags = (json['tradeTags'] as List<dynamic>)
-          .map((e) => TradeTagModel.fromJson(e))
+    List<StrategyTagModel> tradeTags = [];
+    if (json['strategyTags'] != null) {
+      tradeTags = (json['strategyTags'] as List<dynamic>)
+          .map((e) => StrategyTagModel.fromJson(e))
           .toList();
     }
 

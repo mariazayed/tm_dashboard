@@ -71,20 +71,14 @@ class MainManu extends StatelessWidget {
         final isSmallScreen = constraints.maxWidth < _drawerBreakpoint;
 
         return Scaffold(
-          appBar: isSmallScreen
-              ? AppBar(
-            title: const Text('TM 🧠'),
-          )
-              : null,
+          appBar: isSmallScreen ? AppBar(title: const Text('TM 🧠')) : null,
 
           drawer: isSmallScreen
               ? Drawer(
-            child: SafeArea(
-              child: ListView(
-                children: _buildDrawerItems(context),
-              ),
-            ),
-          )
+                  child: SafeArea(
+                    child: ListView(children: _buildDrawerItems(context)),
+                  ),
+                )
               : null,
 
           body: Column(
@@ -95,8 +89,7 @@ class MainManu extends StatelessWidget {
                   children: [
                     Expanded(
                       child: MenuBar(
-                        children:
-                        MenuEntry.build(_getMenus(context)),
+                        children: MenuEntry.build(_getMenus(context)),
                       ),
                     ),
                   ],
@@ -116,13 +109,13 @@ class MainManu extends StatelessWidget {
     return _getMenus(context)
         .map(
           (e) => ListTile(
-        title: Text(e.label),
-        onTap: () {
-          Navigator.pop(context); // close drawer
-          e.onPressed?.call();
-        },
-      ),
-    )
+            title: Text(e.label),
+            onTap: () {
+              Navigator.pop(context); // close drawer
+              e.onPressed?.call();
+            },
+          ),
+        )
         .toList();
   }
 
@@ -155,15 +148,16 @@ class MainManu extends StatelessWidget {
       ),
       MenuEntry(
         label: 'Capitals',
-        onPressed: () =>
-            context.goNamed(RouteNames.capitalManagement),
+        onPressed: () => context.goNamed(RouteNames.capitalManagement),
       ),
       MenuEntry(
         label: 'Reminder Notes',
-        onPressed: () =>
-            context.goNamed(RouteNames.reminderNotes),
+        onPressed: () => context.goNamed(RouteNames.reminderNotes),
+      ),
+      MenuEntry(
+        label: 'Strict Rules',
+        onPressed: () => context.goNamed(RouteNames.strictRules),
       ),
     ];
   }
 }
-

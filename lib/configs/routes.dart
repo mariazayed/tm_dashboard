@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:tm_dashboard/screens/dashboard/dashboard_screen.dart';
+import 'package:tm_dashboard/screens/strict_rules/reminder_notes_screen.dart';
 
 import '../constants/route_names.dart';
 import '../screens/assets/assets_screen.dart';
@@ -57,6 +58,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.reminderNotes,
               path: 'reminder-notes',
               builder: (context, state) => ReminderNotesScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.strictRules,
+              path: 'strict-rules',
+              builder: (context, state) => StrictRulesScreen(),
             ),
           ],
         ),

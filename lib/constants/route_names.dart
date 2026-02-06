@@ -7,4 +7,5 @@ class RouteNames {
   static const assets = 'assets';
   static const capitalManagement = 'capitalManagement';
   static const reminderNotes = 'reminderNotes';
+  static const strictRules = 'strictRules';
 }

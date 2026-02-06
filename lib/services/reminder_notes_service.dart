@@ -29,4 +29,14 @@ class ReminderNotesService {
     final List data = jsonDecode(response.body);
     return data.map((e) => ReminderNoteModel.fromJson(e)).toList();
   }
+
+  static Future<void> delete(int id) async {
+    final response = await http.delete(Uri.parse("${ApiConstants.reminderNotesURL}/$id"));
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete reminder notes');
+    }
+
+    return;
+  }
 }

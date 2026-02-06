@@ -1,15 +1,15 @@
-import 'package:tm_dashboard/enums/trade_direction_enum.dart';
-import 'package:tm_dashboard/models/asset_model.dart';
-
 class ReminderNoteModel {
+  final int id;
   final String text;
 
   ReminderNoteModel({
+    required this.id,
     required this.text,
   });
 
   factory ReminderNoteModel.fromJson(Map<String, dynamic> json) {
     return ReminderNoteModel(
+      id: json['id'],
       text: json['text'],
     );
   }

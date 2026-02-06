@@ -48,7 +48,8 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
       } else {
         // handle error
         setState(() {
-          _isLoading = false;
+          _notes = [];
+              _isLoading = false;
         });
         throw Exception('Failed to load notes');
       }
@@ -74,7 +75,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
     if (_draftNotes.isEmpty) return;
     try {
 
-      List<dynamic> notes = _draftNotes.map((text) => ReminderNoteModel(text: text).toJson()
+      List<dynamic> notes = _draftNotes.map((text) => ReminderNoteModel(text: text, id: 0).toJson()
       ).toList();
 
       await ReminderNotesService.create([...notes]);
@@ -89,7 +90,11 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
     }
   }
 
-  Widget _buildNoteCard(String text, {bool isDraft = false}) {
+  Widget _buildNoteCard(
+      String text, {
+        bool isDraft = false,
+        VoidCallback? onDelete,
+      }) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -107,16 +112,62 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            color: isDraft ? Colors.black87 : Colors.black,
-          ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDraft ? Colors.black87 : Colors.black,
+                ),
+              ),
+            ),
+            if (!isDraft && onDelete != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                onPressed: onDelete,
+              ),
+          ],
         ),
       ),
     );
   }
+
+  Future<void> _deleteNote(int id) async {
+    try {
+      await ReminderNotesService.delete(id);
+
+      // Option A: refetch from API (safest)
+      await _fetchNotes();
+
+      // Option B (optional): optimistic update
+      // setState(() {
+      //   _notes.removeWhere((note) => note.id == id);
+      // });
+    } catch (e) {
+      debugPrint('Error deleting note: $e');
+    }
+  }
+
+  Future<void> _confirmDelete(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete note'),
+        content: const Text('Are you sure you want to delete this note?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _deleteNote(id);
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +186,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            ..._notes.map((note) => _buildNoteCard(note.text)),
+            ..._notes.map((note) => _buildNoteCard(note.text, onDelete: () => _deleteNote(note.id),),),
             ..._draftNotes.map((draft) => _buildNoteCard(draft, isDraft: true)),
           ],
         ),

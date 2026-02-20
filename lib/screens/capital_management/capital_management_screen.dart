@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/screens/capital_management/weekly_pnl_chart.dart';
 
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
@@ -244,7 +245,13 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
                         monthly: _summary(_month),
                         wide: isWide,
                       ),
+
                       const SizedBox(height: 24),
+
+                      WeeklyPnlChart(weeklyData: _weeklyPnl()),
+
+                      const SizedBox(height: 24),
+
                       Expanded(child: CapitalList(capitals: _capitals)),
                     ],
                   ),
@@ -259,5 +266,34 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
     final losses = _sum(from: from, filter: CapitalReasonEnum.LOSS);
 
     return SummaryData(profits: profits, losses: losses, pnl: profits + losses);
+  }
+
+  List<MapEntry<DateTime, double>> _weeklyPnl() {
+    final Map<DateTime, double> weekly = {};
+
+    for (final c in _capitals) {
+      if (c.reason != CapitalReasonEnum.PROFIT &&
+          c.reason != CapitalReasonEnum.LOSS) {
+        continue;
+      }
+
+      // Get Monday of that week
+      final monday = c.dateTime.subtract(
+        Duration(days: c.dateTime.weekday - DateTime.monday),
+      );
+
+      final weekStart = DateTime(monday.year, monday.month, monday.day);
+
+      weekly.update(
+        weekStart,
+        (value) => value + c.amount,
+        ifAbsent: () => c.amount,
+      );
+    }
+
+    final sorted = weekly.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    return sorted;
   }
 }

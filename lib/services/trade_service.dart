@@ -18,7 +18,7 @@ class TradeService {
     }
   }
 
-  static Future<List<TradeModel>> getAll() async {
+  static Future<List<Trade>> getAll() async {
     final response = await http.get(Uri.parse(ApiConstants.tradeURL));
 
     if (response.statusCode != 200) {
@@ -26,6 +26,6 @@ class TradeService {
     }
 
     final List data = jsonDecode(response.body);
-    return data.map((e) => TradeModel.fromJson(e)).toList();
+    return Future.wait(data.map((e) => Trade.fromJson(e)).toList());
   }
 }

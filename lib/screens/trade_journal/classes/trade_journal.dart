@@ -3,7 +3,7 @@ import '../../../models/trade_model.dart';
 class TradeJournal {
   final DateTime entryDateTime;
   final DateTime exitDateTime;
-  final List<TradeModel> trades;
+  final List<Trade> trades;
 
   TradeJournal({
     required this.entryDateTime,
@@ -11,6 +11,5 @@ class TradeJournal {
     required this.trades,
   });
 
-  double get totalProfit =>
-      trades.fold(0, (sum, t) => sum + t.profit);
+  double get totalProfit => trades.fold(0, (sum, t) => sum + t.profit);
 }

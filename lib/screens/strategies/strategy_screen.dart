@@ -29,7 +29,6 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
   Future<void> fetchStrategies() async {
     try {
       final response = await StrategyService.getAll();
-      print(response);
 
       setState(() {
         strategies = response;

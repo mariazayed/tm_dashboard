@@ -105,8 +105,8 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
     );
   }
 
-  List<TradeJournal> groupTrades(List<TradeModel> trades) {
-    final map = <String, List<TradeModel>>{};
+  List<TradeJournal> groupTrades(List<Trade> trades) {
+    final map = <String, List<Trade>>{};
 
     for (final t in trades) {
       final key =

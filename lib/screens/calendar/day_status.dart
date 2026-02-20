@@ -138,7 +138,6 @@ class _DayStatusState extends State<DayStatus> {
     if (widget.day.exists) {
       _dayService.update(widget.day.id, updated.toJson());
     } else {
-      print('updated2.toJson() ${updated.toJson()}');
       _dayService.create(updated.toJson());
     }
 

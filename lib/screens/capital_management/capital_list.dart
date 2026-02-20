@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
 
 class CapitalList extends StatelessWidget {
@@ -9,80 +11,135 @@ class CapitalList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.only(bottom: 120),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
       itemCount: capitals.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      separatorBuilder: (_, __) => const SizedBox(height: 18),
       itemBuilder: (_, i) {
         final c = capitals[i];
-        final isPositive = c.amount >= 0;
 
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isPositive
-                  ? Colors.green.withOpacity(0.3)
-                  : Colors.red.withOpacity(0.3),
-            ),
+        late Color primaryColor;
+        late IconData icon;
+        late String label;
+
+        switch (c.reason) {
+          case CapitalReasonEnum.DEPOSIT:
+            primaryColor = Colors.green.shade600;
+            icon = Icons.south_west_rounded;
+            label = "Deposit";
+            break;
+
+          case CapitalReasonEnum.WITHDRAW:
+            primaryColor = Colors.red.shade600;
+            icon = Icons.north_east_rounded;
+            label = "Withdraw";
+            break;
+
+          case CapitalReasonEnum.PROFIT:
+            primaryColor = Colors.blue.shade600;
+            icon = Icons.trending_up_rounded;
+            label = "Profit";
+            break;
+
+          case CapitalReasonEnum.LOSS:
+            primaryColor = Colors.orange.shade700;
+            icon = Icons.trending_down_rounded;
+            label = "Loss";
+            break;
+        }
+
+        return Card(
+          elevation: 2,
+          shadowColor: Colors.black.withOpacity(0.05),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// Header row
-              Row(
-                children: [
-                  Icon(
-                    isPositive
-                        ? Icons.arrow_upward
-                        : Icons.arrow_downward,
-                    color: isPositive ? Colors.green : Colors.red,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    c.reason.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const Spacer(),
-                  Text(
-                    c.amount.toStringAsFixed(2),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: isPositive ? Colors.green : Colors.red,
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: primaryColor.withOpacity(0.06), // subtle flat tint
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// Header Row
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: primaryColor.withOpacity(0.12),
+                      ),
+                      child: Icon(icon, color: primaryColor, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+
+                    /// Reason + Date
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            label,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            c.formatter.format(c.dateTime),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    /// Amount Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Text(
+                        c.amount.toStringAsFixed(2),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                /// Notes
+                if (c.notes != null && c.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.black.withOpacity(0.04)),
+                    ),
+                    child: Text(
+                      c.notes!,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(height: 1.4),
                     ),
                   ),
                 ],
-              ),
-
-              const SizedBox(height: 6),
-
-              /// Date
-              Text(
-                c.dateTime.toLocal().toString(),
-                style: Theme.of(context)
-                    .textTheme
-                    .labelSmall
-                    ?.copyWith(color: Colors.grey),
-              ),
-
-              /// Notes (optional)
-              if (c.notes != null && c.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    c.notes!,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
               ],
-            ],
+            ),
           ),
         );
       },

@@ -505,6 +505,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _openPnlBottomSheet(title: title, data: data);
   }
 
+  Widget _buildDashboardNoteCard({
+    required String title,
+    required IconData icon,
+    required bool loading,
+    required bool isEmpty,
+    required String text,
+    required int index,
+    required int total,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: Colors.grey.withOpacity(0.08)),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 25,
+            color: Colors.black.withOpacity(0.04),
+            offset: const Offset(0, 15),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// Header
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              if (total > 1)
+                Text(
+                  "${index + 1}/$total",
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          if (loading)
+            const Center(child: CircularProgressIndicator())
+          else if (isEmpty)
+            const Text("No data available")
+          else
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.05, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: Text(
+                text,
+                key: ValueKey(text),
+                style: const TextStyle(
+                  fontSize: 18,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color currentNoteColor = _colors[_currentNoteIndex % _colors.length];
@@ -549,50 +636,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? Row(
                             children: [
                               Expanded(
-                                child: _buildSection(
+                                child: _buildDashboardNoteCard(
                                   title: "Reminder",
+                                  icon: Icons.lightbulb_outline,
                                   loading: _isNotesLoading,
                                   isEmpty: _notes.isEmpty,
                                   text: _notes.isNotEmpty
                                       ? _notes[_currentNoteIndex].text
                                       : "",
-                                  color: currentNoteColor,
+                                  index: _currentNoteIndex,
+                                  total: _notes.length,
                                 ),
                               ),
                               const SizedBox(width: 24),
                               Expanded(
-                                child: _buildSection(
+                                child: _buildDashboardNoteCard(
                                   title: "Strict Rule",
+                                  icon: Icons.rule_folder_outlined,
                                   loading: _isRulesLoading,
                                   isEmpty: _rules.isEmpty,
                                   text: _rules.isNotEmpty
                                       ? _rules[_currentRuleIndex].text
                                       : "",
-                                  color: currentRuleColor,
+                                  index: _currentRuleIndex,
+                                  total: _rules.length,
                                 ),
                               ),
                             ],
                           )
                         : Column(
                             children: [
-                              _buildSection(
+                              _buildDashboardNoteCard(
                                 title: "Reminder",
+                                icon: Icons.lightbulb_outline,
                                 loading: _isNotesLoading,
                                 isEmpty: _notes.isEmpty,
                                 text: _notes.isNotEmpty
                                     ? _notes[_currentNoteIndex].text
                                     : "",
-                                color: currentNoteColor,
+                                index: _currentNoteIndex,
+                                total: _notes.length,
                               ),
                               const SizedBox(height: 24),
-                              _buildSection(
+                              _buildDashboardNoteCard(
                                 title: "Strict Rule",
+                                icon: Icons.rule_folder_outlined,
                                 loading: _isRulesLoading,
                                 isEmpty: _rules.isEmpty,
                                 text: _rules.isNotEmpty
                                     ? _rules[_currentRuleIndex].text
                                     : "",
-                                color: currentRuleColor,
+                                index: _currentRuleIndex,
+                                total: _rules.length,
                               ),
                             ],
                           ),

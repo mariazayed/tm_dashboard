@@ -18,7 +18,7 @@ class StrategyService {
     }
   }
 
-  static Future<List<StrategyModel>> getAll() async {
+  static Future<List<Strategy>> getAll() async {
     final response = await http.get(Uri.parse(ApiConstants.strategyURL));
 
     if (response.statusCode != 200) {
@@ -27,6 +27,6 @@ class StrategyService {
 
     final List data = jsonDecode(response.body);
 
-    return Future.wait(data.map((e) => StrategyModel.fromJson(e)));
+    return Future.wait(data.map((e) => Strategy.fromJson(e)));
   }
 }

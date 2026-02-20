@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/models/strategy_model.dart';
+import 'package:tm_dashboard/services/strategy_service.dart';
 
 import '../../models/asset_model.dart';
 import '../../models/trade_model.dart';
 import '../../services/asset_service.dart';
 import '../../services/trade_service.dart';
 import 'add_journal_sheet.dart';
-import 'journal_card.dart';
 import 'classes/trade_journal.dart';
+import 'journal_card.dart';
 
 class TradeJournalScreen extends StatefulWidget {
   const TradeJournalScreen({super.key});
@@ -17,6 +19,7 @@ class TradeJournalScreen extends StatefulWidget {
 
 class _TradeJournalScreenState extends State<TradeJournalScreen> {
   List<Asset>? assets;
+  List<Strategy>? strategies;
   late Future<List<TradeJournal>> future;
 
   @override
@@ -39,6 +42,7 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
     try {
       final trades = await TradeService.getAll();
       assets ??= await AssetService.fetchAssets();
+      strategies ??= await StrategyService.getAll();
       return groupTrades(trades);
     } catch (e, st) {
       return Future<List<TradeJournal>>.error(e, st);
@@ -52,7 +56,7 @@ class _TradeJournalScreenState extends State<TradeJournalScreen> {
       isDismissible: false,
       enableDrag: false,
       backgroundColor: Colors.transparent,
-      builder: (_) => AddJournalSheet(assets: assets!),
+      builder: (_) => AddJournalSheet(assets: assets!, strategies: strategies!),
     );
 
     setState(() {

@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tm_dashboard/models/strategy_model.dart';
 
 import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
 import '../../services/trade_service.dart';
-import 'trade_card.dart';
 import 'classes/trade_draft.dart';
+import 'trade_card.dart';
 
 class AddJournalSheet extends StatefulWidget {
   final List<Asset> assets;
+  final List<Strategy> strategies;
 
-  const AddJournalSheet({super.key, required this.assets});
+  const AddJournalSheet({
+    super.key,
+    required this.assets,
+    required this.strategies,
+  });
 
   @override
   State<AddJournalSheet> createState() => _AddJournalSheetState();
@@ -30,7 +36,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
       drafts = [];
     } else {
       final defaultAsset = widget.assets.firstWhere(
-            (a) => a.symbol == 'XAUUSD',
+        (a) => a.symbol == 'XAUUSD',
         orElse: () => widget.assets.first,
       );
       drafts = [TradeDraft(asset: defaultAsset)];
@@ -84,10 +90,12 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     if (entryDateTime == null || exitDateTime == null || drafts.isEmpty) return;
 
     final payload = drafts
-        .map((d) => d.toJson(
-      entryDateTime: entryDateTime!,
-      exitDateTime: exitDateTime!,
-    ))
+        .map(
+          (d) => d.toJson(
+            entryDateTime: entryDateTime!,
+            exitDateTime: exitDateTime!,
+          ),
+        )
         .toList();
 
     await TradeService.create(payload);
@@ -135,8 +143,9 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
                     child: Text(
                       entryDateTime == null
                           ? 'Entry DateTime'
-                          : DateFormat('dd MMM yyyy HH:mm')
-                          .format(entryDateTime!),
+                          : DateFormat(
+                              'dd MMM yyyy HH:mm',
+                            ).format(entryDateTime!),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -154,8 +163,9 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
                     child: Text(
                       exitDateTime == null
                           ? 'Exit DateTime'
-                          : DateFormat('dd MMM yyyy HH:mm')
-                          .format(exitDateTime!),
+                          : DateFormat(
+                              'dd MMM yyyy HH:mm',
+                            ).format(exitDateTime!),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -168,12 +178,13 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
 
           // Trade cards
           ...drafts.map(
-                (d) => Padding(
-                  key: ValueKey(d.id),
-                  padding: const EdgeInsets.only(bottom: 28),
+            (d) => Padding(
+              key: ValueKey(d.id),
+              padding: const EdgeInsets.only(bottom: 28),
               child: TradeCard(
                 draft: d,
                 assets: widget.assets,
+                strategies: widget.strategies,
                 onChanged: () => setState(() => _recalc(d)),
                 onRemove: drafts.length > 1
                     ? () => setState(() => drafts.remove(d))
@@ -189,10 +200,8 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
             onPressed: widget.assets.isEmpty
                 ? null
                 : () => setState(
-                  () => drafts.add(
-                TradeDraft(asset: drafts.first.asset),
-              ),
-            ),
+                    () => drafts.add(TradeDraft(asset: drafts.first.asset)),
+                  ),
             icon: const Icon(Icons.add),
             label: const Text('Add Trade'),
           ),

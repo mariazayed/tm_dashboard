@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/models/strategy_model.dart';
 
 import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
@@ -7,6 +8,7 @@ import 'classes/trade_draft.dart';
 class TradeCard extends StatefulWidget {
   final TradeDraft draft;
   final List<Asset> assets;
+  final List<Strategy> strategies;
   final VoidCallback onChanged;
   final VoidCallback? onRemove;
 
@@ -14,6 +16,7 @@ class TradeCard extends StatefulWidget {
     super.key,
     required this.draft,
     required this.assets,
+    required this.strategies,
     required this.onChanged,
     this.onRemove,
   });
@@ -34,10 +37,10 @@ class _TradeCardState extends State<TradeCard> {
   void initState() {
     super.initState();
     entryCtrl = TextEditingController(text: widget.draft.entryPrice.toString());
-    exitCtrl  = TextEditingController(text: widget.draft.exitPrice.toString());
-    lotCtrl   = TextEditingController(text: widget.draft.lot.toString());
-    slCtrl    = TextEditingController(text: widget.draft.sl.toString());
-    tpCtrl    = TextEditingController(text: widget.draft.tp.toString());
+    exitCtrl = TextEditingController(text: widget.draft.exitPrice.toString());
+    lotCtrl = TextEditingController(text: widget.draft.lot.toString());
+    slCtrl = TextEditingController(text: widget.draft.sl.toString());
+    tpCtrl = TextEditingController(text: widget.draft.tp.toString());
     notesCtrl = TextEditingController(text: widget.draft.notes ?? '');
   }
 
@@ -69,10 +72,12 @@ class _TradeCardState extends State<TradeCard> {
                 DropdownButton<TradeDirectionEnum>(
                   value: d.signal,
                   items: TradeDirectionEnum.values
-                      .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(e.name.toUpperCase()),
-                  ))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e.name.toUpperCase()),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) {
                     if (v != null) {
@@ -86,10 +91,12 @@ class _TradeCardState extends State<TradeCard> {
                   child: DropdownButtonFormField<Asset>(
                     value: widget.assets.contains(d.asset) ? d.asset : null,
                     items: widget.assets
-                        .map((a) => DropdownMenuItem(
-                      value: a,
-                      child: Text('${a.symbol} • ${a.name}'),
-                    ))
+                        .map(
+                          (a) => DropdownMenuItem(
+                            value: a,
+                            child: Text('${a.symbol} • ${a.name}'),
+                          ),
+                        )
                         .toList(),
                     onChanged: (v) {
                       if (v != null) {
@@ -106,6 +113,23 @@ class _TradeCardState extends State<TradeCard> {
                     onPressed: widget.onRemove,
                   ),
               ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // IMPORTANT: don't use Expanded here; TradeCard is typically inside a ListView
+            DropdownButtonFormField<Strategy>(
+              value: widget.strategies.contains(d.strategy) ? d.strategy : null,
+              items: widget.strategies
+                  .map((a) => DropdownMenuItem(value: a, child: Text(a.name)))
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) {
+                  d.strategy = v;
+                  widget.onChanged();
+                }
+              },
+              decoration: const InputDecoration(labelText: 'Strategy'),
             ),
 
             const SizedBox(height: 20),
@@ -162,10 +186,10 @@ class _TradeCardState extends State<TradeCard> {
   }
 
   Widget _num(
-      String label,
-      TextEditingController ctrl,
-      Function(double) onChanged,
-      ) {
+    String label,
+    TextEditingController ctrl,
+    Function(double) onChanged,
+  ) {
     return TextField(
       controller: ctrl,
       keyboardType: TextInputType.number,

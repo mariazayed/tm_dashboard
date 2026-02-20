@@ -14,7 +14,7 @@ class StrategiesScreen extends StatefulWidget {
 }
 
 class _StrategiesScreenState extends State<StrategiesScreen> {
-  List<StrategyModel> strategies = [];
+  List<Strategy> strategies = [];
   List<StrategyTagModel> availableTags = [];
   bool isLoading = true;
   String? error;

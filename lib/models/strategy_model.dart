@@ -4,21 +4,21 @@ import '../enums/strategy_tag_enum.dart';
 import '../services/static_data_service.dart';
 import 'strategy_tag_model.dart';
 
-class StrategyModel {
+class Strategy {
   final int id;
   final String name;
   final String link;
   final List<StrategyTagModel> tags;
 
-  StrategyModel({
+  Strategy({
     required this.id,
     required this.name,
     required this.link,
     required this.tags,
   });
 
-  static Future<StrategyModel> fromJson(Map<String, dynamic> json) async {
-    return StrategyModel(
+  static Future<Strategy> fromJson(Map<String, dynamic> json) async {
+    return Strategy(
       id: json['id'],
       name: json['name'],
       link: json['link'],
@@ -26,11 +26,12 @@ class StrategyModel {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'link': link,
-    'tags': tags.map((e) => e.id.value).toList(),
-  };
+  Map<String, dynamic> toJson() =>
+      {
+        'name': name,
+        'link': link,
+        'tags': tags.map((e) => e.id.value).toList(),
+      };
 
   static Future<List<StrategyTagModel>> getTags(List<int> tags) async {
     List<StrategyTagModel> strategyTags = [];

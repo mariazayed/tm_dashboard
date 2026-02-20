@@ -248,6 +248,26 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
 
                       const SizedBox(height: 24),
 
+                      Row(
+                        children: [
+                          _CapitalStatCard(
+                            title: "Total Deposits",
+                            value: _totalDeposits,
+                            color: Colors.green.shade500,
+                            icon: Icons.south_west_rounded,
+                          ),
+                          const SizedBox(width: 16),
+                          _CapitalStatCard(
+                            title: "Total Withdraws",
+                            value: _totalWithdraws,
+                            color: Colors.red.shade400,
+                            icon: Icons.north_east_rounded,
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
                       WeeklyPnlChart(weeklyData: _weeklyPnl()),
 
                       const SizedBox(height: 24),
@@ -294,5 +314,96 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
       ..sort((a, b) => a.key.compareTo(b.key));
 
     return sorted;
+  }
+
+  double get _totalDeposits {
+    return _capitals
+        .where((c) => c.reason == CapitalReasonEnum.DEPOSIT)
+        .fold(0.0, (a, b) => a + b.amount);
+  }
+
+  double get _totalWithdraws {
+    return _capitals
+        .where((c) => c.reason == CapitalReasonEnum.WITHDRAW)
+        .fold(0.0, (a, b) => a + b.amount);
+  }
+}
+
+class _CapitalStatCard extends StatelessWidget {
+  final String title;
+  final double value;
+  final Color color;
+  final IconData icon;
+
+  const _CapitalStatCard({
+    required this.title,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 20,
+              color: Colors.black.withOpacity(0.05),
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// Icon + Title
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withOpacity(0.12),
+                  ),
+                  child: Icon(icon, size: 18, color: color),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            /// Animated Value
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: value),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutCubic,
+              builder: (context, val, _) {
+                return Text(
+                  val.toStringAsFixed(2),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

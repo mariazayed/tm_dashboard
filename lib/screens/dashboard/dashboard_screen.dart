@@ -517,127 +517,166 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required int total,
     required bool isNotesCard,
   }) {
-    return MouseRegion(
-      onEnter: (_) {
-        if (isNotesCard) {
-          _notesTimer?.cancel();
-        } else {
-          _rulesTimer?.cancel();
-        }
-      },
-      onExit: (_) {
-        if (isNotesCard && _notes.isNotEmpty) {
-          _notesTimer = Timer.periodic(
-            const Duration(seconds: 6),
-            (_) => setState(() {
-              _currentNoteIndex = (_currentNoteIndex + 1) % _notes.length;
-            }),
-          );
-        }
+    bool isHovered = false;
 
-        if (!isNotesCard && _rules.isNotEmpty) {
-          _rulesTimer = Timer.periodic(
-            const Duration(seconds: 6),
-            (_) => setState(() {
-              _currentRuleIndex = (_currentRuleIndex + 1) % _rules.length;
-            }),
-          );
-        }
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              color: Colors.white.withOpacity(0.55),
-              border: Border.all(color: Colors.white.withOpacity(0.4)),
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 30,
-                  color: Colors.black.withOpacity(0.05),
-                  offset: const Offset(0, 15),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// Header
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withOpacity(0.1),
-                      ),
-                      child: Icon(
-                        icon,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.primary,
+    return StatefulBuilder(
+      builder: (context, setLocalState) {
+        return MouseRegion(
+          onEnter: (_) {
+            setLocalState(() => isHovered = true);
+
+            if (isNotesCard) {
+              _notesTimer?.cancel();
+            } else {
+              _rulesTimer?.cancel();
+            }
+          },
+          onExit: (_) {
+            setLocalState(() => isHovered = false);
+
+            if (isNotesCard && _notes.isNotEmpty) {
+              _notesTimer = Timer.periodic(
+                const Duration(seconds: 6),
+                (_) => setState(() {
+                  _currentNoteIndex = (_currentNoteIndex + 1) % _notes.length;
+                }),
+              );
+            }
+
+            if (!isNotesCard && _rules.isNotEmpty) {
+              _rulesTimer = Timer.periodic(
+                const Duration(seconds: 6),
+                (_) => setState(() {
+                  _currentRuleIndex = (_currentRuleIndex + 1) % _rules.length;
+                }),
+              );
+            }
+          },
+          child: AnimatedScale(
+            scale: isHovered ? 1.02 : 1.0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOut,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  /// Base shadow
+                  BoxShadow(
+                    blurRadius: 30,
+                    color: Colors.black.withOpacity(0.05),
+                    offset: const Offset(0, 15),
+                  ),
+
+                  /// Glow shadow (only when hovered)
+                  if (isHovered)
+                    BoxShadow(
+                      blurRadius: 40,
+                      spreadRadius: 2,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.25),
+                    ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: Colors.white.withOpacity(0.55),
+                      border: Border.all(
+                        color: isHovered
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.5)
+                            : Colors.white.withOpacity(0.4),
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (total > 1)
-                      Text(
-                        "${index + 1}/$total",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// Header
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.1),
+                              ),
+                              child: Icon(
+                                icon,
+                                size: 18,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (total > 1)
+                              Text(
+                                "${index + 1}/$total",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                  ],
-                ),
 
-                const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                if (loading)
-                  const Center(child: CircularProgressIndicator())
-                else if (isEmpty)
-                  const Text("No data available")
-                else
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 500),
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.08, 0),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Text(
-                      text,
-                      key: ValueKey(text),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        height: 1.6,
-                        fontWeight: FontWeight.w500,
-                      ),
+                        if (loading)
+                          const Center(child: CircularProgressIndicator())
+                        else if (isEmpty)
+                          const Text("No data available")
+                        else
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 500),
+                            transitionBuilder: (child, animation) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.08, 0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: Text(
+                              text,
+                              key: ValueKey(text),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                height: 1.6,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
-              ],
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

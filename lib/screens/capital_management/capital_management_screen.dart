@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:tm_dashboard/screens/capital_management/weekly_pnl_chart.dart';
 
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
 import '../../services/capital_service.dart';
 import 'capital_list.dart';
-import 'summary_data.dart';
+import 'capital_stat_card.dart';
+import 'classes/summary_data.dart';
+import 'classes/weekly_breakdown.dart';
 import 'summary_section.dart';
+import 'weekly_history_table.dart';
+import 'weekly_pnl_chart.dart';
 
 class CapitalManagementScreen extends StatefulWidget {
   const CapitalManagementScreen({super.key});
@@ -188,10 +190,6 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
     return DateTime(now.year, now.month, 1);
   }
 
-  /// ------------------------------
-  /// Actions
-  /// ------------------------------
-
   Future<void> _openCapitalDialog(CapitalReasonEnum reason) async {
     final TextEditingController amountController = TextEditingController();
     final TextEditingController notesController = TextEditingController();
@@ -334,112 +332,6 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
     );
   }
 
-  /// ------------------------------
-  /// UI
-  /// ------------------------------
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Capital Overview')),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'deposit',
-            onPressed: () => _openCapitalDialog(CapitalReasonEnum.DEPOSIT),
-            icon: const Icon(Icons.trending_up), // deposit (capital in)
-            label: const Text('Deposit'),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'withdraw',
-            backgroundColor: Colors.redAccent,
-            onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
-            icon: const Icon(Icons.trending_down),
-            // withdraw (capital out)
-            label: const Text('Withdraw'),
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 900;
-
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: constraints.maxWidth,
-                      ),
-                      child: Column(
-                        children: [
-                          SummarySection(
-                            daily: _summary(_today),
-                            weekly: _summary(_week),
-                            monthly: _summary(_month),
-                            wide: isWide,
-                            onDailyTap: _openTodayPnlDetails,
-                            onWeeklyTap: _openWeeklyPnlDetails,
-                            onMonthlyTap: _openMonthlyPnlDetails,
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          Row(
-                            children: [
-                              _CapitalStatCard(
-                                title: "Total Deposits",
-                                value: _totalDeposits,
-                                color: Colors.green.shade500,
-                                icon: Icons.south_west_rounded,
-                                onTap: () => _openFilteredCapitalDialog(
-                                  CapitalReasonEnum.DEPOSIT,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              _CapitalStatCard(
-                                title: "Total Withdraws",
-                                value: _totalWithdraws,
-                                color: Colors.red.shade400,
-                                icon: Icons.north_east_rounded,
-                                onTap: () => _openFilteredCapitalDialog(
-                                  CapitalReasonEnum.WITHDRAW,
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          WeeklyPnlChart(weeklyData: _weeklyPnl()),
-
-                          const SizedBox(height: 24),
-
-                          // WeeklyPnlTable(
-                          //   profit: _weeklyProfit,
-                          //   loss: _weeklyLoss,
-                          // ),
-                          WeeklyHistoryTable(weeks: _allWeeklyBreakdown()),
-
-                          const SizedBox(height: 24),
-
-                          // Expanded(child: CapitalList(capitals: _capitals)),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-    );
-  }
-
   List<WeeklyBreakdown> _allWeeklyBreakdown() {
     final Map<DateTime, WeeklyBreakdown> weekly = {};
 
@@ -521,25 +413,6 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
         .fold(0.0, (a, b) => a + b.amount);
   }
 
-  double get _weeklyProfit {
-    return _capitals
-        .where(
-          (c) =>
-              c.reason == CapitalReasonEnum.PROFIT &&
-              !c.dateTime.isBefore(_week),
-        )
-        .fold(0.0, (a, b) => a + b.amount);
-  }
-
-  double get _weeklyLoss {
-    return _capitals
-        .where(
-          (c) =>
-              c.reason == CapitalReasonEnum.LOSS && !c.dateTime.isBefore(_week),
-        )
-        .fold(0.0, (a, b) => a + b.amount);
-  }
-
   void _openFilteredCapitalDialog(CapitalReasonEnum reason) {
     final filtered = _capitals.where((c) => c.reason == reason).toList()
       ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
@@ -600,312 +473,106 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
       },
     );
   }
-}
-
-class _CapitalStatCard extends StatelessWidget {
-  final VoidCallback? onTap;
-  final String title;
-  final double value;
-  final Color color;
-  final IconData icon;
-
-  const _CapitalStatCard({
-    required this.title,
-    required this.value,
-    required this.color,
-    required this.icon,
-    this.onTap,
-  });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 20,
-                  color: Colors.black.withOpacity(0.05),
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /// Icon + Title
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: color.withOpacity(0.12),
-                      ),
-                      child: Icon(icon, size: 18, color: color),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-
-                /// Animated Value
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: value),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.easeOutCubic,
-                  builder: (context, val, _) {
-                    return Text(
-                      val.toStringAsFixed(2),
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: color,
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class WeeklyPnlTable extends StatelessWidget {
-  final double profit;
-  final double loss;
-
-  const WeeklyPnlTable({super.key, required this.profit, required this.loss});
-
-  @override
-  Widget build(BuildContext context) {
-    final net = profit + loss;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      appBar: AppBar(title: const Text('Capital Overview')),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          /// Title
-          Text(
-            "Weekly Breakdown",
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          FloatingActionButton.extended(
+            heroTag: 'deposit',
+            onPressed: () => _openCapitalDialog(CapitalReasonEnum.DEPOSIT),
+            icon: const Icon(Icons.trending_up), // deposit (capital in)
+            label: const Text('Deposit'),
           ),
-
-          const SizedBox(height: 20),
-
-          /// Table Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text("Type", style: TextStyle(fontWeight: FontWeight.w600)),
-              Text("Amount", style: TextStyle(fontWeight: FontWeight.w600)),
-            ],
-          ),
-
-          const Divider(height: 28),
-
-          /// Profit Row
-          _buildRow(
-            label: "Profit",
-            value: profit,
-            color: Colors.green.shade500,
-          ),
-
-          const SizedBox(height: 14),
-
-          /// Loss Row
-          _buildRow(label: "Loss", value: loss, color: Colors.red.shade400),
-
-          const Divider(height: 28),
-
-          /// Net Row
-          _buildRow(
-            label: "Net",
-            value: net,
-            color: net >= 0 ? Colors.green.shade600 : Colors.red.shade600,
-            bold: true,
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'withdraw',
+            backgroundColor: Colors.redAccent,
+            onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
+            icon: const Icon(Icons.trending_down),
+            // withdraw (capital out)
+            label: const Text('Withdraw'),
           ),
         ],
       ),
-    );
-  }
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 900;
 
-  Widget _buildRow({
-    required String label,
-    required double value,
-    required Color color,
-    bool bold = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: bold ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-        Text(
-          value.toStringAsFixed(2),
-          style: TextStyle(
-            color: color,
-            fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth,
+                      ),
+                      child: Column(
+                        children: [
+                          SummarySection(
+                            daily: _summary(_today),
+                            weekly: _summary(_week),
+                            monthly: _summary(_month),
+                            wide: isWide,
+                            onDailyTap: _openTodayPnlDetails,
+                            onWeeklyTap: _openWeeklyPnlDetails,
+                            onMonthlyTap: _openMonthlyPnlDetails,
+                          ),
 
-class WeeklyBreakdown {
-  final DateTime weekStart;
-  double profit = 0;
-  double loss = 0;
+                          const SizedBox(height: 24),
 
-  WeeklyBreakdown({required this.weekStart});
+                          Row(
+                            children: [
+                              CapitalStatCard(
+                                title: "Total Deposits",
+                                value: _totalDeposits,
+                                color: Colors.green.shade500,
+                                icon: Icons.south_west_rounded,
+                                onTap: () => _openFilteredCapitalDialog(
+                                  CapitalReasonEnum.DEPOSIT,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              CapitalStatCard(
+                                title: "Total Withdraws",
+                                value: _totalWithdraws,
+                                color: Colors.red.shade400,
+                                icon: Icons.north_east_rounded,
+                                onTap: () => _openFilteredCapitalDialog(
+                                  CapitalReasonEnum.WITHDRAW,
+                                ),
+                              ),
+                            ],
+                          ),
 
-  double get net => profit + loss;
-}
+                          const SizedBox(height: 24),
 
-class WeeklyHistoryTable extends StatelessWidget {
-  final List<WeeklyBreakdown> weeks;
+                          WeeklyPnlChart(weeklyData: _weeklyPnl()),
 
-  const WeeklyHistoryTable({super.key, required this.weeks});
+                          const SizedBox(height: 24),
 
-  @override
-  Widget build(BuildContext context) {
-    if (weeks.isEmpty) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: Text("No weekly data")),
-      );
-    }
+                          // WeeklyPnlTable(
+                          //   profit: _weeklyProfit,
+                          //   loss: _weeklyLoss,
+                          // ),
+                          WeeklyHistoryTable(weeks: _allWeeklyBreakdown()),
 
-    final formatter = DateFormat('MMM d');
+                          const SizedBox(height: 24),
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Weekly Performance",
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-
-          const SizedBox(height: 20),
-
-          /// Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Expanded(child: Text("Week")),
-              Expanded(child: Text("Profit")),
-              Expanded(child: Text("Loss")),
-              Expanded(child: Text("Net")),
-            ],
-          ),
-
-          const Divider(height: 28),
-
-          ...weeks.map((week) {
-            final weekEnd = week.weekStart.add(const Duration(days: 6));
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      "${formatter.format(week.weekStart)} - ${formatter.format(weekEnd)}",
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Text(
-                      week.profit.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: Colors.green.shade500,
-                        fontWeight: FontWeight.w500,
+                          // Expanded(child: CapitalList(capitals: _capitals)),
+                        ],
                       ),
                     ),
                   ),
-
-                  Expanded(
-                    child: Text(
-                      week.loss.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: Colors.red.shade400,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Text(
-                      week.net.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: week.net >= 0
-                            ? Colors.green.shade600
-                            : Colors.red.shade600,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
+                );
+              },
+            ),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'classes/summary_data.dart';
 import 'summary_card.dart';
-import 'summary_data.dart';
 
 class SummarySection extends StatelessWidget {
   final SummaryData daily;

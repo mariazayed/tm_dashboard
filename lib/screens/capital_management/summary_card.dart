@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'capital_stat.dart';
-import 'summary_data.dart';
+import 'classes/summary_data.dart';
 
 class SummaryCard extends StatelessWidget {
   final String title;

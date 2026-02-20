@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -69,6 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _notesTimer?.cancel();
+    _rulesTimer?.cancel();
     super.dispose();
   }
 
@@ -513,81 +515,128 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String text,
     required int index,
     required int total,
+    required bool isNotesCard,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+    return MouseRegion(
+      onEnter: (_) {
+        if (isNotesCard) {
+          _notesTimer?.cancel();
+        } else {
+          _rulesTimer?.cancel();
+        }
+      },
+      onExit: (_) {
+        if (isNotesCard && _notes.isNotEmpty) {
+          _notesTimer = Timer.periodic(
+            const Duration(seconds: 6),
+            (_) => setState(() {
+              _currentNoteIndex = (_currentNoteIndex + 1) % _notes.length;
+            }),
+          );
+        }
+
+        if (!isNotesCard && _rules.isNotEmpty) {
+          _rulesTimer = Timer.periodic(
+            const Duration(seconds: 6),
+            (_) => setState(() {
+              _currentRuleIndex = (_currentRuleIndex + 1) % _rules.length;
+            }),
+          );
+        }
+      },
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: Colors.grey.withOpacity(0.08)),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 25,
-            color: Colors.black.withOpacity(0.04),
-            offset: const Offset(0, 15),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Header
-          Row(
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              color: Colors.white.withOpacity(0.55),
+              border: Border.all(color: Colors.white.withOpacity(0.4)),
+              boxShadow: [
+                BoxShadow(
+                  blurRadius: 30,
+                  color: Colors.black.withOpacity(0.05),
+                  offset: const Offset(0, 15),
                 ),
-              ),
-              const Spacer(),
-              if (total > 1)
-                Text(
-                  "${index + 1}/$total",
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          if (loading)
-            const Center(child: CircularProgressIndicator())
-          else if (isEmpty)
-            const Text("No data available")
-          else
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.05, 0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  ),
-                );
-              },
-              child: Text(
-                text,
-                key: ValueKey(text),
-                style: const TextStyle(
-                  fontSize: 18,
-                  height: 1.5,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              ],
             ),
-        ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withOpacity(0.1),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (total > 1)
+                      Text(
+                        "${index + 1}/$total",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                if (loading)
+                  const Center(child: CircularProgressIndicator())
+                else if (isEmpty)
+                  const Text("No data available")
+                else
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.08, 0),
+                            end: Offset.zero,
+                          ).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Text(
+                      text,
+                      key: ValueKey(text),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        height: 1.6,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -646,6 +695,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       : "",
                                   index: _currentNoteIndex,
                                   total: _notes.length,
+                                  isNotesCard: true,
                                 ),
                               ),
                               const SizedBox(width: 24),
@@ -660,6 +710,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       : "",
                                   index: _currentRuleIndex,
                                   total: _rules.length,
+                                  isNotesCard: false,
                                 ),
                               ),
                             ],
@@ -676,6 +727,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     : "",
                                 index: _currentNoteIndex,
                                 total: _notes.length,
+                                isNotesCard: true,
                               ),
                               const SizedBox(height: 24),
                               _buildDashboardNoteCard(
@@ -688,6 +740,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     : "",
                                 index: _currentRuleIndex,
                                 total: _rules.length,
+                                isNotesCard: false,
                               ),
                             ],
                           ),

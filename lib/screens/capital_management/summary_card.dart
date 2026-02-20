@@ -7,10 +7,7 @@ class SummaryCard extends StatelessWidget {
   final String title;
   final SummaryData data;
 
-  const SummaryCard({
-    required this.title,
-    required this.data,
-  });
+  const SummaryCard({super.key, required this.title, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +18,7 @@ class SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [
-            pnlColor.withOpacity(0.15),
-            Colors.transparent,
-          ],
+          colors: [pnlColor.withOpacity(0.15), Colors.transparent],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -35,10 +29,9 @@ class SummaryCard extends StatelessWidget {
         children: [
           Text(
             title.toUpperCase(),
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(letterSpacing: 1.2),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(letterSpacing: 1.2),
           ),
           const SizedBox(height: 12),
 
@@ -61,11 +54,7 @@ class SummaryCard extends StatelessWidget {
                 color: Colors.green,
               ),
               const SizedBox(width: 16),
-              CapitalStat(
-                label: 'Loss',
-                value: data.losses,
-                color: Colors.red,
-              ),
+              CapitalStat(label: 'Loss', value: data.losses, color: Colors.red),
             ],
           ),
         ],

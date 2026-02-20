@@ -44,11 +44,28 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
         .fold(0.0, (a, b) => a + b.amount);
   }
 
-  DateTime get _today => DateTime.now().subtract(const Duration(days: 1));
+  DateTime get _today {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day);
+  }
 
-  DateTime get _week => DateTime.now().subtract(const Duration(days: 7));
+  /// Monday 00:00 of current week
+  DateTime get _week {
+    final now = DateTime.now();
 
-  DateTime get _month => DateTime.now().subtract(const Duration(days: 100));
+    // weekday: Monday = 1 ... Sunday = 7
+    final difference = now.weekday - DateTime.monday;
+
+    final monday = now.subtract(Duration(days: difference));
+
+    return DateTime(monday.year, monday.month, monday.day);
+  }
+
+  /// First day of current month 00:00
+  DateTime get _month {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, 1);
+  }
 
   /// ------------------------------
   /// Actions

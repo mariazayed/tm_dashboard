@@ -5,7 +5,6 @@ class RouteNames {
   static const riskManagement = 'riskManagement';
   static const tradeJournal = 'tradeJournal';
   static const assets = 'assets';
-  static const capitalManagement = 'capitalManagement';
   static const reminderNotes = 'reminderNotes';
   static const strictRules = 'strictRules';
   static const strategies = 'strategies';

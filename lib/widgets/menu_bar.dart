@@ -226,7 +226,6 @@ List<_MenuItem> _menus(BuildContext context) {
     _MenuItem('Trade Journaling', RouteNames.tradeJournal),
     _MenuItem('Risk Management', RouteNames.riskManagement),
     _MenuItem('Assets', RouteNames.assets),
-    _MenuItem('Capitals', RouteNames.capitalManagement),
     _MenuItem('Reminder Notes', RouteNames.reminderNotes),
     _MenuItem('Strict Rules', RouteNames.strictRules),
     _MenuItem('Strategies', RouteNames.strategies),

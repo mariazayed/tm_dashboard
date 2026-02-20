@@ -1,12 +1,11 @@
 import 'package:go_router/go_router.dart';
-import 'package:tm_dashboard/screens/dashboard/dashboard_screen.dart';
 import 'package:tm_dashboard/screens/strategies/strategy_screen.dart';
 import 'package:tm_dashboard/screens/strict_rules/reminder_notes_screen.dart';
 
 import '../constants/route_names.dart';
 import '../screens/assets/assets_screen.dart';
 import '../screens/calendar/calendar_screen.dart';
-import '../screens/capital_management/capital_management_screen.dart';
+import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/memoir/memoir_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
@@ -23,7 +22,7 @@ final GoRouter routes = GoRouter(
         GoRoute(
           name: RouteNames.home,
           path: '/',
-          builder: (context, state) => const DashboardScreen(),
+          builder: (context, state) => DashboardScreen(),
           routes: [
             GoRoute(
               name: RouteNames.calendar,
@@ -49,11 +48,6 @@ final GoRouter routes = GoRouter(
               name: RouteNames.assets,
               path: 'assets',
               builder: (context, state) => AssetScreen(),
-            ),
-            GoRoute(
-              name: RouteNames.capitalManagement,
-              path: 'capitals-management',
-              builder: (context, state) => CapitalManagementScreen(),
             ),
             GoRoute(
               name: RouteNames.reminderNotes,

@@ -1,245 +1,438 @@
-import 'dart:async';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:tm_dashboard/models/reminder_note_model.dart';
-import 'package:tm_dashboard/models/strict_rule_model.dart';
-import 'package:tm_dashboard/services/reminder_notes_service.dart';
-import 'package:tm_dashboard/services/strict_rules_service.dart';
+
+import '../../enums/capital_reason_enum.dart';
+import '../../models/capital_model.dart';
+import '../../services/capital_service.dart';
+import 'capital_list.dart';
+import 'capital_stat_card.dart';
+import 'classes/capital_dashboard_helper.dart';
+import 'summary_section.dart';
+import 'weekly_history_table.dart';
+import 'weekly_pnl_chart.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<ReminderNoteModel> _notes = [];
-  List<StrictRuleModel> _rules = [];
-  bool _isNotesLoading = true;
-  bool _isRulesLoading = true;
-  int _currentNoteIndex = 0;
-  int _currentRuleIndex = 0;
-  Timer? _notesTimer;
-  Timer? _rulesTimer;
+  CapitalDashboardHelper? _helper;
+  List<CapitalModel> _capitals = [];
 
-  // Modern light colors for sticky notes
-  final List<Color> _colors = [
-    Colors.yellow.shade100,
-    Colors.blue.shade50,
-    Colors.green.shade50,
-    Colors.pink.shade50,
-    Colors.orange.shade50,
-    Colors.purple.shade50,
-  ];
+  CapitalDashboardHelper get helper {
+    final h = _helper;
+    if (h != null) return h;
+
+    final created = CapitalDashboardHelper(_capitals);
+
+    _helper = created;
+    return created;
+  }
 
   @override
   void initState() {
     super.initState();
-    _fetchNotes();
-    _fetchRules();
+    _fetchCapitals();
   }
 
-  @override
-  void dispose() {
-    _notesTimer?.cancel();
-    super.dispose();
+  Future<void> _fetchCapitals() async {
+    final capitals = await CapitalService.getAll();
+
+    if (!mounted) return;
+
+    setState(() {
+      _capitals = capitals;
+      _helper = null;
+    });
   }
 
-  Future<void> _fetchNotes() async {
-    setState(() => _isNotesLoading = true);
+  void _openPnlBottomSheet({
+    required String title,
+    required List<CapitalModel> data,
+  }) {
+    final total = data.fold(0.0, (a, b) => a + b.amount);
 
-    try {
-      final response = await ReminderNotesService.getAll();
-      if (response.isNotEmpty) {
-        final notes = List.of(response)..shuffle(Random());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.85,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
 
-        setState(() {
-          _notes = notes;
-          _currentNoteIndex = 0;
-          _isNotesLoading = false;
-        });
+                  /// Drag handle
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
 
-        if (_notes.isNotEmpty) {
-          _notesTimer?.cancel();
-          _notesTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-            setState(() {
-              _currentNoteIndex = (_currentNoteIndex + 1) % _notes.length;
-            });
-          });
-        }
-      } else {
-        setState(() => _isNotesLoading = false);
-      }
-    } catch (e) {
-      setState(() => _isNotesLoading = false);
-      debugPrint('Error fetching notes: $e');
-    }
+                  const SizedBox(height: 16),
+
+                  /// Title
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  /// Total PnL
+                  Text(
+                    total.toStringAsFixed(2),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: total >= 0
+                          ? Colors.green.shade500
+                          : Colors.red.shade400,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// List
+                  Expanded(child: CapitalList(capitals: data)),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
-  Future<void> _fetchRules() async {
-    setState(() => _isRulesLoading = true);
+  Future<void> _openCapitalDialog(CapitalReasonEnum reason) async {
+    final TextEditingController amountController = TextEditingController();
+    final TextEditingController notesController = TextEditingController();
+    DateTime selectedDateTime = DateTime.now();
 
-    try {
-      final response = await StrictRulesService.getAll();
-      if (response.isNotEmpty) {
-        final rules = List.of(response)..shuffle(Random());
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(
+                reason == CapitalReasonEnum.DEPOSIT ? 'Deposit' : 'Withdraw',
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    /// Amount
+                    TextField(
+                      controller: amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        hintText: 'Enter amount',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
 
-        setState(() {
-          _rules = rules;
-          _currentRuleIndex = 0;
-          _isRulesLoading = false;
-        });
+                    /// DateTime Picker
+                    InkWell(
+                      onTap: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDateTime,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
 
-        if (_rules.isNotEmpty) {
-          _rulesTimer?.cancel();
-          _rulesTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-            setState(() {
-              _currentRuleIndex = (_currentRuleIndex + 1) % _rules.length;
-            });
-          });
-        }
-      } else {
-        setState(() => _isRulesLoading = false);
-      }
-    } catch (e) {
-      setState(() => _isRulesLoading = false);
-      debugPrint('Error fetching rules: $e');
-    }
+                        if (date == null) return;
+
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.fromDateTime(selectedDateTime),
+                        );
+
+                        if (time == null) return;
+
+                        setState(() {
+                          selectedDateTime = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          );
+                        });
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date & Time',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(selectedDateTime.toString()),
+                            const Icon(Icons.calendar_today, size: 18),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    /// Notes
+                    TextField(
+                      controller: notesController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        hintText: 'Optional notes...',
+                        alignLabelWithHint: true,
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final value = double.tryParse(amountController.text);
+
+                    if (value == null) return;
+
+                    final model = CapitalModel(
+                      dateTime: selectedDateTime,
+                      reason: reason,
+                      amount: value,
+                      notes: notesController.text.trim().isEmpty
+                          ? null
+                          : notesController.text.trim(),
+                    );
+
+                    await CapitalService.create([
+                      {...model.toJson()},
+                    ]);
+
+                    if (mounted) Navigator.pop(context);
+                    _fetchCapitals();
+                  },
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  double get _totalWithdraws {
+    return _capitals
+        .where((c) => c.reason == CapitalReasonEnum.WITHDRAW)
+        .fold(0.0, (a, b) => a + b.amount);
+  }
+
+  void _openFilteredCapitalDialog(CapitalReasonEnum reason) {
+    final filtered = _capitals.where((c) => c.reason == reason).toList()
+      ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.8,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+
+                  /// Drag indicator
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// Title
+                  Text(
+                    reason == CapitalReasonEnum.DEPOSIT
+                        ? "All Deposits"
+                        : "All Withdraws",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  /// List
+                  Expanded(child: CapitalList(capitals: filtered)),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openPeriodDetails(String title, DateTime from) {
+    final data =
+        helper.capitals
+            .where(
+              (c) =>
+                  !c.dateTime.isBefore(from) &&
+                  (c.reason == CapitalReasonEnum.PROFIT ||
+                      c.reason == CapitalReasonEnum.LOSS),
+            )
+            .toList()
+          ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+
+    _openPnlBottomSheet(title: title, data: data);
   }
 
   @override
   Widget build(BuildContext context) {
-    final Color currentNoteColor = _colors[_currentNoteIndex % _colors.length];
-    final Color currentRuleColor = _colors[_currentRuleIndex % _colors.length];
-
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0,
+      appBar: AppBar(title: const Text('Dashboard')),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'deposit',
+            onPressed: () => _openCapitalDialog(CapitalReasonEnum.DEPOSIT),
+            icon: const Icon(Icons.trending_up), // deposit (capital in)
+            label: const Text('Deposit'),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'withdraw',
+            backgroundColor: Colors.redAccent,
+            onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
+            icon: const Icon(Icons.trending_down),
+            // withdraw (capital out)
+            label: const Text('Withdraw'),
+          ),
+        ],
       ),
-      body: Center(
-        child: Row(
-          children: [
-            _isNotesLoading
-                ? const CircularProgressIndicator()
-                : _notes.isEmpty
-                ? const Text('No notes available')
-                : AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
-                    // smooth fade
-                    curve: Curves.easeInOut,
-                    width: 300,
-                    height: 300,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: currentNoteColor, // dynamic background color
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 6,
-                          offset: Offset(3, 3),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: CustomPaint(painter: _NotebookLinesPainter()),
-                        ),
-                        Text(
-                          _notes[_currentNoteIndex].text,
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            height: 1.4,
-                            color: Colors.grey.shade900,
-                            shadows: const [
-                              Shadow(
-                                offset: Offset(1, 1),
-                                blurRadius: 2,
-                                color: Colors.black12,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 900;
 
-            _isRulesLoading
-                ? const CircularProgressIndicator()
-                : _rules.isEmpty
-                ? const Text('No rules available')
-                : AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
-                    // smooth fade
-                    curve: Curves.easeInOut,
-                    width: 300,
-                    height: 300,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: currentRuleColor, // dynamic background color
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 6,
-                          offset: Offset(3, 3),
-                        ),
-                      ],
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                child: Column(
+                  children: [
+                    SummarySection(
+                      daily: helper.summaryFrom(helper.today),
+                      weekly: helper.summaryFrom(helper.weekStart),
+                      monthly: helper.summaryFrom(helper.monthStart),
+                      wide: isWide,
+                      onDailyTap: () =>
+                          _openPeriodDetails("Today PnL", helper.today),
+                      onWeeklyTap: () =>
+                          _openPeriodDetails("This Week PnL", helper.weekStart),
+                      onMonthlyTap: () => _openPeriodDetails(
+                        "This Month PnL",
+                        helper.monthStart,
+                      ),
                     ),
-                    child: Stack(
+
+                    const SizedBox(height: 24),
+
+                    Row(
                       children: [
-                        Positioned.fill(
-                          child: CustomPaint(painter: _NotebookLinesPainter()),
+                        CapitalStatCard(
+                          title: "Total Deposits",
+                          value: helper.totalDeposits,
+                          color: Colors.green.shade500,
+                          icon: Icons.south_west_rounded,
+                          onTap: () => _openFilteredCapitalDialog(
+                            CapitalReasonEnum.DEPOSIT,
+                          ),
                         ),
-                        Text(
-                          _rules[_currentRuleIndex].text,
-                          style: TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            height: 1.4,
-                            color: Colors.grey.shade900,
-                            shadows: const [
-                              Shadow(
-                                offset: Offset(1, 1),
-                                blurRadius: 2,
-                                color: Colors.black12,
-                              ),
-                            ],
+                        const SizedBox(width: 16),
+                        CapitalStatCard(
+                          title: "Total Withdraws",
+                          value: _totalWithdraws,
+                          color: Colors.red.shade400,
+                          icon: Icons.north_east_rounded,
+                          onTap: () => _openFilteredCapitalDialog(
+                            CapitalReasonEnum.WITHDRAW,
                           ),
                         ),
                       ],
                     ),
-                  ),
-          ],
-        ),
+
+                    const SizedBox(height: 24),
+
+                    WeeklyPnlChart(weeklyData: helper.weeklyPnl()),
+
+                    const SizedBox(height: 24),
+
+                    // WeeklyPnlTable(
+                    //   profit: _weeklyProfit,
+                    //   loss: _weeklyLoss,
+                    // ),
+                    WeeklyHistoryTable(weeks: helper.weeklyBreakdown()),
+
+                    const SizedBox(height: 24),
+
+                    // Expanded(child: CapitalList(capitals: _capitals)),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
-}
-
-class _NotebookLinesPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final linePaint = Paint()
-      ..color = Colors.grey.shade300
-      ..strokeWidth = 1;
-
-    const double lineSpacing = 24;
-    for (double y = lineSpacing; y < size.height; y += lineSpacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

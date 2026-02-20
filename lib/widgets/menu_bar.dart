@@ -57,111 +57,167 @@ class MenuEntry {
   }
 }
 
-class MainManu extends StatelessWidget {
+class MainMenu extends StatelessWidget {
   final Widget child;
 
-  const MainManu({super.key, required this.child});
+  const MainMenu({super.key, required this.child});
 
-  static const double _drawerBreakpoint = 900;
+  static const double _breakpoint = 900;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isSmallScreen = constraints.maxWidth < _drawerBreakpoint;
+        final isSmallScreen = constraints.maxWidth < _breakpoint;
 
         return Scaffold(
-          appBar: isSmallScreen ? AppBar(title: const Text('TM 🧠')) : null,
-
-          drawer: isSmallScreen
-              ? Drawer(
-                  child: SafeArea(
-                    child: ListView(children: _buildDrawerItems(context)),
-                  ),
-                )
+          drawer: isSmallScreen ? _ModernDrawer() : null,
+          appBar: isSmallScreen
+              ? AppBar(title: const Text("TM 🧠"), elevation: 0)
               : null,
-
-          body: Column(
+          body: Row(
             children: [
-              // Top menu only on large screens
-              if (!isSmallScreen)
-                Row(
-                  children: [
-                    Expanded(
-                      child: MenuBar(
-                        children: MenuEntry.build(_getMenus(context)),
-                      ),
-                    ),
-                  ],
+              if (!isSmallScreen) _ModernSidebar(),
+              Expanded(
+                child: Container(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: child,
                 ),
-
-              // PAGE CONTENT
-              Expanded(child: child),
+              ),
             ],
           ),
         );
       },
     );
   }
+}
 
-  /// Drawer items
-  List<Widget> _buildDrawerItems(BuildContext context) {
-    return _getMenus(context)
-        .map(
-          (e) => ListTile(
-            title: Text(e.label),
-            onTap: () {
-              Navigator.pop(context); // close drawer
-              e.onPressed?.call();
-            },
+class _ModernSidebar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final currentRoute = GoRouterState.of(context).name;
+
+    return Container(
+      width: 260,
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        border: Border(right: BorderSide(color: Colors.grey.withOpacity(0.1))),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              "TM 🧠",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
           ),
-        )
-        .toList();
+          const SizedBox(height: 30),
+          ..._menuItems(context, currentRoute),
+        ],
+      ),
+    );
   }
 
-  /// Shared menu definition
-  List<MenuEntry> _getMenus(BuildContext context) {
-    return <MenuEntry>[
-      MenuEntry(
-        label: 'Home',
-        onPressed: () => context.goNamed(RouteNames.home),
-      ),
-      MenuEntry(
-        label: 'Calendar',
-        onPressed: () => context.goNamed(RouteNames.calendar),
-      ),
-      MenuEntry(
-        label: 'Memoir',
-        onPressed: () => context.goNamed(RouteNames.memoir),
-      ),
-      MenuEntry(
-        label: 'Trade Journaling',
-        onPressed: () => context.goNamed(RouteNames.tradeJournal),
-      ),
-      MenuEntry(
-        label: 'Risk Management',
-        onPressed: () => context.goNamed(RouteNames.riskManagement),
-      ),
-      MenuEntry(
-        label: 'Assets',
-        onPressed: () => context.goNamed(RouteNames.assets),
-      ),
-      MenuEntry(
-        label: 'Capitals',
-        onPressed: () => context.goNamed(RouteNames.capitalManagement),
-      ),
-      MenuEntry(
-        label: 'Reminder Notes',
-        onPressed: () => context.goNamed(RouteNames.reminderNotes),
-      ),
-      MenuEntry(
-        label: 'Strict Rules',
-        onPressed: () => context.goNamed(RouteNames.strictRules),
-      ),
-      MenuEntry(
-        label: 'Strategies',
-        onPressed: () => context.goNamed(RouteNames.strategies),
-      ),
-    ];
+  List<Widget> _menuItems(BuildContext context, String? currentRoute) {
+    final items = _menus(context);
+
+    return items.map((item) {
+      final isSelected = currentRoute == item.routeName;
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Material(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => context.goNamed(item.routeName),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Text(
+                item.label,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
   }
+}
+
+class _ModernDrawer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final currentRoute = GoRouterState.of(context).name;
+
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            const Text(
+              "TM 🧠",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const Divider(height: 40),
+            Expanded(
+              child: ListView(
+                children: _menus(context).map((item) {
+                  final isSelected = currentRoute == item.routeName;
+
+                  return ListTile(
+                    selected: isSelected,
+                    selectedTileColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    title: Text(item.label),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.goNamed(item.routeName);
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuItem {
+  final String label;
+  final String routeName;
+
+  _MenuItem(this.label, this.routeName);
+}
+
+List<_MenuItem> _menus(BuildContext context) {
+  return [
+    _MenuItem('Home', RouteNames.home),
+    _MenuItem('Calendar', RouteNames.calendar),
+    _MenuItem('Memoir', RouteNames.memoir),
+    _MenuItem('Trade Journaling', RouteNames.tradeJournal),
+    _MenuItem('Risk Management', RouteNames.riskManagement),
+    _MenuItem('Assets', RouteNames.assets),
+    _MenuItem('Capitals', RouteNames.capitalManagement),
+    _MenuItem('Reminder Notes', RouteNames.reminderNotes),
+    _MenuItem('Strict Rules', RouteNames.strictRules),
+    _MenuItem('Strategies', RouteNames.strategies),
+  ];
 }

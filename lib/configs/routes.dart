@@ -17,7 +17,7 @@ final GoRouter routes = GoRouter(
   routes: [
     ShellRoute(
       builder: (context, state, child) {
-        return MainManu(child: child);
+        return MainMenu(child: child);
       },
       routes: [
         GoRoute(

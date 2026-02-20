@@ -11,7 +11,8 @@ class CapitalManagementScreen extends StatefulWidget {
   const CapitalManagementScreen({super.key});
 
   @override
-  State<CapitalManagementScreen> createState() => _CapitalManagementScreenState();
+  State<CapitalManagementScreen> createState() =>
+      _CapitalManagementScreenState();
 }
 
 class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
@@ -44,8 +45,10 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
   }
 
   DateTime get _today => DateTime.now().subtract(const Duration(days: 1));
+
   DateTime get _week => DateTime.now().subtract(const Duration(days: 7));
-  DateTime get _month => DateTime.now().subtract(const Duration(days: 30));
+
+  DateTime get _month => DateTime.now().subtract(const Duration(days: 100));
 
   /// ------------------------------
   /// Actions
@@ -72,8 +75,9 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
                     /// Amount
                     TextField(
                       controller: amountController,
-                      keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'Amount',
                         hintText: 'Enter amount',
@@ -95,8 +99,7 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
 
                         final time = await showTimePicker(
                           context: context,
-                          initialTime:
-                          TimeOfDay.fromDateTime(selectedDateTime),
+                          initialTime: TimeOfDay.fromDateTime(selectedDateTime),
                         );
 
                         if (time == null) return;
@@ -149,8 +152,7 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final value =
-                    double.tryParse(amountController.text);
+                    final value = double.tryParse(amountController.text);
 
                     if (value == null) return;
 
@@ -164,9 +166,7 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
                     );
 
                     await CapitalService.create([
-                      {
-                        ...model.toJson(),
-                      }
+                      {...model.toJson()},
                     ]);
 
                     if (mounted) Navigator.pop(context);
@@ -181,7 +181,6 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
       },
     );
   }
-
 
   /// ------------------------------
   /// UI
@@ -205,7 +204,8 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
             heroTag: 'withdraw',
             backgroundColor: Colors.redAccent,
             onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
-            icon: const Icon(Icons.trending_down), // withdraw (capital out)
+            icon: const Icon(Icons.trending_down),
+            // withdraw (capital out)
             label: const Text('Withdraw'),
           ),
         ],
@@ -214,26 +214,26 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 900;
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 900;
 
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                SummarySection(
-                  daily: _summary(_today),
-                  weekly: _summary(_week),
-                  monthly: _summary(_month),
-                  wide: isWide,
-                ),
-                const SizedBox(height: 24),
-                Expanded(child: CapitalList(capitals: _capitals)),
-              ],
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      SummarySection(
+                        daily: _summary(_today),
+                        weekly: _summary(_week),
+                        monthly: _summary(_month),
+                        wide: isWide,
+                      ),
+                      const SizedBox(height: 24),
+                      Expanded(child: CapitalList(capitals: _capitals)),
+                    ],
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -241,11 +241,6 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
     final profits = _sum(from: from, filter: CapitalReasonEnum.PROFIT);
     final losses = _sum(from: from, filter: CapitalReasonEnum.LOSS);
 
-    return SummaryData(
-      profits: profits,
-      losses: losses,
-      pnl: profits + losses,
-    );
+    return SummaryData(profits: profits, losses: losses, pnl: profits + losses);
   }
 }
-

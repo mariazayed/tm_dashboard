@@ -34,7 +34,7 @@ class StaticDataResponse {
   List<TakeProfitPlacementReasonModel> takeProfitPlacementReasons;
   List<EntryTypeModel> entryTypes;
   List<SessionModel> sessions;
-  List<StrategyTagModel> tradeTags;
+  List<StrategyTagModel> strategyTags;
   List<TradeUpdateModel> tradeUpdates;
   List<ExitReasonModel> exitReasons;
 
@@ -54,7 +54,7 @@ class StaticDataResponse {
     required this.takeProfitPlacementReasons,
     required this.entryTypes,
     required this.sessions,
-    required this.tradeTags,
+    required this.strategyTags,
     required this.tradeUpdates,
     required this.exitReasons,
   });
@@ -204,7 +204,7 @@ class StaticDataResponse {
       takeProfitPlacementReasons: takeProfitPlacementReasons,
       entryTypes: entryTypes,
       sessions: sessions,
-      tradeTags: tradeTags,
+      strategyTags: tradeTags,
       tradeUpdates: tradeUpdates,
       exitReasons: exitReasons,
     );

@@ -158,6 +158,10 @@ class MainManu extends StatelessWidget {
         label: 'Strict Rules',
         onPressed: () => context.goNamed(RouteNames.strictRules),
       ),
+      MenuEntry(
+        label: 'Strategies',
+        onPressed: () => context.goNamed(RouteNames.strategies),
+      ),
     ];
   }
 }

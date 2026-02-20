@@ -8,4 +8,5 @@ class RouteNames {
   static const capitalManagement = 'capitalManagement';
   static const reminderNotes = 'reminderNotes';
   static const strictRules = 'strictRules';
+  static const strategies = 'strategies';
 }

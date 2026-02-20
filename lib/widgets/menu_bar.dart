@@ -99,7 +99,6 @@ class _ModernSidebar extends StatelessWidget {
 
     return Container(
       width: 260,
-      padding: const EdgeInsets.symmetric(vertical: 24),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceVariant,
         border: Border(right: BorderSide(color: Colors.grey.withOpacity(0.1))),
@@ -107,6 +106,9 @@ class _ModernSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 24),
+
+          /// Header
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Text(
@@ -114,8 +116,15 @@ class _ModernSidebar extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(height: 30),
-          ..._menuItems(context, currentRoute),
+
+          const SizedBox(height: 24),
+
+          /// Scrollable menu area
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(children: _menuItems(context, currentRoute)),
+            ),
+          ),
         ],
       ),
     );
@@ -137,10 +146,12 @@ class _ModernSidebar extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () => context.goNamed(item.routeName),
-            child: Padding(
+            child: Container(
+              alignment: Alignment.centerLeft, // 👈 THIS FIXES IT
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Text(
                 item.label,
+                textAlign: TextAlign.left,
                 style: TextStyle(
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   color: isSelected

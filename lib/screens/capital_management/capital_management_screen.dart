@@ -277,7 +277,6 @@ class _CapitalManagementScreenState extends State<CapitalManagementScreen> {
         continue;
       }
 
-      // Get Monday of that week
       final monday = c.dateTime.subtract(
         Duration(days: c.dateTime.weekday - DateTime.monday),
       );

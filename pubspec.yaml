@@ -45,6 +45,7 @@ dependencies:
   trina_grid: ^1.6.10
   fl_chart: ^1.1.1
   url_launcher: ^6.3.2
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

@@ -11,6 +11,34 @@ class WeekRow extends StatelessWidget {
 
   const WeekRow({required this.row, this.placeholders = 0, super.key});
 
+  /// Emoji for each exact psychology score
+  String _emojiForScore(int value) {
+    switch (value) {
+      case 1:
+        return "😡";
+      case 2:
+        return "😖";
+      case 3:
+        return "😞";
+      case 4:
+        return "😕";
+      case 5:
+        return "😐";
+      case 6:
+        return "🙂";
+      case 7:
+        return "😌";
+      case 8:
+        return "😎";
+      case 9:
+        return "🚀";
+      case 10:
+        return "🧠🔥";
+      default:
+        return "";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -18,8 +46,9 @@ class WeekRow extends StatelessWidget {
         if (i < placeholders) return const Expanded(child: SizedBox());
 
         final dayIndex = i - placeholders;
-
-        if (dayIndex >= row.length) return const Expanded(child: SizedBox());
+        if (dayIndex >= row.length) {
+          return const Expanded(child: SizedBox());
+        }
 
         final DayModel day = row[dayIndex];
         final today = DateTime.now();
@@ -56,22 +85,33 @@ class WeekRow extends StatelessWidget {
 
         final List<Widget> statusIcons = [
           if (day.noWork) const Icon(Icons.block, size: 14, color: Colors.grey),
+
           if (day.ended)
             Icon(
               Icons.check_circle_outline,
               size: 14,
               color: Colors.green.shade300,
             ),
+
           if (day.weekend)
             Icon(
               Icons.weekend_outlined,
               size: 14,
               color: Colors.orange.shade300,
             ),
+
           if (day.notes.isNotEmpty)
             Icon(Icons.note_add, size: 14, color: Colors.blue.shade300),
+
           if (day.exists)
             Icon(Icons.hdr_strong, size: 14, color: Colors.purple.shade200),
+
+          /// ✅ Psychology Emoji
+          if (day.psychologyRate != null)
+            Text(
+              _emojiForScore(day.psychologyRate!.value),
+              style: const TextStyle(fontSize: 14),
+            ),
         ];
 
         return Expanded(
@@ -120,8 +160,7 @@ class WeekRow extends StatelessWidget {
                         const Spacer(),
                         if (statusIcons.isNotEmpty)
                           SizedBox(
-                            height: 14,
-                            // keeps the icon area bounded (prevents vertical overflow)
+                            height: 16,
                             child: Wrap(
                               spacing: 4,
                               runSpacing: 2,

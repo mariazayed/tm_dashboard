@@ -60,12 +60,32 @@ class _DayStatusState extends State<DayStatus> {
     super.dispose();
   }
 
+  /// Emoji for each exact score
   String _emojiForScore(int value) {
-    if (value <= 2) return "😵";
-    if (value <= 4) return "😕";
-    if (value <= 6) return "😐";
-    if (value <= 8) return "🙂";
-    return "🧠🔥";
+    switch (value) {
+      case 1:
+        return "😡"; // TERRIBLE
+      case 2:
+        return "😖"; // VERY_POOR
+      case 3:
+        return "😞"; // POOR
+      case 4:
+        return "😕"; // BELOW_AVERAGE
+      case 5:
+        return "😐"; // AVERAGE
+      case 6:
+        return "🙂"; // ABOVE_AVERAGE
+      case 7:
+        return "😌"; // GOOD
+      case 8:
+        return "😎"; // VERY_GOOD
+      case 9:
+        return "🚀"; // EXCELLENT
+      case 10:
+        return "🧠🔥"; // WORLD_CLASS
+      default:
+        return "";
+    }
   }
 
   @override
@@ -102,60 +122,45 @@ class _DayStatusState extends State<DayStatus> {
           "Psychology Rating",
           style: Theme.of(context).textTheme.titleMedium,
         ),
+        const SizedBox(height: 20),
 
-        const SizedBox(height: 16),
-
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.red.shade100,
-                Colors.orange.shade100,
-                Colors.yellow.shade100,
-                Colors.green.shade100,
-                Colors.blue.shade100,
-              ],
+        Column(
+          children: [
+            Text(
+              _psychologyRate == null
+                  ? "Select your day psychology"
+                  : "${_emojiForScore(_psychologyRate!.value)}  ${_psychologyRate!.value}/10",
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
             ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              Text(
-                _psychologyRate == null
-                    ? "Select your trading psychology mood"
-                    : "${_emojiForScore(_psychologyRate!.value)}  ${_psychologyRate!.value}/10",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Slider(
-                value: (_psychologyRate?.value ?? 1).toDouble(),
-                min: 1,
-                max: 10,
-                divisions: 9,
-                activeColor: Colors.deepPurple,
-                inactiveColor: Colors.white,
-                onChanged: (value) {
-                  setState(() {
-                    _psychologyRate = ScoreEnum.fromValue(value.round());
-                  });
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text("😵"),
-                  Text("😕"),
-                  Text("😐"),
-                  Text("🙂"),
-                  Text("🧠🔥"),
-                ],
-              ),
-            ],
-          ),
+            const SizedBox(height: 16),
+
+            Slider(
+              value: (_psychologyRate?.value ?? 1).toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              label: _psychologyRate?.value.toString(),
+              onChanged: (value) {
+                setState(() {
+                  _psychologyRate = ScoreEnum.fromValue(value.round());
+                });
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            /// Emoji scale row (1 → 10)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(10, (index) {
+                final score = index + 1;
+                return Text(
+                  _emojiForScore(score),
+                  style: const TextStyle(fontSize: 16),
+                );
+              }),
+            ),
+          ],
         ),
 
         const SizedBox(height: 32),

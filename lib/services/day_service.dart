@@ -32,7 +32,6 @@ class DayService {
   }
 
   Future<DayModel> update(int id, Object requestObj) async {
-    print(requestObj);
     final response = await http.put(
       Uri.parse('${ApiConstants.dayURL}/$id'),
       headers: {'Content-Type': 'application/json'},

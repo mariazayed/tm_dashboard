@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../enums/score_enum.dart';
 import '../../../models/day_model.dart';
 import '../../../services/day_service.dart';
 import 'calendar_state.dart';
@@ -23,7 +24,9 @@ class _DayStatusState extends State<DayStatus> {
   bool noWork = false;
   bool ended = false;
 
-  String _notes = ''; // Safe default for notes
+  String _notes = '';
+
+  ScoreEnum? _psychologyRate; // nullable → no default value
 
   @override
   void initState() {
@@ -47,12 +50,22 @@ class _DayStatusState extends State<DayStatus> {
 
     _notes = widget.day.notes ?? '';
     _notesController.text = _notes;
+
+    _psychologyRate = widget.day.psychologyRate; // no default
   }
 
   @override
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  String _emojiForScore(int value) {
+    if (value <= 2) return "😵";
+    if (value <= 4) return "😕";
+    if (value <= 6) return "😐";
+    if (value <= 8) return "🙂";
+    return "🧠🔥";
   }
 
   @override
@@ -63,33 +76,89 @@ class _DayStatusState extends State<DayStatus> {
         /// -------- Status Chips --------
         Wrap(
           spacing: 12,
-
           children: [
             FilterChip(
               label: const Text("Weekend"),
               selected: weekend,
-              onSelected: (v) => setState(() {
-                weekend = v;
-              }),
+              onSelected: (v) => setState(() => weekend = v),
             ),
             FilterChip(
               label: const Text("No Work"),
               selected: noWork,
-              onSelected: (v) => setState(() {
-                noWork = v;
-              }),
+              onSelected: (v) => setState(() => noWork = v),
             ),
             FilterChip(
               label: const Text("Ended"),
               selected: ended,
-              onSelected: (v) => setState(() {
-                ended = v;
-              }),
+              onSelected: (v) => setState(() => ended = v),
             ),
           ],
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
+
+        /// -------- Psychology Slider --------
+        Text(
+          "Psychology Rating",
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+
+        const SizedBox(height: 16),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.red.shade100,
+                Colors.orange.shade100,
+                Colors.yellow.shade100,
+                Colors.green.shade100,
+                Colors.blue.shade100,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              Text(
+                _psychologyRate == null
+                    ? "Select your trading psychology mood"
+                    : "${_emojiForScore(_psychologyRate!.value)}  ${_psychologyRate!.value}/10",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Slider(
+                value: (_psychologyRate?.value ?? 1).toDouble(),
+                min: 1,
+                max: 10,
+                divisions: 9,
+                activeColor: Colors.deepPurple,
+                inactiveColor: Colors.white,
+                onChanged: (value) {
+                  setState(() {
+                    _psychologyRate = ScoreEnum.fromValue(value.round());
+                  });
+                },
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text("😵"),
+                  Text("😕"),
+                  Text("😐"),
+                  Text("🙂"),
+                  Text("🧠🔥"),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 32),
 
         /// -------- Notes --------
         Text("Notes", style: Theme.of(context).textTheme.titleMedium),
@@ -128,6 +197,7 @@ class _DayStatusState extends State<DayStatus> {
   void _saveDaySettings() {
     final updated = widget.day.copyWith(
       weekend: weekend,
+      psychologyRate: _psychologyRate,
       noWork: noWork,
       ended: ended,
       notes: _notesController.text.trim(),

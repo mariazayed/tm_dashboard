@@ -6,7 +6,6 @@ import '../constants/route_names.dart';
 import '../screens/assets/assets_screen.dart';
 import '../screens/calendar/calendar_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
-import '../screens/memoir/memoir_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
 import '../screens/trade_journal/trade_journal_screen.dart';

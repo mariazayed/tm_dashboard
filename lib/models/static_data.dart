@@ -8,7 +8,6 @@ import 'package:tm_dashboard/models/trade_direction_model.dart';
 import 'package:tm_dashboard/models/trade_update_model.dart';
 import 'package:tm_dashboard/models/volatility_model.dart';
 
-import 'boost_rule_model.dart';
 import 'entry_confirmation_model.dart';
 import 'entry_reason_model.dart';
 import 'entry_type_model.dart';
@@ -17,6 +16,7 @@ import 'exit_reason_model.dart';
 import 'invalidation_condition_model.dart';
 import 'market_bias_model.dart';
 import 'market_state_model.dart';
+import 'score_model.dart';
 
 class StaticDataResponse {
   List<TradeDirectionModel> tradeDirections;
@@ -29,7 +29,7 @@ class StaticDataResponse {
   List<ProbabilityModel> probabilities;
   List<VolatilityModel> volatilities;
   List<ScalingRuleModel> scalingRules;
-  List<BoostRuleModel> boostRules;
+  List<ScoreModel> scoreList;
   List<StopLossPlacementReasonModel> stopLossPlacementReasons;
   List<TakeProfitPlacementReasonModel> takeProfitPlacementReasons;
   List<EntryTypeModel> entryTypes;
@@ -49,7 +49,7 @@ class StaticDataResponse {
     required this.probabilities,
     required this.volatilities,
     required this.scalingRules,
-    required this.boostRules,
+    required this.scoreList,
     required this.stopLossPlacementReasons,
     required this.takeProfitPlacementReasons,
     required this.entryTypes,
@@ -130,10 +130,10 @@ class StaticDataResponse {
           .toList();
     }
 
-    List<BoostRuleModel> boostRules = [];
-    if (json['boostRules'] != null) {
-      boostRules = (json['boostRules'] as List<dynamic>)
-          .map((e) => BoostRuleModel.fromJson(e))
+    List<ScoreModel> scoreList = [];
+    if (json['scoreList'] != null) {
+      scoreList = (json['scoreList'] as List<dynamic>)
+          .map((e) => ScoreModel.fromJson(e))
           .toList();
     }
 
@@ -199,7 +199,7 @@ class StaticDataResponse {
       probabilities: probabilities,
       volatilities: volatilities,
       scalingRules: scalingRules,
-      boostRules: boostRules,
+      scoreList: scoreList,
       stopLossPlacementReasons: stopLossPlacementReasons,
       takeProfitPlacementReasons: takeProfitPlacementReasons,
       entryTypes: entryTypes,

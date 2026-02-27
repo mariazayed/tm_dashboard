@@ -30,11 +30,6 @@ final GoRouter routes = GoRouter(
               builder: (context, state) => CalendarScreen(),
             ),
             GoRoute(
-              name: RouteNames.memoir,
-              path: 'memoir',
-              builder: (context, state) => MemoirScreen(),
-            ),
-            GoRoute(
               name: RouteNames.riskManagement,
               path: 'risk-management',
               builder: (context, state) => RiskManagementScreen(),

@@ -222,7 +222,6 @@ List<_MenuItem> _menus(BuildContext context) {
   return [
     _MenuItem('Home', RouteNames.home),
     _MenuItem('Calendar', RouteNames.calendar),
-    _MenuItem('Memoir', RouteNames.memoir),
     _MenuItem('Trade Journaling', RouteNames.tradeJournal),
     _MenuItem('Risk Management', RouteNames.riskManagement),
     _MenuItem('Assets', RouteNames.assets),

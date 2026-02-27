@@ -18,7 +18,8 @@ class CapitalStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return SizedBox(
+      height: 150, // fixed height
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -52,11 +53,15 @@ class CapitalStatCard extends StatelessWidget {
                       child: Icon(icon, size: 18, color: color),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ],

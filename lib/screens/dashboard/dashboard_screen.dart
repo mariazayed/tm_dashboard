@@ -14,7 +14,6 @@ import '../../services/strict_rules_service.dart';
 import 'capital_list.dart';
 import 'capital_stat_card.dart';
 import 'classes/capital_dashboard_helper.dart';
-import 'notebook_lines_painter.dart';
 import 'summary_section.dart';
 import 'weekly_history_table.dart';
 import 'weekly_pnl_chart.dart';
@@ -134,81 +133,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       setState(() => _isRulesLoading = false);
       debugPrint('Error fetching rules: $e');
     }
-  }
-
-  Widget _buildSection({
-    required String title,
-    required bool loading,
-    required bool isEmpty,
-    required String text,
-    required Color color,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        /// Section Title
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 16),
-
-        loading
-            ? const Center(child: CircularProgressIndicator())
-            : isEmpty
-            ? const Text("No data available")
-            : AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0.1, 0),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Container(
-                  key: ValueKey(text),
-                  padding: const EdgeInsets.all(24),
-                  height: 280,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 30,
-                        color: Colors.black.withOpacity(0.05),
-                        offset: const Offset(0, 15),
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: CustomPaint(painter: NotebookLinesPainter()),
-                      ),
-                      Center(
-                        child: Text(
-                          text,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            height: 1.5,
-                            color: Colors.grey.shade900,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-      ],
-    );
   }
 
   Future<void> _fetchCapitals() async {
@@ -585,6 +509,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                   child: Container(
+                    height: 260, // <-- FIXED HEIGHT
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
@@ -682,9 +607,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color currentNoteColor = _colors[_currentNoteIndex % _colors.length];
-    final Color currentRuleColor = _colors[_currentRuleIndex % _colors.length];
-
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
       floatingActionButton: Column(
@@ -803,23 +725,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     Row(
                       children: [
-                        CapitalStatCard(
-                          title: "Total Deposits",
-                          value: helper.totalDeposits,
-                          color: Colors.green.shade500,
-                          icon: Icons.south_west_rounded,
-                          onTap: () => _openFilteredCapitalDialog(
-                            CapitalReasonEnum.DEPOSIT,
+                        Expanded(
+                          child: CapitalStatCard(
+                            title: "Total Deposits",
+                            value: helper.totalDeposits,
+                            color: Colors.green.shade500,
+                            icon: Icons.south_west_rounded,
+                            onTap: () => _openFilteredCapitalDialog(
+                              CapitalReasonEnum.DEPOSIT,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 16),
-                        CapitalStatCard(
-                          title: "Total Withdraws",
-                          value: _totalWithdraws,
-                          color: Colors.red.shade400,
-                          icon: Icons.north_east_rounded,
-                          onTap: () => _openFilteredCapitalDialog(
-                            CapitalReasonEnum.WITHDRAW,
+                        Expanded(
+                          child: CapitalStatCard(
+                            title: "Total Withdraws",
+                            value: _totalWithdraws,
+                            color: Colors.red.shade400,
+                            icon: Icons.north_east_rounded,
+                            onTap: () => _openFilteredCapitalDialog(
+                              CapitalReasonEnum.WITHDRAW,
+                            ),
                           ),
                         ),
                       ],

@@ -134,36 +134,52 @@ class _ModernSidebar extends StatelessWidget {
     final items = _menus(context);
 
     return items.map((item) {
-      final isSelected = currentRoute == item.routeName;
+      if (item.hasChildren) {
+        return ExpansionTile(
+          title: Text(item.label),
+          children: item.children!
+              .map((child) => _buildLeaf(context, child, currentRoute))
+              .toList(),
+        );
+      }
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Material(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-              : Colors.transparent,
+      return _buildLeaf(context, item, currentRoute);
+    }).toList();
+  }
+
+  Widget _buildLeaf(
+    BuildContext context,
+    _MenuItem item,
+    String? currentRoute,
+  ) {
+    final isSelected = currentRoute == item.routeName;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Material(
+        color: isSelected
+            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => context.goNamed(item.routeName),
-            child: Container(
-              alignment: Alignment.centerLeft, // 👈 THIS FIXES IT
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Text(
-                item.label,
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-                ),
+          onTap: () => context.goNamed(item.routeName!),
+          child: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Text(
+              item.label,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
               ),
             ),
           ),
         ),
-      );
-    }).toList();
+      ),
+    );
   }
 }
 
@@ -185,20 +201,26 @@ class _ModernDrawer extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: _menus(context).map((item) {
-                  final isSelected = currentRoute == item.routeName;
+                  if (item.hasChildren) {
+                    return ExpansionTile(
+                      title: Text(item.label),
+                      children: item.children!.map((child) {
+                        return ListTile(
+                          title: Text(child.label),
+                          onTap: () {
+                            Navigator.pop(context);
+                            context.goNamed(child.routeName!);
+                          },
+                        );
+                      }).toList(),
+                    );
+                  }
 
                   return ListTile(
-                    selected: isSelected,
-                    selectedTileColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withOpacity(0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     title: Text(item.label),
                     onTap: () {
                       Navigator.pop(context);
-                      context.goNamed(item.routeName);
+                      context.goNamed(item.routeName!);
                     },
                   );
                 }).toList(),
@@ -213,20 +235,28 @@ class _ModernDrawer extends StatelessWidget {
 
 class _MenuItem {
   final String label;
-  final String routeName;
+  final String? routeName;
+  final List<_MenuItem>? children;
 
-  _MenuItem(this.label, this.routeName);
+  bool get hasChildren => children != null && children!.isNotEmpty;
+
+  _MenuItem({required this.label, this.routeName, this.children});
 }
 
 List<_MenuItem> _menus(BuildContext context) {
   return [
-    _MenuItem('Home', RouteNames.home),
-    _MenuItem('Calendar', RouteNames.calendar),
-    _MenuItem('Trade Journaling', RouteNames.tradeJournal),
-    _MenuItem('Risk Management', RouteNames.riskManagement),
-    _MenuItem('Assets', RouteNames.assets),
-    _MenuItem('Reminder Notes', RouteNames.reminderNotes),
-    _MenuItem('Strict Rules', RouteNames.strictRules),
-    _MenuItem('Strategies', RouteNames.strategies),
+    _MenuItem(label: 'Home', routeName: RouteNames.home),
+    _MenuItem(label: 'Calendar', routeName: RouteNames.calendar),
+    _MenuItem(label: 'Trade Journal', routeName: RouteNames.tradeJournal),
+    _MenuItem(label: 'Strategies', routeName: RouteNames.strategies),
+    _MenuItem(
+      label: 'Rules',
+      children: [
+        _MenuItem(label: 'Strict Rules', routeName: RouteNames.strictRules),
+        _MenuItem(label: 'Reminder Notes', routeName: RouteNames.reminderNotes),
+      ],
+    ),
+    // _MenuItem('Risk Management', RouteNames.riskManagement),
+    // _MenuItem('Assets', RouteNames.assets),
   ];
 }

@@ -106,18 +106,22 @@ class _ModernSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
           /// Header
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              "TM 🧠",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: const [
+                Text(
+                  "TM 🧠",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                ),
+              ],
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
           /// Scrollable menu area
           Expanded(
@@ -135,11 +139,26 @@ class _ModernSidebar extends StatelessWidget {
 
     return items.map((item) {
       if (item.hasChildren) {
-        return ExpansionTile(
-          title: Text(item.label),
-          children: item.children!
-              .map((child) => _buildLeaf(context, child, currentRoute))
-              .toList(),
+        return Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 2,
+            ),
+            childrenPadding: const EdgeInsets.only(bottom: 6),
+            iconColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            collapsedIconColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withOpacity(0.6),
+            title: Text(
+              item.label,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            children: item.children!
+                .map((child) => _buildLeaf(context, child, currentRoute))
+                .toList(),
+          ),
         );
       }
 
@@ -153,28 +172,28 @@ class _ModernSidebar extends StatelessWidget {
     String? currentRoute,
   ) {
     final isSelected = currentRoute == item.routeName;
+    final theme = Theme.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: Material(
-        color: isSelected
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => context.goNamed(item.routeName!),
-          child: Container(
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            child: Text(
-              item.label,
-              style: TextStyle(
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : null,
-              ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => context.goNamed(item.routeName!),
+        child: Container(
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? theme.colorScheme.primary.withOpacity(0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            item.label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected ? theme.colorScheme.primary : null,
             ),
           ),
         ),
@@ -248,7 +267,6 @@ List<_MenuItem> _menus(BuildContext context) {
     _MenuItem(label: 'Home', routeName: RouteNames.home),
     _MenuItem(label: 'Calendar', routeName: RouteNames.calendar),
     _MenuItem(label: 'Trade Journal', routeName: RouteNames.tradeJournal),
-    _MenuItem(label: 'Strategies', routeName: RouteNames.strategies),
     _MenuItem(
       label: 'Rules',
       children: [
@@ -256,7 +274,16 @@ List<_MenuItem> _menus(BuildContext context) {
         _MenuItem(label: 'Reminder Notes', routeName: RouteNames.reminderNotes),
       ],
     ),
-    // _MenuItem('Risk Management', RouteNames.riskManagement),
-    // _MenuItem('Assets', RouteNames.assets),
+    _MenuItem(
+      label: 'Others',
+      children: [
+        _MenuItem(label: 'Strategies', routeName: RouteNames.strategies),
+        _MenuItem(
+          label: 'Risk Management',
+          routeName: RouteNames.riskManagement,
+        ),
+        _MenuItem(label: 'Assets', routeName: RouteNames.assets),
+      ],
+    ),
   ];
 }

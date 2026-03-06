@@ -39,6 +39,34 @@ class WeekRow extends StatelessWidget {
     }
   }
 
+  /// Background color for each psychology score
+  Color? _backgroundForScore(int value) {
+    switch (value) {
+      case 1:
+        return const Color(0xFFFFCDD2); // 😡 strong red
+      case 2:
+        return const Color(0xFFFFE0E0); // 😖 soft red
+      case 3:
+        return const Color(0xFFFFCCBC); // 😞 orange-red
+      case 4:
+        return const Color(0xFFFFE0B2); // 😕 light orange
+      case 5:
+        return const Color(0xFFE0E0E0); // 😐 neutral grey
+      case 6:
+        return const Color(0xFFC8E6C9); // 🙂 light green
+      case 7:
+        return const Color(0xFFA5D6A7); // 😌 calm green
+      case 8:
+        return const Color(0xFFB3E5FC); // 😎 cool blue
+      case 9:
+        return const Color(0xFFD1C4E9); // 🚀 purple
+      case 10:
+        return const Color(0xFFFFF59D); // 🧠🔥 gold
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -60,12 +88,17 @@ class WeekRow extends StatelessWidget {
         Color backgroundColor;
         Color textColor = const Color(0xFF1F2937);
         double opacity = 1.0;
+
         // Mark days with notes with a different background
         // if (day.notes.isNotEmpty) {
         //   backgroundColor = Colors.yellow.shade100; // background for notes
         // } else
 
-        if (isToday) {
+        /// ✅ Psychology background (added)
+        if (day.psychologyRate != null) {
+          backgroundColor =
+              _backgroundForScore(day.psychologyRate!.value) ?? Colors.white;
+        } else if (isToday) {
           backgroundColor = Theme.of(context).colorScheme.primaryContainer;
           textColor = Theme.of(context).colorScheme.onPrimaryContainer;
         } else if (day.noWork) {

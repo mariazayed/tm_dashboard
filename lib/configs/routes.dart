@@ -6,6 +6,7 @@ import '../constants/route_names.dart';
 import '../screens/assets/assets_screen.dart';
 import '../screens/calendar/calendar_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/goals/goals_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
 import '../screens/trade_journal/trade_journal_screen.dart';
@@ -37,6 +38,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.tradeJournal,
               path: 'trade-journal',
               builder: (context, state) => TradeJournalScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.goals,
+              path: 'goals',
+              builder: (context, state) => GoalsScreen(),
             ),
             GoRoute(
               name: RouteNames.assets,

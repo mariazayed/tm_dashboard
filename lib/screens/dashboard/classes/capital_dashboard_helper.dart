@@ -47,6 +47,43 @@ class CapitalDashboardHelper {
       .where((c) => c.reason == CapitalReasonEnum.WITHDRAW)
       .fold(0.0, (a, b) => a + b.amount);
 
+  /// Chronological running balance of the account: every capital record
+  /// (deposits, withdrawals, and trade profit/loss) applied in dateTime
+  /// order, so this is the *actual* capital curve — as opposed to
+  /// [weeklyPnl] which only nets PROFIT/LOSS per week and ignores
+  /// deposits/withdrawals.
+  ///
+  /// Sign convention: PROFIT and LOSS amounts already arrive signed from
+  /// the server (LOSS is a negative pnl), and DEPOSIT amounts are entered
+  /// as positive additions to capital, so those three are applied as-is.
+  /// WITHDRAW amounts are entered as a positive magnitude (see the
+  /// deposit/withdraw dialog on the dashboard), so they're subtracted here.
+  List<MapEntry<DateTime, double>> capitalOverTime() {
+    if (capitals.isEmpty) return [];
+
+    final sorted = List<CapitalModel>.from(capitals)
+      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    double running = 0;
+    final List<MapEntry<DateTime, double>> points = [];
+
+    for (final c in sorted) {
+      final signedAmount =
+          c.reason == CapitalReasonEnum.WITHDRAW ? -c.amount : c.amount;
+      running += signedAmount;
+      points.add(MapEntry(c.dateTime, running));
+    }
+
+    return points;
+  }
+
+  /// The account's current capital — the last point of [capitalOverTime],
+  /// or 0 if there's no capital history yet.
+  double get currentCapital {
+    final points = capitalOverTime();
+    return points.isEmpty ? 0 : points.last.value;
+  }
+
   List<MapEntry<DateTime, double>> weeklyPnl() {
     final Map<DateTime, double> weekly = {};
 

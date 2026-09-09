@@ -14,6 +14,7 @@ import '../../services/strict_rules_service.dart';
 import 'capital_list.dart';
 import 'capital_stat_card.dart';
 import 'classes/capital_dashboard_helper.dart';
+import 'capital_growth_chart.dart';
 import 'summary_section.dart';
 import 'weekly_history_table.dart';
 import 'weekly_pnl_chart.dart';
@@ -750,6 +751,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ],
                     ),
+
+                    const SizedBox(height: 24),
+
+                    CapitalGrowthChart(data: helper.capitalOverTime()),
 
                     const SizedBox(height: 24),
 

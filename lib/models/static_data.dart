@@ -16,6 +16,7 @@ import 'exit_reason_model.dart';
 import 'invalidation_condition_model.dart';
 import 'market_bias_model.dart';
 import 'market_state_model.dart';
+import 'mistake_tag_model.dart';
 import 'score_model.dart';
 
 class StaticDataResponse {
@@ -30,6 +31,7 @@ class StaticDataResponse {
   List<VolatilityModel> volatilities;
   List<ScalingRuleModel> scalingRules;
   List<ScoreModel> scoreList;
+  List<MistakeTagModel> mistakeTags;
   List<StopLossPlacementReasonModel> stopLossPlacementReasons;
   List<TakeProfitPlacementReasonModel> takeProfitPlacementReasons;
   List<EntryTypeModel> entryTypes;
@@ -50,6 +52,7 @@ class StaticDataResponse {
     required this.volatilities,
     required this.scalingRules,
     required this.scoreList,
+    required this.mistakeTags,
     required this.stopLossPlacementReasons,
     required this.takeProfitPlacementReasons,
     required this.entryTypes,
@@ -137,6 +140,13 @@ class StaticDataResponse {
           .toList();
     }
 
+    List<MistakeTagModel> mistakeTags = [];
+    if (json['mistakeTags'] != null) {
+      mistakeTags = (json['mistakeTags'] as List<dynamic>)
+          .map((e) => MistakeTagModel.fromJson(e))
+          .toList();
+    }
+
     List<StopLossPlacementReasonModel> stopLossPlacementReasons = [];
     if (json['stopLossPlacementReasons'] != null) {
       stopLossPlacementReasons =
@@ -200,6 +210,7 @@ class StaticDataResponse {
       volatilities: volatilities,
       scalingRules: scalingRules,
       scoreList: scoreList,
+      mistakeTags: mistakeTags,
       stopLossPlacementReasons: stopLossPlacementReasons,
       takeProfitPlacementReasons: takeProfitPlacementReasons,
       entryTypes: entryTypes,

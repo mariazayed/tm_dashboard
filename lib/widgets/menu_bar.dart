@@ -95,7 +95,7 @@ class MainMenu extends StatelessWidget {
 class _ModernSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final currentRoute = GoRouterState.of(context).name;
+    final location = GoRouterState.of(context).uri.path;
 
     return Container(
       width: 260,
@@ -126,7 +126,7 @@ class _ModernSidebar extends StatelessWidget {
           /// Scrollable menu area
           Expanded(
             child: SingleChildScrollView(
-              child: Column(children: _menuItems(context, currentRoute)),
+              child: Column(children: _menuItems(context, location)),
             ),
           ),
         ],
@@ -134,14 +134,19 @@ class _ModernSidebar extends StatelessWidget {
     );
   }
 
-  List<Widget> _menuItems(BuildContext context, String? currentRoute) {
+  List<Widget> _menuItems(BuildContext context, String location) {
     final items = _menus(context);
 
     return items.map((item) {
       if (item.hasChildren) {
+        final hasSelectedChild = item.children!.any(
+          (child) => _isActiveRoute(context, location, child.routeName),
+        );
+
         return Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
+            initiallyExpanded: hasSelectedChild,
             tilePadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 2,
@@ -153,25 +158,27 @@ class _ModernSidebar extends StatelessWidget {
             ).colorScheme.onSurface.withOpacity(0.6),
             title: Text(
               item.label,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: hasSelectedChild
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
+              ),
             ),
             children: item.children!
-                .map((child) => _buildLeaf(context, child, currentRoute))
+                .map((child) => _buildLeaf(context, child, location))
                 .toList(),
           ),
         );
       }
 
-      return _buildLeaf(context, item, currentRoute);
+      return _buildLeaf(context, item, location);
     }).toList();
   }
 
-  Widget _buildLeaf(
-    BuildContext context,
-    _MenuItem item,
-    String? currentRoute,
-  ) {
-    final isSelected = currentRoute == item.routeName;
+  Widget _buildLeaf(BuildContext context, _MenuItem item, String location) {
+    final isSelected = _isActiveRoute(context, location, item.routeName);
     final theme = Theme.of(context);
 
     return Padding(
@@ -205,7 +212,29 @@ class _ModernSidebar extends StatelessWidget {
 class _ModernDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final currentRoute = GoRouterState.of(context).name;
+    final location = GoRouterState.of(context).uri.path;
+    final theme = Theme.of(context);
+
+    Widget buildLeaf(_MenuItem item) {
+      final isSelected = _isActiveRoute(context, location, item.routeName);
+
+      return ListTile(
+        title: Text(
+          item.label,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            color: isSelected ? theme.colorScheme.primary : null,
+          ),
+        ),
+        selected: isSelected,
+        selectedTileColor: theme.colorScheme.primary.withOpacity(0.12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        onTap: () {
+          Navigator.pop(context);
+          context.goNamed(item.routeName!);
+        },
+      );
+    }
 
     return Drawer(
       child: SafeArea(
@@ -221,27 +250,29 @@ class _ModernDrawer extends StatelessWidget {
               child: ListView(
                 children: _menus(context).map((item) {
                   if (item.hasChildren) {
+                    final hasSelectedChild = item.children!.any(
+                      (child) =>
+                          _isActiveRoute(context, location, child.routeName),
+                    );
+
                     return ExpansionTile(
-                      title: Text(item.label),
-                      children: item.children!.map((child) {
-                        return ListTile(
-                          title: Text(child.label),
-                          onTap: () {
-                            Navigator.pop(context);
-                            context.goNamed(child.routeName!);
-                          },
-                        );
-                      }).toList(),
+                      initiallyExpanded: hasSelectedChild,
+                      title: Text(
+                        item.label,
+                        style: TextStyle(
+                          fontWeight: hasSelectedChild
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: hasSelectedChild
+                              ? theme.colorScheme.primary
+                              : null,
+                        ),
+                      ),
+                      children: item.children!.map(buildLeaf).toList(),
                     );
                   }
 
-                  return ListTile(
-                    title: Text(item.label),
-                    onTap: () {
-                      Navigator.pop(context);
-                      context.goNamed(item.routeName!);
-                    },
-                  );
+                  return buildLeaf(item);
                 }).toList(),
               ),
             ),
@@ -250,6 +281,19 @@ class _ModernDrawer extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Compares the current router location against the location a named
+/// route resolves to. `GoRouterState.of(context).name`/`.path` only
+/// reflect the specific route level a widget happens to be built at
+/// (e.g. inside a ShellRoute they can be null even on a matched sub-route),
+/// while `.uri` always reflects the full current location, so we resolve
+/// each menu item's target path via [GoRouter.namedLocation] and compare
+/// full paths instead.
+bool _isActiveRoute(BuildContext context, String location, String? routeName) {
+  if (routeName == null) return false;
+  final target = Uri.parse(GoRouter.of(context).namedLocation(routeName)).path;
+  return location == target;
 }
 
 class _MenuItem {
@@ -267,9 +311,9 @@ List<_MenuItem> _menus(BuildContext context) {
     _MenuItem(label: 'Home', routeName: RouteNames.home),
     _MenuItem(label: 'Calendar', routeName: RouteNames.calendar),
     _MenuItem(label: 'Trades', routeName: RouteNames.trades),
-    _MenuItem(label: 'Trade Review', routeName: RouteNames.tradeReview),
     _MenuItem(label: 'Goals', routeName: RouteNames.goals),
     _MenuItem(label: 'Deposits & Withdraws', routeName: RouteNames.capital),
+    _MenuItem(label: 'Decisions', routeName: RouteNames.decisions),
     _MenuItem(
       label: 'Rules',
       children: [

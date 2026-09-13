@@ -1,19 +1,34 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tm_dashboard/enums/day_of_week_enum.dart';
 import 'package:tm_dashboard/services/day_service.dart';
+import 'package:tm_dashboard/services/trade_service.dart';
 
 import '../../models/day_model.dart';
+import '../../models/trade_model.dart';
 
 class CalendarState {
   final DateTime currentMonth;
   final Map<int, DayModel> days;
 
-  CalendarState({required this.currentMonth, required this.days});
+  /// Trades for [currentMonth], keyed by day-of-month, for the "trades
+  /// overview per day" shown on each cell and in the day-detail dialog.
+  final Map<int, List<Trade>> tradesByDay;
 
-  CalendarState copyWith({DateTime? currentMonth, Map<int, DayModel>? days}) {
+  CalendarState({
+    required this.currentMonth,
+    required this.days,
+    this.tradesByDay = const {},
+  });
+
+  CalendarState copyWith({
+    DateTime? currentMonth,
+    Map<int, DayModel>? days,
+    Map<int, List<Trade>>? tradesByDay,
+  }) {
     return CalendarState(
       currentMonth: currentMonth ?? this.currentMonth,
       days: days ?? this.days,
+      tradesByDay: tradesByDay ?? this.tradesByDay,
     );
   }
 }
@@ -79,7 +94,26 @@ class CalendarCubit extends Cubit<CalendarState> {
       print("Error fetching days: $e");
     }
 
-    emit(state.copyWith(days: map));
+    // 4. Fetch this month's trades for the per-day trades overview. Kept in
+    // its own try/catch so a trades-fetch failure doesn't blank out the
+    // days grid built above (and vice versa).
+    final Map<int, List<Trade>> tradesMap = {};
+    try {
+      final monthTrades = await TradeService.getForMonth(state.currentMonth);
+
+      for (final trade in monthTrades) {
+        final entryLocal = trade.entryDateTime.toLocal();
+
+        if (entryLocal.month == state.currentMonth.month &&
+            entryLocal.year == state.currentMonth.year) {
+          tradesMap.putIfAbsent(entryLocal.day, () => []).add(trade);
+        }
+      }
+    } catch (e) {
+      print("Error fetching trades: $e");
+    }
+
+    emit(state.copyWith(days: map, tradesByDay: tradesMap));
   }
 
   Future<void> nextMonth() async {

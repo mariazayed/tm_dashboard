@@ -7,11 +7,11 @@ import '../screens/assets/assets_screen.dart';
 import '../screens/calendar/calendar_screen.dart';
 import '../screens/capital/capital_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/decisions/decisions_screen.dart';
 import '../screens/goals/goals_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
 import '../screens/trade_journal/trade_journal_screen.dart';
-import '../screens/trade_review/trade_review_screen.dart';
 import '../widgets/menu_bar.dart';
 
 final GoRouter routes = GoRouter(
@@ -42,11 +42,6 @@ final GoRouter routes = GoRouter(
               builder: (context, state) => TradesScreen(),
             ),
             GoRoute(
-              name: RouteNames.tradeReview,
-              path: 'trade-review',
-              builder: (context, state) => TradeReviewScreen(),
-            ),
-            GoRoute(
               name: RouteNames.goals,
               path: 'goals',
               builder: (context, state) => GoalsScreen(),
@@ -55,6 +50,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.capital,
               path: 'capital',
               builder: (context, state) => CapitalScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.decisions,
+              path: 'decisions',
+              builder: (context, state) => DecisionsScreen(),
             ),
             GoRoute(
               name: RouteNames.assets,

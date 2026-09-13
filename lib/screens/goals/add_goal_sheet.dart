@@ -244,7 +244,16 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
             onPressed: _saving ? null : _submit,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(_saving ? 'Saving...' : (_isEdit ? 'Save Changes' : 'Create Goal')),
+              child: _saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(_isEdit ? 'Save Changes' : 'Create Goal'),
             ),
           ),
         ],

@@ -65,6 +65,9 @@ class _CapitalScreenState extends State<CapitalScreen> {
     final TextEditingController amountController = TextEditingController();
     final TextEditingController notesController = TextEditingController();
     DateTime selectedDateTime = DateTime.now();
+    // Declared outside the StatefulBuilder so it survives its rebuilds --
+    // true while the CapitalService.create() POST below is in flight.
+    bool isSubmitting = false;
 
     await showDialog(
       context: context,
@@ -154,32 +157,49 @@ class _CapitalScreenState extends State<CapitalScreen> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: isSubmitting ? null : () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    final value = double.tryParse(amountController.text);
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final value = double.tryParse(amountController.text);
 
-                    if (value == null) return;
+                          if (value == null) return;
 
-                    final model = CapitalModel(
-                      dateTime: selectedDateTime,
-                      reason: reason,
-                      amount: value,
-                      notes: notesController.text.trim().isEmpty
-                          ? null
-                          : notesController.text.trim(),
-                    );
+                          final model = CapitalModel(
+                            dateTime: selectedDateTime,
+                            reason: reason,
+                            amount: value,
+                            notes: notesController.text.trim().isEmpty
+                                ? null
+                                : notesController.text.trim(),
+                          );
 
-                    await CapitalService.create([
-                      {...model.toJson()},
-                    ]);
-
-                    if (mounted) Navigator.pop(context);
-                    _fetchCapitals();
-                  },
-                  child: const Text('Confirm'),
+                          setState(() => isSubmitting = true);
+                          try {
+                            await CapitalService.create([
+                              {...model.toJson()},
+                            ]);
+                            if (mounted) Navigator.pop(context);
+                            _fetchCapitals();
+                          } catch (e) {
+                            setState(() => isSubmitting = false);
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to save: $e')),
+                              );
+                            }
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Confirm'),
                 ),
               ],
             );

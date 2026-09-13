@@ -8,14 +8,22 @@ import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
 import '../../models/reminder_note_model.dart';
 import '../../models/strict_rule_model.dart';
+import '../../models/trade_model.dart';
 import '../../services/capital_service.dart';
 import '../../services/reminder_notes_service.dart';
 import '../../services/strict_rules_service.dart';
+import '../../services/trade_service.dart';
 import 'capital_list.dart';
 import 'capital_stat_card.dart';
 import 'classes/capital_dashboard_helper.dart';
+import 'classes/trade_analytics_helper.dart';
 import 'capital_growth_chart.dart';
+import 'goals_progress_section.dart';
+import 'mistake_tag_chart.dart';
+import 'session_performance_chart.dart';
+import 'strategy_performance_chart.dart';
 import 'summary_section.dart';
+import 'trade_stats_row.dart';
 import 'weekly_history_table.dart';
 import 'weekly_pnl_chart.dart';
 
@@ -39,6 +47,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Timer? _notesTimer;
   Timer? _rulesTimer;
 
+  // Recent-trade history backing the Trade Performance section (stat row +
+  // PnL-by-strategy/session + mistake frequency). Bounded fetch -- see
+  // TradeService.getRecentForAnalytics -- not the full auto-imported
+  // history.
+  List<Trade> _trades = [];
+  bool _isTradesLoading = true;
+
   // Modern light colors for sticky notes
   final List<Color> _colors = [
     Colors.yellow.shade100,
@@ -59,12 +74,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return created;
   }
 
+  TradeAnalyticsHelper get analytics => TradeAnalyticsHelper(_trades);
+
   @override
   void initState() {
     super.initState();
     _fetchCapitals();
     _fetchNotes();
     _fetchRules();
+    _fetchTrades();
   }
 
   @override
@@ -149,6 +167,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _capitals = capitals;
       _helper = null;
     });
+  }
+
+  Future<void> _fetchTrades() async {
+    try {
+      // Bounded, recent-first fetch -- not the full continuously
+      // auto-imported trade history. See TradeService.getRecentForAnalytics.
+      final trades = await TradeService.getRecentForAnalytics();
+
+      if (!mounted) return;
+
+      setState(() {
+        _trades = trades;
+        _isTradesLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isTradesLoading = false);
+      debugPrint('Error fetching trades for dashboard analytics: $e');
+    }
   }
 
   void _openPnlBottomSheet({
@@ -493,6 +530,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildSectionHeader(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ],
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -573,6 +636,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ],
                           ),
 
+                    const SizedBox(height: 24),
+
+                    // Previously built but never wired into this screen.
+                    const GoalsProgressSection(),
+
                     SummarySection(
                       daily: helper.summaryFrom(helper.today),
                       weekly: helper.summaryFrom(helper.weekStart),
@@ -625,6 +693,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 24),
 
                     WeeklyPnlChart(weeklyData: helper.weeklyPnl()),
+
+                    const SizedBox(height: 24),
+
+                    // --- Trade Performance: computed from actual Trade
+                    // history (TradeAnalyticsHelper), as opposed to
+                    // everything above this line, which is derived from the
+                    // capital ledger only. ---
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _buildSectionHeader(
+                        context,
+                        title: "Trade Performance",
+                        subtitle: _isTradesLoading || _trades.isEmpty
+                            ? null
+                            : "Based on your last ${_trades.length} trade${_trades.length == 1 ? '' : 's'}",
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    TradeStatsRow(
+                      analytics: analytics,
+                      loading: _isTradesLoading,
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    isWide
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: StrategyPerformanceChart(
+                                  data: analytics.pnlByStrategy(),
+                                  loading: _isTradesLoading,
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                child: SessionPerformanceChart(
+                                  data: analytics.pnlBySession(),
+                                  loading: _isTradesLoading,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              StrategyPerformanceChart(
+                                data: analytics.pnlByStrategy(),
+                                loading: _isTradesLoading,
+                              ),
+                              const SizedBox(height: 24),
+                              SessionPerformanceChart(
+                                data: analytics.pnlBySession(),
+                                loading: _isTradesLoading,
+                              ),
+                            ],
+                          ),
+
+                    const SizedBox(height: 24),
+
+                    MistakeTagChart(
+                      data: analytics.mistakeTagFrequency(),
+                      loading: _isTradesLoading,
+                    ),
 
                     const SizedBox(height: 24),
 

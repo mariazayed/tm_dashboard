@@ -10,4 +10,5 @@ class ApiConstants {
   static const String reminderNotesURL = '$baseURL/reminderNotes';
   static const String strictRulesURL = '$baseURL/strictRules';
   static const String goalURL = '$baseURL/goal';
+  static const String decisionURL = '$baseURL/decision';
 }

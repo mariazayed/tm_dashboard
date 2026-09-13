@@ -15,6 +15,11 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
   final List<String> _draftRules = [];
   bool _isLoading = true;
   bool _isAdding = false;
+  // True while _submitAllDrafts()'s create request is in flight.
+  bool _isSubmittingDrafts = false;
+  // Ids with a delete request currently in flight, so only that rule's
+  // delete button shows a spinner instead of the whole screen blocking.
+  final Set<int> _deletingRuleIds = {};
 
   final TextEditingController _controller = TextEditingController();
 
@@ -71,7 +76,8 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
   }
 
   Future<void> _submitAllDrafts() async {
-    if (_draftRules.isEmpty) return;
+    if (_draftRules.isEmpty || _isSubmittingDrafts) return;
+    setState(() => _isSubmittingDrafts = true);
     try {
       List<dynamic> rules = _draftRules
           .map((text) => StrictRuleModel(text: text, id: 0).toJson())
@@ -82,16 +88,19 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
       setState(() {
         _draftRules.clear();
         _isAdding = false;
+        _isSubmittingDrafts = false;
       });
       _fetchRules();
     } catch (e) {
       debugPrint('Error submitting rules: $e');
+      if (mounted) setState(() => _isSubmittingDrafts = false);
     }
   }
 
   Widget _buildRuleCard(
     String text, {
     bool isDraft = false,
+    bool isDeleting = false,
     VoidCallback? onDelete,
   }) {
     return AnimatedContainer(
@@ -122,7 +131,16 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
                 ),
               ),
             ),
-            if (!isDraft && onDelete != null)
+            if (!isDraft && isDeleting)
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else if (!isDraft && onDelete != null)
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 onPressed: onDelete,
@@ -134,6 +152,8 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
   }
 
   Future<void> _deleteRule(int id) async {
+    if (_deletingRuleIds.contains(id)) return;
+    setState(() => _deletingRuleIds.add(id));
     try {
       await StrictRulesService.delete(id);
 
@@ -146,6 +166,8 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
       // });
     } catch (e) {
       debugPrint('Error deleting rule: $e');
+    } finally {
+      if (mounted) setState(() => _deletingRuleIds.remove(id));
     }
   }
 
@@ -193,6 +215,7 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
                   ..._rules.map(
                     (rule) => _buildRuleCard(
                       rule.text,
+                      isDeleting: _deletingRuleIds.contains(rule.id),
                       onDelete: () => _deleteRule(rule.id),
                     ),
                   ),
@@ -271,7 +294,7 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: ElevatedButton(
-                        onPressed: _submitAllDrafts,
+                        onPressed: _isSubmittingDrafts ? null : _submitAllDrafts,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -279,11 +302,20 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Center(
-                          child: Text(
-                            'Submit All',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
+                        child: Center(
+                          child: _isSubmittingDrafts
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Submit All',
+                                  style: TextStyle(fontSize: 16, color: Colors.white),
+                                ),
                         ),
                       ),
                     ),

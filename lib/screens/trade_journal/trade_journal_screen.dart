@@ -55,6 +55,18 @@ class _TradesScreenState extends State<TradesScreen> {
   int _nextPage = 0;
   bool _hasMore = true;
   bool _isLoadingMore = false;
+  // Separate from _isLoadingMore so the "Load more" and "Load all" buttons
+  // (and the auto-fetch-more-on-empty-filter callback below) can tell the
+  // two apart and avoid firing a second fetch loop on top of an ongoing one.
+  bool _isLoadingAll = false;
+
+  // Exact count of trades matching the search on the server (from the most
+  // recent page's `totalElements`), *not* how many pages have loaded so
+  // far -- see the "Trades" stat pill in _summaryRow(). Every
+  // POST .../search response carries this for free (BaseSearchService gets
+  // it from Spring Data's Page<T>), so there's no reason to make the user
+  // scroll to the end just to find out the real total.
+  int _totalTrades = 0;
 
   TradeJournalFilters _filters = const TradeJournalFilters();
   final _searchCtrl = TextEditingController();
@@ -83,7 +95,7 @@ class _TradesScreenState extends State<TradesScreen> {
   }
 
   void _onScroll() {
-    if (!_hasMore || _isLoadingMore) return;
+    if (!_hasMore || _isLoadingMore || _isLoadingAll) return;
     // Start fetching the next page a bit before the user hits the bottom,
     // so scrolling doesn't stall on the network round-trip.
     final threshold = _scrollController.position.maxScrollExtent - 600;
@@ -96,6 +108,7 @@ class _TradesScreenState extends State<TradesScreen> {
     _trades = [];
     _nextPage = 0;
     _hasMore = true;
+    _totalTrades = 0;
 
     // Sequential awaits (not Future.wait) -- avoids Future.wait's generic
     // type inference having to find a common type across List<Asset> and
@@ -120,16 +133,34 @@ class _TradesScreenState extends State<TradesScreen> {
       _trades = [..._trades, ...result.data];
       _hasMore = !result.last;
       _nextPage++;
+      _totalTrades = result.totalElements;
     });
   }
 
   Future<void> _loadMore() async {
-    if (!_hasMore || _isLoadingMore) return;
+    if (!_hasMore || _isLoadingMore || _isLoadingAll) return;
     setState(() => _isLoadingMore = true);
     try {
       await _fetchNextPage();
     } finally {
       if (mounted) setState(() => _isLoadingMore = false);
+    }
+  }
+
+  // Fetches every remaining page in one go, driven by the "Load all"
+  // button. Same underlying _fetchNextPage() as scroll/"Load more" --
+  // just looped to completion instead of one page at a time -- so
+  // _totalTrades / _hasMore end up exactly as they would from scrolling
+  // to the bottom, just without the scrolling.
+  Future<void> _loadAll() async {
+    if (!_hasMore || _isLoadingMore || _isLoadingAll) return;
+    setState(() => _isLoadingAll = true);
+    try {
+      while (_hasMore && mounted) {
+        await _fetchNextPage();
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingAll = false);
     }
   }
 
@@ -205,7 +236,8 @@ class _TradesScreenState extends State<TradesScreen> {
           if (filteredTrades.isEmpty &&
               _filters.isActive &&
               _hasMore &&
-              !_isLoadingMore) {
+              !_isLoadingMore &&
+              !_isLoadingAll) {
             WidgetsBinding.instance.addPostFrameCallback((_) => _loadMore());
           }
 
@@ -228,6 +260,10 @@ class _TradesScreenState extends State<TradesScreen> {
                       _groupingBar(),
                       const SizedBox(height: 16),
                       _summaryRow(filteredTrades, groups),
+                      if (_hasMore) ...[
+                        const SizedBox(height: 16),
+                        Center(child: _loadMoreControls()),
+                      ],
                       const SizedBox(height: 16),
                     ],
                   ),
@@ -266,19 +302,11 @@ class _TradesScreenState extends State<TradesScreen> {
                     ),
                   ),
               ],
-              if (_hasMore)
+              if (_hasMore && (_isLoadingMore || _isLoadingAll))
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: _isLoadingMore
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
+                    child: Center(child: _loadingIndicator()),
                   ),
                 ),
             ],
@@ -286,6 +314,65 @@ class _TradesScreenState extends State<TradesScreen> {
         },
       ),
     );
+  }
+
+  // ---------------- LOAD MORE / LOAD ALL ----------------
+
+  // Live in the header (top of the page, above the list) so they're visible
+  // without scrolling -- a short filtered list may never reach the
+  // scroll-triggered auto-fetch threshold, and "Load all" has no
+  // scroll-driven equivalent at all. The auto-fetch-on-scroll listener
+  // (_onScroll) still fires as before; _loadingIndicator() below is what
+  // gives that (and these buttons) visible feedback down at the bottom of
+  // the list while a page is actually being fetched.
+  Widget _loadMoreButtons() {
+    return Wrap(
+      spacing: 12,
+      alignment: WrapAlignment.center,
+      children: [
+        OutlinedButton.icon(
+          onPressed: _loadMore,
+          icon: const Icon(Icons.expand_more_rounded, size: 18),
+          label: const Text('Load more'),
+        ),
+        OutlinedButton.icon(
+          onPressed: _loadAll,
+          icon: const Icon(Icons.playlist_add_check_rounded, size: 18),
+          label: const Text('Load all'),
+        ),
+      ],
+    );
+  }
+
+  // Shown at the top in place of the buttons while a fetch they triggered
+  // (or the scroll listener did) is in flight, and again at the bottom of
+  // the list -- that's the part of the screen actually growing, so a
+  // spinner there confirms something's happening even though the buttons
+  // that started it are back up at the top, off-screen.
+  Widget _loadingIndicator() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        if (_isLoadingAll) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Loading all remaining trades…',
+            style: TextStyle(color: Colors.grey.shade500, fontSize: 12.5),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _loadMoreControls() {
+    return (_isLoadingMore || _isLoadingAll)
+        ? _loadingIndicator()
+        : _loadMoreButtons();
   }
 
   // ---------------- FILTER BAR ----------------
@@ -742,7 +829,12 @@ class _TradesScreenState extends State<TradesScreen> {
           icon: Icons.receipt_long_rounded,
           iconColor: const Color(0xFF818CF8),
           label: 'Trades',
-          value: '${filteredTrades.length} / ${_trades.length} loaded',
+          // Denominator is the server's exact totalElements, not
+          // _trades.length (pages loaded so far) -- the latter understated
+          // the real total until the user scrolled to the very end.
+          // Numerator still only reflects filters applied to loaded pages,
+          // same caveat as elsewhere in this screen (see class doc).
+          value: '${filteredTrades.length} / $_totalTrades',
         ),
         if (filteredTrades.isNotEmpty) ...[
           _statPill(

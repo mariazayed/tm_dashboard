@@ -187,6 +187,9 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
     final nameController = TextEditingController();
     final linkController = TextEditingController();
     List<StrategyTagEnum> selectedTags = [];
+    // Declared outside the StatefulBuilder so it survives its rebuilds --
+    // true while createStrategy()'s POST is in flight.
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
@@ -277,32 +280,51 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: isSubmitting
+                                ? null
+                                : () => Navigator.pop(context),
                             child: const Text("Cancel"),
                           ),
                           const SizedBox(width: 12),
                           ElevatedButton(
-                            onPressed: () async {
-                              if (nameController.text.isEmpty ||
-                                  linkController.text.isEmpty ||
-                                  selectedTags.isEmpty) {
-                                return;
-                              }
+                            onPressed: isSubmitting
+                                ? null
+                                : () async {
+                                    if (nameController.text.isEmpty ||
+                                        linkController.text.isEmpty ||
+                                        selectedTags.isEmpty) {
+                                      return;
+                                    }
 
-                              await createStrategy(
-                                name: nameController.text,
-                                link: linkController.text,
-                                tags: selectedTags,
-                              );
-
-                              Navigator.pop(context);
-                            },
+                                    setStateDialog(() => isSubmitting = true);
+                                    try {
+                                      await createStrategy(
+                                        name: nameController.text,
+                                        link: linkController.text,
+                                        tags: selectedTags,
+                                      );
+                                      if (context.mounted) Navigator.pop(context);
+                                    } catch (e) {
+                                      setStateDialog(() => isSubmitting = false);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to create strategy: $e')),
+                                        );
+                                      }
+                                    }
+                                  },
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text("Create"),
+                            child: isSubmitting
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Text("Create"),
                           ),
                         ],
                       ),

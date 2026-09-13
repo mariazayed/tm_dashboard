@@ -19,6 +19,11 @@ class _GoalsScreenState extends State<GoalsScreen> {
   GoalCategoryEnum? categoryFilter;
   bool showHistory = false;
 
+  // Goal ids with a delete or status-change request currently in flight --
+  // passed to GoalCard as `busy` so that one card shows a spinner instead
+  // of silently doing nothing if its menu is tapped again mid-request.
+  final Set<int> _pendingGoalIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -65,14 +70,40 @@ class _GoalsScreenState extends State<GoalsScreen> {
     );
 
     if (confirmed == true) {
-      await GoalService.delete(goal.id);
-      _refresh();
+      setState(() => _pendingGoalIds.add(goal.id));
+      try {
+        await GoalService.delete(goal.id);
+        _refresh();
+      } catch (e) {
+        if (mounted) {
+          setState(() => _pendingGoalIds.remove(goal.id));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete goal: $e')),
+          );
+        }
+        return;
+      }
+      // On success _refresh() replaces `future` with a new fetch, which
+      // rebuilds fresh GoalCards anyway -- but clear it in case the fetch
+      // fails and the old cards (still showing this goal) get reused.
+      if (mounted) setState(() => _pendingGoalIds.remove(goal.id));
     }
   }
 
   Future<void> _setStatus(GoalModel goal, GoalStatusEnum status) async {
-    await GoalService.update(goal.id, goal.copyWith(status: status).toUpdateJson());
-    _refresh();
+    setState(() => _pendingGoalIds.add(goal.id));
+    try {
+      await GoalService.update(goal.id, goal.copyWith(status: status).toUpdateJson());
+      _refresh();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update goal: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pendingGoalIds.remove(goal.id));
+    }
   }
 
   @override
@@ -204,6 +235,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           ),
           itemBuilder: (_, i) => GoalCard(
             goal: goals[i],
+            busy: _pendingGoalIds.contains(goals[i].id),
             onEdit: () => _openAddGoal(existing: goals[i]),
             onDelete: () => _confirmDelete(goals[i]),
             onSetStatus: (status) => _setStatus(goals[i], status),

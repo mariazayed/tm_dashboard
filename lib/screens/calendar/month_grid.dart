@@ -25,6 +25,15 @@ class _MonthGridState extends State<MonthGrid> {
     return BlocBuilder<CalendarCubit, CalendarState>(builder: (context, state) {
       List<DayModel> days = state.days.values.toList();
 
+      // Denominator for the day-cell heatmap tint: the single largest
+      // absolute net P&L across this month's days, so shading reflects
+      // each day's size relative to the month rather than a fixed number.
+      double maxAbsPnl = 0;
+      for (final dayTrades in state.tradesByDay.values) {
+        final netPnl = dayTrades.fold(0.0, (sum, t) => sum + t.profit);
+        if (netPnl.abs() > maxAbsPnl) maxAbsPnl = netPnl.abs();
+      }
+
       final firstWeekday = DateTime(
         state.currentMonth.year,
         state.currentMonth.month,
@@ -66,6 +75,8 @@ class _MonthGridState extends State<MonthGrid> {
                 return WeekRow(
                   row: row,
                   placeholders: rowIndex == 0 ? placeholderCount : 0,
+                  tradesByDay: state.tradesByDay,
+                  maxAbsPnl: maxAbsPnl,
                 );
               }),
 
@@ -115,6 +126,28 @@ class _MonthGridState extends State<MonthGrid> {
                         Text('Day exists'),
                       ],
                     ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _LegendHeatSwatch(colors: [
+                          Color(0xFFEFF8F0),
+                          Color(0xFFC8E6C9),
+                          Color(0xFF86D18C),
+                        ]),
+                        const SizedBox(width: 6),
+                        _LegendHeatSwatch(colors: [
+                          Color(0xFFFDF1F0),
+                          Color(0xFFFFCDD2),
+                          Color(0xFFE57373),
+                        ]),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Day shading + accent bar scale with that day\'s net P&L (green = profit, red = loss); tap a day for the full trades overview',
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -126,3 +159,31 @@ class _MonthGridState extends State<MonthGrid> {
   }
 }
 
+/// Three small swatches (light -> strong) illustrating one arm of the
+/// day-cell heatmap ramp in the legend.
+class _LegendHeatSwatch extends StatelessWidget {
+  final List<Color> colors;
+
+  const _LegendHeatSwatch({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: colors
+          .map(
+            (c) => Container(
+              width: 14,
+              height: 14,
+              margin: const EdgeInsets.only(right: 2),
+              decoration: BoxDecoration(
+                color: c,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}

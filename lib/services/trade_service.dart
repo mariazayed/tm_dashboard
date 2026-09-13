@@ -51,6 +51,87 @@ class TradeService {
     );
   }
 
+  /// Trades for the calendar's "trades overview per day" -- there's no
+  /// backend date-range filter (BaseSpecification can't express range
+  /// predicates, see the lazy-loading pagination doc), so this pages through
+  /// /trade/search newest-first and stops as soon as it walks past the
+  /// requested month, rather than pulling the whole auto-imported history
+  /// the way a plain getAll() would. Safe to call for any month: pages
+  /// newer than [month] are skipped without being kept, and paging stops
+  /// the moment a trade older than the month's first day is seen (or the
+  /// last page is reached).
+  static Future<List<Trade>> getForMonth(DateTime month) async {
+    final monthStart = DateTime(month.year, month.month, 1);
+    final monthEnd = DateTime(month.year, month.month + 1, 1);
+
+    final List<Trade> result = [];
+    int page = 0;
+    const size = 50;
+
+    while (true) {
+      final response = await searchPage(
+        page: page,
+        size: size,
+        sortBy: 'entryDateTime',
+        direction: 'DESC',
+      );
+
+      bool pastMonth = false;
+      for (final trade in response.data) {
+        final entry = trade.entryDateTime.toLocal();
+
+        if (!entry.isBefore(monthEnd)) {
+          // Newer than the requested month -- still paging toward it.
+          continue;
+        }
+        if (entry.isBefore(monthStart)) {
+          // Sorted newest-first, so everything from here on is even
+          // older than the month we want -- no point paging further.
+          pastMonth = true;
+          break;
+        }
+        result.add(trade);
+      }
+
+      if (pastMonth || response.last) break;
+      page++;
+    }
+
+    return result;
+  }
+
+  /// Bounded, recent slice of trade history for dashboard-level analytics
+  /// (win rate, profit factor, PnL by strategy/session, mistake-tag
+  /// frequency -- see `TradeAnalyticsHelper`). Trades are continuously
+  /// auto-imported via MT5 (see the lazy-loading pagination doc), so this
+  /// deliberately caps how much it pulls instead of paging through the
+  /// entire history the way getAll() would -- same bounded-paging shape as
+  /// getForMonth(), just capped by trade count instead of a calendar
+  /// month. Pages newest-first, so the result is always "the most recent
+  /// [limit] trades", which is also the more useful window for a
+  /// performance dashboard than all-time history would be.
+  static Future<List<Trade>> getRecentForAnalytics({int limit = 500}) async {
+    final List<Trade> result = [];
+    int page = 0;
+    const size = 100;
+
+    while (result.length < limit) {
+      final response = await searchPage(
+        page: page,
+        size: size,
+        sortBy: 'entryDateTime',
+        direction: 'DESC',
+      );
+
+      result.addAll(response.data);
+
+      if (response.last) break;
+      page++;
+    }
+
+    return result.length > limit ? result.sublist(0, limit) : result;
+  }
+
   /// PATCH /trade/{id}/review -- confirms the review-flow fields for a
   /// trade and sets reviewedAt server-side. Null-means-unchanged: only keys
   /// present in [payload] are applied, so callers should build it

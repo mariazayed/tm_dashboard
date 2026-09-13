@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../../models/day_model.dart';
+import '../../models/trade_model.dart';
 import 'calendar_state.dart';
 import 'day_status.dart';
+import 'day_trades_section.dart';
 
 class DayEditDialog extends StatefulWidget {
   final DayModel day;
   final CalendarCubit cubit;
+  final List<Trade> trades;
 
-  const DayEditDialog({super.key, required this.day, required this.cubit});
+  const DayEditDialog({
+    super.key,
+    required this.day,
+    required this.cubit,
+    this.trades = const [],
+  });
 
   @override
   State<DayEditDialog> createState() => _DayEditDialogState();
@@ -76,6 +84,8 @@ class _DayEditDialogState extends State<DayEditDialog> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       DayStatus(day: widget.day, cubit: widget.cubit),
+                      const SizedBox(height: 32),
+                      DayTradesSection(trades: widget.trades),
                       const SizedBox(height: 24),
                     ],
                   ),

@@ -10,6 +10,13 @@ class GoalCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final ValueChanged<GoalStatusEnum>? onSetStatus;
+  // True while a delete or status-change request for this goal is in
+  // flight (tracked by the parent GoalsScreen, one goal at a time can be
+  // busy without blocking the rest of the grid). Swaps the "..." menu for
+  // a small spinner and dims the card so there's visible feedback while
+  // waiting on the server, instead of the menu just silently doing nothing
+  // if tapped again.
+  final bool busy;
 
   const GoalCard({
     super.key,
@@ -17,6 +24,7 @@ class GoalCard extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onSetStatus,
+    this.busy = false,
   });
 
   Color get _categoryColor {
@@ -77,7 +85,9 @@ class GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Opacity(
+      opacity: busy ? 0.6 : 1,
+      child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -117,43 +127,52 @@ class GoalCard extends StatelessWidget {
                   padding: EdgeInsets.only(right: 4),
                   child: Icon(Icons.emoji_events, color: Color(0xFFF59E0B), size: 18),
                 ),
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
-                onSelected: (value) {
-                  switch (value) {
-                    case 'edit':
-                      onEdit?.call();
-                      break;
-                    case 'achieved':
-                      onSetStatus?.call(GoalStatusEnum.ACHIEVED);
-                      break;
-                    case 'failed':
-                      onSetStatus?.call(GoalStatusEnum.FAILED);
-                      break;
-                    case 'archived':
-                      onSetStatus?.call(GoalStatusEnum.ARCHIVED);
-                      break;
-                    case 'active':
-                      onSetStatus?.call(GoalStatusEnum.ACTIVE);
-                      break;
-                    case 'delete':
-                      onDelete?.call();
-                      break;
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  if (goal.status != GoalStatusEnum.ACHIEVED)
-                    const PopupMenuItem(value: 'achieved', child: Text('Mark achieved')),
-                  if (goal.status != GoalStatusEnum.FAILED)
-                    const PopupMenuItem(value: 'failed', child: Text('Mark failed')),
-                  if (goal.status != GoalStatusEnum.ARCHIVED)
-                    const PopupMenuItem(value: 'archived', child: Text('Archive')),
-                  if (goal.status != GoalStatusEnum.ACTIVE)
-                    const PopupMenuItem(value: 'active', child: Text('Reactivate')),
-                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
-                ],
-              ),
+              busy
+                  ? const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : PopupMenuButton<String>(
+                      icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'edit':
+                            onEdit?.call();
+                            break;
+                          case 'achieved':
+                            onSetStatus?.call(GoalStatusEnum.ACHIEVED);
+                            break;
+                          case 'failed':
+                            onSetStatus?.call(GoalStatusEnum.FAILED);
+                            break;
+                          case 'archived':
+                            onSetStatus?.call(GoalStatusEnum.ARCHIVED);
+                            break;
+                          case 'active':
+                            onSetStatus?.call(GoalStatusEnum.ACTIVE);
+                            break;
+                          case 'delete':
+                            onDelete?.call();
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        if (goal.status != GoalStatusEnum.ACHIEVED)
+                          const PopupMenuItem(value: 'achieved', child: Text('Mark achieved')),
+                        if (goal.status != GoalStatusEnum.FAILED)
+                          const PopupMenuItem(value: 'failed', child: Text('Mark failed')),
+                        if (goal.status != GoalStatusEnum.ARCHIVED)
+                          const PopupMenuItem(value: 'archived', child: Text('Archive')),
+                        if (goal.status != GoalStatusEnum.ACTIVE)
+                          const PopupMenuItem(value: 'active', child: Text('Reactivate')),
+                        const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      ],
+                    ),
             ],
           ),
           const SizedBox(height: 12),
@@ -204,6 +223,7 @@ class GoalCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }

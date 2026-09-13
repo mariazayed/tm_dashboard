@@ -18,6 +18,11 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
   final List<String> _draftNotes = [];
   bool _isLoading = true;
   bool _isAdding = false;
+  // True while _submitAllDrafts()'s create request is in flight.
+  bool _isSubmittingDrafts = false;
+  // Ids with a delete request currently in flight, so only that note's
+  // delete button shows a spinner instead of the whole screen blocking.
+  final Set<int> _deletingNoteIds = {};
 
   final TextEditingController _controller = TextEditingController();
 
@@ -74,27 +79,30 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
   }
 
   Future<void> _submitAllDrafts() async {
-    if (_draftNotes.isEmpty) return;
+    if (_draftNotes.isEmpty || _isSubmittingDrafts) return;
+    setState(() => _isSubmittingDrafts = true);
     try {
-
       List<dynamic> notes = _draftNotes.map((text) => ReminderNoteModel(text: text, id: 0).toJson()
       ).toList();
 
       await ReminderNotesService.create([...notes]);
 
-        setState(() {
-          _draftNotes.clear();
-          _isAdding = false;
-        });
-        _fetchNotes();
+      setState(() {
+        _draftNotes.clear();
+        _isAdding = false;
+        _isSubmittingDrafts = false;
+      });
+      _fetchNotes();
     } catch (e) {
       debugPrint('Error submitting notes: $e');
+      if (mounted) setState(() => _isSubmittingDrafts = false);
     }
   }
 
   Widget _buildNoteCard(
       String text, {
         bool isDraft = false,
+        bool isDeleting = false,
         VoidCallback? onDelete,
       }) {
     return AnimatedContainer(
@@ -125,7 +133,16 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
                 ),
               ),
             ),
-            if (!isDraft && onDelete != null)
+            if (!isDraft && isDeleting)
+              const Padding(
+                padding: EdgeInsets.all(12),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else if (!isDraft && onDelete != null)
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 onPressed: onDelete,
@@ -137,6 +154,8 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
   }
 
   Future<void> _deleteNote(int id) async {
+    if (_deletingNoteIds.contains(id)) return;
+    setState(() => _deletingNoteIds.add(id));
     try {
       await ReminderNotesService.delete(id);
 
@@ -149,6 +168,8 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
       // });
     } catch (e) {
       debugPrint('Error deleting note: $e');
+    } finally {
+      if (mounted) setState(() => _deletingNoteIds.remove(id));
     }
   }
 
@@ -188,7 +209,11 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            ..._notes.map((note) => _buildNoteCard(note.text, onDelete: () => _deleteNote(note.id),),),
+            ..._notes.map((note) => _buildNoteCard(
+              note.text,
+              isDeleting: _deletingNoteIds.contains(note.id),
+              onDelete: () => _deleteNote(note.id),
+            ),),
             ..._draftNotes.map((draft) => _buildNoteCard(draft, isDraft: true)),
           ],
         ),
@@ -254,18 +279,27 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: ElevatedButton(
-                  onPressed: _submitAllDrafts,
+                  onPressed: _isSubmittingDrafts ? null : _submitAllDrafts,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Submit All',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
+                  child: Center(
+                    child: _isSubmittingDrafts
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Submit All',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
                   ),
                 ),
               ),

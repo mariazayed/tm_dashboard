@@ -27,6 +27,11 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   DateTime? exitDateTime;
   late List<TradeDraft> drafts;
 
+  // True while _submit()'s POST /trade is in flight -- disables the Submit
+  // button and swaps its label for a spinner so there's no dead period
+  // where the sheet looks unresponsive while waiting on the server.
+  bool _submitting = false;
+
   static const double xauPipSize = 0.1;
 
   @override
@@ -87,6 +92,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (entryDateTime == null || exitDateTime == null || drafts.isEmpty) return;
 
     final payload = drafts
@@ -98,8 +104,19 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
         )
         .toList();
 
-    await TradeService.create(payload);
-    Navigator.pop(context);
+    setState(() => _submitting = true);
+    try {
+      await TradeService.create(payload);
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save journal: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
@@ -210,10 +227,19 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
 
           // Submit
           FilledButton(
-            onPressed: _submit,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text('Submit Journal'),
+            onPressed: _submitting ? null : _submit,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Submit Journal'),
             ),
           ),
         ],

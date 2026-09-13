@@ -5,6 +5,7 @@ import 'package:tm_dashboard/screens/strict_rules/reminder_notes_screen.dart';
 import '../constants/route_names.dart';
 import '../screens/assets/assets_screen.dart';
 import '../screens/calendar/calendar_screen.dart';
+import '../screens/capital/capital_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/goals/goals_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
@@ -55,6 +56,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.goals,
               path: 'goals',
               builder: (context, state) => GoalsScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.capital,
+              path: 'capital',
+              builder: (context, state) => CapitalScreen(),
             ),
             GoRoute(
               name: RouteNames.assets,

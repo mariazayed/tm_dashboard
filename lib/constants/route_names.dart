@@ -10,4 +10,5 @@ class RouteNames {
   static const strictRules = 'strictRules';
   static const strategies = 'strategies';
   static const goals = 'goals';
+  static const capital = 'capital';
 }

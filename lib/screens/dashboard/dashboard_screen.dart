@@ -222,134 +222,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<void> _openCapitalDialog(CapitalReasonEnum reason) async {
-    final TextEditingController amountController = TextEditingController();
-    final TextEditingController notesController = TextEditingController();
-    DateTime selectedDateTime = DateTime.now();
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                reason == CapitalReasonEnum.DEPOSIT ? 'Deposit' : 'Withdraw',
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    /// Amount
-                    TextField(
-                      controller: amountController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        labelText: 'Amount',
-                        hintText: 'Enter amount',
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    /// DateTime Picker
-                    InkWell(
-                      onTap: () async {
-                        final date = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDateTime,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                        );
-
-                        if (date == null) return;
-
-                        final time = await showTimePicker(
-                          context: context,
-                          initialTime: TimeOfDay.fromDateTime(selectedDateTime),
-                        );
-
-                        if (time == null) return;
-
-                        setState(() {
-                          selectedDateTime = DateTime(
-                            date.year,
-                            date.month,
-                            date.day,
-                            time.hour,
-                            time.minute,
-                          );
-                        });
-                      },
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Date & Time',
-                          border: OutlineInputBorder(),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(selectedDateTime.toString()),
-                            const Icon(Icons.calendar_today, size: 18),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    /// Notes
-                    TextField(
-                      controller: notesController,
-                      maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: 'Notes',
-                        hintText: 'Optional notes...',
-                        alignLabelWithHint: true,
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final value = double.tryParse(amountController.text);
-
-                    if (value == null) return;
-
-                    final model = CapitalModel(
-                      dateTime: selectedDateTime,
-                      reason: reason,
-                      amount: value,
-                      notes: notesController.text.trim().isEmpty
-                          ? null
-                          : notesController.text.trim(),
-                    );
-
-                    await CapitalService.create([
-                      {...model.toJson()},
-                    ]);
-
-                    if (mounted) Navigator.pop(context);
-                    _fetchCapitals();
-                  },
-                  child: const Text('Confirm'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   double get _totalWithdraws {
     return _capitals
         .where((c) => c.reason == CapitalReasonEnum.WITHDRAW)
@@ -459,7 +331,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onExit: (_) {
             setLocalState(() => isHovered = false);
 
+            // Cancel any existing timer first -- onExit can fire more than
+            // once without a matching onEnter in between (these animated
+            // hover regions can re-layout under the pointer), and without
+            // this guard each spurious exit stacked another live
+            // Timer.periodic on top of the old one. Every stacked timer
+            // kept firing setState -> rebuilding the BackdropFilter blur
+            // below, so hovering these cards repeatedly made the dashboard
+            // progressively heavier (more concurrent timers + GPU blur
+            // recomposites) the longer it stayed open.
             if (isNotesCard && _notes.isNotEmpty) {
+              _notesTimer?.cancel();
               _notesTimer = Timer.periodic(
                 const Duration(seconds: 6),
                 (_) => setState(() {
@@ -469,6 +351,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }
 
             if (!isNotesCard && _rules.isNotEmpty) {
+              _rulesTimer?.cancel();
               _rulesTimer = Timer.periodic(
                 const Duration(seconds: 6),
                 (_) => setState(() {
@@ -610,27 +493,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'deposit',
-            onPressed: () => _openCapitalDialog(CapitalReasonEnum.DEPOSIT),
-            icon: const Icon(Icons.trending_up), // deposit (capital in)
-            label: const Text('Deposit'),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'withdraw',
-            backgroundColor: Colors.redAccent,
-            onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
-            icon: const Icon(Icons.trending_down),
-            // withdraw (capital out)
-            label: const Text('Withdraw'),
-          ),
-        ],
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 900;

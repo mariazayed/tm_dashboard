@@ -270,6 +270,7 @@ List<_MenuItem> _menus(BuildContext context) {
     _MenuItem(label: 'Trades', routeName: RouteNames.tradeList),
     _MenuItem(label: 'Trade Review', routeName: RouteNames.tradeReview),
     _MenuItem(label: 'Goals', routeName: RouteNames.goals),
+    _MenuItem(label: 'Deposits & Withdraws', routeName: RouteNames.capital),
     _MenuItem(
       label: 'Rules',
       children: [

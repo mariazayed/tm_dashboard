@@ -20,7 +20,12 @@ class AssetsListState extends State<AssetsList> {
   }
 
   void loadAssets() {
-    _assetsFuture = AssetService.fetchAssets();
+    // Paged transport under the hood (AssetService.fetchAssetsPaged ->
+    // .../asset/search) instead of one unbounded GET -- this standalone
+    // Assets list screen shows its own data, unlike the filter dropdowns
+    // elsewhere (trade list/journal) which keep using fetchAssets() since
+    // they need the complete option set loaded in one go.
+    _assetsFuture = AssetService.fetchAssetsPaged();
   }
 
   @override

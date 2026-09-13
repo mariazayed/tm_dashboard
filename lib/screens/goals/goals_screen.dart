@@ -22,12 +22,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   void initState() {
     super.initState();
-    future = GoalService.getAll();
+    // Paged transport under the hood (GoalService.getAllPaged ->
+    // .../goal/search) instead of one unbounded GET.
+    future = GoalService.getAllPaged();
   }
 
   void _refresh() {
     setState(() {
-      future = GoalService.getAll();
+      // Paged transport under the hood (GoalService.getAllPaged ->
+    // .../goal/search) instead of one unbounded GET.
+    future = GoalService.getAllPaged();
     });
   }
 

@@ -78,7 +78,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => _isNotesLoading = true);
 
     try {
-      final response = await ReminderNotesService.getAll();
+      // Paged transport under the hood instead of one unbounded GET.
+      final response = await ReminderNotesService.getAllPaged();
       if (response.isNotEmpty) {
         final notes = List.of(response)..shuffle(Random());
 
@@ -109,7 +110,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => _isRulesLoading = true);
 
     try {
-      final response = await StrictRulesService.getAll();
+      // Paged transport under the hood instead of one unbounded GET.
+      final response = await StrictRulesService.getAllPaged();
       if (response.isNotEmpty) {
         final rules = List.of(response)..shuffle(Random());
 
@@ -137,7 +139,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _fetchCapitals() async {
-    final capitals = await CapitalService.getAll();
+    // Paged transport under the hood instead of one unbounded GET --
+    // this list grows with trade count (see CapitalService.getAllPaged).
+    final capitals = await CapitalService.getAllPaged();
 
     if (!mounted) return;
 

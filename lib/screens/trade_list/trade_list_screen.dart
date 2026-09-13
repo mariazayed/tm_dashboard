@@ -1,3 +1,14 @@
+// SUPERSEDED (unused): the Trades and Trade Journal pages were merged into
+// one combined screen -- see TradesScreen in
+// lib/screens/trade_journal/trade_journal_screen.dart, which now owns
+// routing (RouteNames.trades) and the menu entry. TradesScreen carried over
+// this screen's pagination (TradeService.searchPage(), infinite scroll,
+// auto-fetch-more-on-empty-filter) verbatim and adds daily/weekly/monthly/
+// custom grouping on top via TradeGroupCard. This file is no longer
+// referenced from anywhere and is safe to delete; it's left in place only
+// because this change was made without shell/file-delete access to this
+// machine. classes/trade_list_filters.dart (same folder) is similarly
+// unused now -- TradesScreen uses TradeJournalFilters instead.
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -19,14 +30,30 @@ class TradeListScreen extends StatefulWidget {
 }
 
 class _TradeListScreenState extends State<TradeListScreen> {
+  // Page size for TradeService.searchPage() -- kept small-ish since each
+  // page's trades are all built as live TradeRowTile widgets once they
+  // scroll into the SliverList's builder range.
+  static const int _pageSize = 30;
+
   late Future<void> _future;
 
+  // _trades only ever holds pages fetched so far, not the whole history --
+  // that's the point: TradeService.getAll() (which returns every trade
+  // ever imported) is never called here anymore. Client-side filters
+  // (below) therefore filter/count against "loaded so far", not the whole
+  // account history, until the user has scrolled far enough to load it
+  // all.
   List<Trade> _trades = [];
   List<Asset> _assets = [];
   List<Strategy> _strategies = [];
 
+  int _nextPage = 0;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+
   TradeListFilters _filters = const TradeListFilters();
   final _searchCtrl = TextEditingController();
+  final _scrollController = ScrollController();
 
   static final _money = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
 
@@ -34,22 +61,66 @@ class _TradeListScreenState extends State<TradeListScreen> {
   void initState() {
     super.initState();
     _future = _load();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _searchCtrl.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (!_hasMore || _isLoadingMore) return;
+    // Start fetching the next page a bit before the user hits the bottom,
+    // so scrolling doesn't stall on the network round-trip.
+    final threshold = _scrollController.position.maxScrollExtent - 600;
+    if (_scrollController.position.pixels >= threshold) {
+      _loadMore();
+    }
+  }
+
   Future<void> _load() async {
+    _trades = [];
+    _nextPage = 0;
+    _hasMore = true;
+
     // Sequential awaits (not Future.wait) -- same pattern as
     // TradeJournalScreen._load(), and avoids Future.wait's generic type
     // inference having to find a common type across List<Trade>,
-    // List<Asset> and List<Strategy>.
-    _trades = await TradeService.getAll();
+    // List<Asset> and List<Strategy>. Assets/strategies still use
+    // getAll(): the filter dropdowns need the complete set of choices, and
+    // both lists are small/bounded (user-curated, not auto-imported), so
+    // there's no memory concern there like there is with trades.
     _assets = await AssetService.fetchAssets();
     _strategies = await StrategyService.getAll();
+    await _fetchNextPage();
+  }
+
+  Future<void> _fetchNextPage() async {
+    final result = await TradeService.searchPage(
+      page: _nextPage,
+      size: _pageSize,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _trades = [..._trades, ...result.data];
+      _hasMore = !result.last;
+      _nextPage++;
+    });
+  }
+
+  Future<void> _loadMore() async {
+    if (!_hasMore || _isLoadingMore) return;
+    setState(() => _isLoadingMore = true);
+    try {
+      await _fetchNextPage();
+    } finally {
+      if (mounted) setState(() => _isLoadingMore = false);
+    }
   }
 
   Future<void> _refresh() async {
@@ -100,6 +171,19 @@ class _TradeListScreenState extends State<TradeListScreen> {
 
           final filtered = _filters.apply(_trades);
 
+          // An active filter can legitimately match nothing in the pages
+          // loaded so far even though older, not-yet-fetched pages contain
+          // matches (e.g. filtering to a rarely-traded asset). Rather than
+          // making the user manually scroll an empty list to trigger the
+          // next page, keep auto-fetching until either a match turns up or
+          // the server confirms there's nothing left.
+          if (filtered.isEmpty &&
+              _filters.isActive &&
+              _hasMore &&
+              !_isLoadingMore) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _loadMore());
+          }
+
           return LayoutBuilder(
             builder: (context, constraints) {
               // CustomScrollView + SliverList instead of a SingleChildScrollView
@@ -111,6 +195,7 @@ class _TradeListScreenState extends State<TradeListScreen> {
               // the viewport, same as ListView.builder, while still letting
               // the filter card + summary scroll away as a normal header.
               return CustomScrollView(
+                controller: _scrollController,
                 slivers: [
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -139,6 +224,21 @@ class _TradeListScreenState extends State<TradeListScreen> {
                           (context, index) =>
                               TradeRowTile(trade: filtered[index]),
                           childCount: filtered.length,
+                        ),
+                      ),
+                    ),
+                  if (_hasMore)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                          child: _isLoadingMore
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const SizedBox.shrink(),
                         ),
                       ),
                     ),

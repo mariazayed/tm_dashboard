@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
+import '../models/paginated_response.dart';
 import '../models/strategy_model.dart';
 
 class StrategyService {
@@ -28,5 +29,35 @@ class StrategyService {
     final List data = jsonDecode(response.body);
 
     return Future.wait(data.map((e) => Strategy.fromJson(e)));
+  }
+
+  /// Paginated fetch, added mainly for consistency with the other list
+  /// screens (strategy counts are typically small).
+  static Future<PaginatedResponse<Strategy>> searchPage({
+    required int page,
+    int size = 30,
+    String sortBy = 'id',
+    String direction = 'DESC',
+  }) {
+    return fetchSearchPage<Strategy>(
+      '${ApiConstants.strategyURL}/search',
+      (json) => Strategy.fromJson(json),
+      page: page,
+      size: size,
+      sortBy: sortBy,
+      direction: direction,
+    );
+  }
+
+  /// Drop-in replacement for [getAll] that fetches the same full list, but
+  /// a page at a time under the hood via [searchPage]/[fetchAllPages]
+  /// instead of one unbounded GET.
+  static Future<List<Strategy>> getAllPaged() {
+    return fetchAllPages<Strategy>(
+      '${ApiConstants.strategyURL}/search',
+      (json) => Strategy.fromJson(json),
+      sortBy: 'id',
+      direction: 'DESC',
+    );
   }
 }

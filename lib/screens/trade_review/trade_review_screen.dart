@@ -36,11 +36,29 @@ class TradeReviewScreen extends StatefulWidget {
 }
 
 class _TradeReviewScreenState extends State<TradeReviewScreen> {
+  // Page size for TradeService.searchPage() when topping up the queue.
+  static const int _pageSize = 50;
+  // Keep at least this many unreviewed trades buffered ahead of
+  // _currentIndex before fetching another page.
+  static const int _minBuffered = 3;
+
   late Future<void> _loadFuture;
 
+  // Trades are fetched oldest-entryDateTime-first, same page at a time, and
+  // unreviewed ones are appended here -- instead of TradeService.getAll()
+  // loading the entire (continuously auto-imported) trade history just to
+  // filter it down to the unreviewed subset. Reviewed trades in a fetched
+  // page are simply dropped, so a long stretch of already-reviewed history
+  // means more pages fetched to find the next unreviewed trade -- there's
+  // no server-side "unreviewed only" filter yet (reviewedAt IS NULL isn't
+  // expressible through BaseSpecification's equality/like filters).
   List<Trade> _queue = [];
   StaticDataResponse? _staticData;
   int _currentIndex = 0;
+
+  int _nextPage = 0;
+  bool _hasMorePages = true;
+  bool _isFillingQueue = false;
 
   bool _submitting = false;
   bool _suggesting = false;
@@ -77,16 +95,51 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
   }
 
   Future<void> _load() async {
-    final results = await Future.wait([
-      TradeService.getAll(),
-      StaticDataService.getAll(),
-    ]);
-    final trades = results[0] as List<Trade>;
-    _staticData = results[1] as StaticDataResponse;
-    _queue = trades.where((t) => !t.isReviewed).toList()
-      ..sort((a, b) => a.entryDateTime.compareTo(b.entryDateTime));
+    _queue = [];
     _currentIndex = 0;
+    _nextPage = 0;
+    _hasMorePages = true;
+
+    _staticData = await StaticDataService.getAll();
+    await _fillQueue();
     _initFormForCurrentTrade();
+  }
+
+  /// Fetches pages of trades (oldest entryDateTime first, same ordering the
+  /// queue always used) and appends the unreviewed ones to [_queue], until
+  /// either there's enough buffered ahead of [_currentIndex] or the server
+  /// confirms there's nothing left to fetch.
+  Future<void> _fillQueue() async {
+    if (_isFillingQueue) return;
+    _isFillingQueue = true;
+    try {
+      while (_hasMorePages &&
+          (_queue.length - _currentIndex) < _minBuffered) {
+        final result = await TradeService.searchPage(
+          page: _nextPage,
+          size: _pageSize,
+          sortBy: 'entryDateTime',
+          direction: 'ASC',
+        );
+        _nextPage++;
+        _hasMorePages = !result.last;
+        _queue.addAll(result.data.where((t) => !t.isReviewed));
+      }
+    } finally {
+      _isFillingQueue = false;
+    }
+  }
+
+  /// Tops up the queue in the background (fire-and-forget) after
+  /// [_confirm]/[_skip] consume an entry, so the "Trade X of Y" progress and
+  /// the ability to keep going don't stall waiting on a network round-trip.
+  void _topUpQueueInBackground() {
+    if (!_hasMorePages || (_queue.length - _currentIndex) >= _minBuffered) {
+      return;
+    }
+    _fillQueue().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   Trade? get _current =>
@@ -192,6 +245,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
         if (_currentIndex >= _queue.length) _currentIndex = 0;
         _initFormForCurrentTrade();
       });
+      _topUpQueueInBackground();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Review saved.')),
@@ -214,6 +268,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
       _currentIndex = (_currentIndex + 1) % _queue.length;
       _initFormForCurrentTrade();
     });
+    _topUpQueueInBackground();
   }
 
   @override
@@ -254,7 +309,11 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               Text(
-                'Trade ${_currentIndex + 1} of ${_queue.length}',
+                // _queue.length is only what's been fetched so far -- append
+                // "+" while more pages might still hold unreviewed trades,
+                // since the true total isn't known without fetching
+                // everything (defeating the point of paging it in).
+                'Trade ${_currentIndex + 1} of ${_queue.length}${_hasMorePages ? '+' : ''}',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

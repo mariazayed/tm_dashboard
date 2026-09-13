@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:tm_dashboard/models/trade_model.dart';
 
 import '../constants/api_constants.dart';
+import '../models/paginated_response.dart';
 import '../models/reminder_note_model.dart';
 
 class ReminderNotesService {
@@ -38,5 +39,35 @@ class ReminderNotesService {
     }
 
     return;
+  }
+
+  /// Paginated fetch, added mainly for consistency with the other list
+  /// screens (reminder-note counts are typically small).
+  static Future<PaginatedResponse<ReminderNoteModel>> searchPage({
+    required int page,
+    int size = 30,
+    String sortBy = 'id',
+    String direction = 'DESC',
+  }) {
+    return fetchSearchPage<ReminderNoteModel>(
+      '${ApiConstants.reminderNotesURL}/search',
+      (json) => ReminderNoteModel.fromJson(json),
+      page: page,
+      size: size,
+      sortBy: sortBy,
+      direction: direction,
+    );
+  }
+
+  /// Drop-in replacement for [getAll] that fetches the same full list, but
+  /// a page at a time under the hood via [searchPage]/[fetchAllPages]
+  /// instead of one unbounded GET.
+  static Future<List<ReminderNoteModel>> getAllPaged() {
+    return fetchAllPages<ReminderNoteModel>(
+      '${ApiConstants.reminderNotesURL}/search',
+      (json) => ReminderNoteModel.fromJson(json),
+      sortBy: 'id',
+      direction: 'DESC',
+    );
   }
 }

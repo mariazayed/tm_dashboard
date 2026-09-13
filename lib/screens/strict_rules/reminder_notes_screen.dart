@@ -31,8 +31,10 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
     });
 
     try {
-      // Step 2: perform async work outside of setState
-      final response = await StrictRulesService.getAll();
+      // Step 2: perform async work outside of setState. Paged transport
+      // under the hood (StrictRulesService.getAllPaged ->
+      // .../strict-rule/search) instead of one unbounded GET.
+      final response = await StrictRulesService.getAllPaged();
 
       if (response.isNotEmpty) {
         final rules = response;

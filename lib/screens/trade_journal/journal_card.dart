@@ -1,244 +1,390 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../enums/trade_direction_enum.dart';
+import '../../models/trade_model.dart';
 import 'classes/trade_journal.dart';
 
-class JournalCard extends StatefulWidget {
-  final TradeJournal journal;
+/// One trade bucket (a calendar day/week/month, or a custom N-day interval
+/// -- see TradeGrouping in classes/trade_journal.dart) as a collapsible
+/// card. Visual language matches TradeRowTile on the flat trade list
+/// (lib/screens/trade_list/trade_row_tile.dart) -- same accent-bar + pill
+/// styling -- so the combined Trades screen feels like one surface whether
+/// grouped or not.
+///
+/// Formerly JournalCard, rendering a TradeJournal (a group of trades sharing
+/// one exact entry/exit timestamp). Trades and Trade Journal were merged
+/// into a single screen, and the exact-timestamp grouping was replaced by
+/// the daily/weekly/monthly/custom grouping this card now renders -- the
+/// stat getters (tradeCount, winRate, isProfit, totalProfit, hasUnreviewed)
+/// are unchanged, so only the header's label source changed.
+class TradeGroupCard extends StatefulWidget {
+  final TradeGroup group;
 
-  const JournalCard({super.key, required this.journal});
+  const TradeGroupCard({super.key, required this.group});
 
   @override
-  State<JournalCard> createState() => _JournalCardState();
+  State<TradeGroupCard> createState() => _TradeGroupCardState();
 }
 
-class _JournalCardState extends State<JournalCard> {
-  bool isExpanded = false;
+class _TradeGroupCardState extends State<TradeGroupCard> {
+  static final _money = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
+
+  bool _isExpanded = false;
+  bool _hovering = false;
+
+  TradeGroup get group => widget.group;
 
   @override
   Widget build(BuildContext context) {
-    final journal = widget.journal;
-    final isProfit = journal.totalProfit >= 0;
+    final profitColor = group.isProfit
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFEF4444);
 
-    final profitColor = isProfit ? Colors.green : Colors.red;
-    final profitBg = isProfit
-        ? Colors.green.withOpacity(0.08)
-        : Colors.red.withOpacity(0.08);
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: _hovering
+                  ? profitColor.withOpacity(0.25)
+                  : Colors.grey.shade100,
+            ),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: _hovering ? 24 : 16,
+                color: Colors.black.withOpacity(_hovering ? 0.07 : 0.04),
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          /// HEADER
-          GestureDetector(
-            onTap: () => setState(() => isExpanded = !isExpanded),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              /// HEADER
+              InkWell(
+                onTap: () => setState(() => _isExpanded = !_isExpanded),
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(
-                        DateFormat(
-                          'dd MMM yyyy • HH:mm',
-                        ).format(journal.entryDateTime),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                      // Result accent bar.
+                      Container(width: 5, color: profitColor),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 18,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.event_outlined,
+                                          size: 14,
+                                          color: Colors.grey.shade400,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            group.label,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: -0.2,
+                                            ),
+                                          ),
+                                        ),
+                                        if (group.hasUnreviewed) ...[
+                                          const SizedBox(width: 8),
+                                          Tooltip(
+                                            message: 'Has unreviewed trades',
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.shade50,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.schedule,
+                                                size: 11,
+                                                color: Colors.orange.shade700,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 6,
+                                      children: [
+                                        _metaChip(
+                                          Icons.receipt_long_rounded,
+                                          '${group.tradeCount} trade${group.tradeCount == 1 ? '' : 's'}',
+                                        ),
+                                        _metaChip(
+                                          Icons.emoji_events_outlined,
+                                          '${group.winRate.toStringAsFixed(0)}% win',
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              _profitBadge(group.isProfit, profitColor),
+                              const SizedBox(width: 10),
+                              _expandButton(),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${journal.trades.length} trades',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       ),
                     ],
                   ),
                 ),
+              ),
 
-                /// Profit badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: profitBg,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Text(
-                    '${journal.totalProfit.toStringAsFixed(2)} \$',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: profitColor,
-                    ),
+              /// EXPANDED CONTENT
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 200),
+                sizeCurve: Curves.easeOut,
+                crossFadeState: _isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                firstChild: const SizedBox(width: double.infinity),
+                secondChild: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                  child: Column(
+                    children: [
+                      Divider(height: 1, color: Colors.grey.shade100),
+                      const SizedBox(height: 14),
+                      ...group.trades.map(_tradeTile),
+                    ],
                   ),
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-                const SizedBox(width: 12),
+  Widget _metaChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.grey.shade500),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                /// Expand button (NEW)
-                InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => setState(() => isExpanded = !isExpanded),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
+  Widget _profitBadge(bool isProfit, Color color) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 100),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isProfit ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+            size: 15,
+            color: color,
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              '${isProfit ? '+' : ''}${_money.format(group.totalProfit)}',
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13.5,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _expandButton() {
+    return AnimatedRotation(
+      turns: _isExpanded ? 0.5 : 0,
+      duration: const Duration(milliseconds: 200),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          size: 20,
+          color: Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+
+  Widget _tradeTile(Trade t) {
+    final isProfit = t.profit >= 0;
+    final profitColor = isProfit
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFEF4444);
+    final isLong = t.direction == TradeDirectionEnum.LONG;
+    final directionColor = isLong
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFEF4444);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  t.asset.symbol,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 7,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: directionColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isLong
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_downward_rounded,
+                      size: 10,
+                      color: directionColor,
                     ),
-                    child: Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 22,
+                    const SizedBox(width: 2),
+                    Text(
+                      isLong ? 'LONG' : 'SHORT',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: directionColor,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+              if (!t.isReviewed) ...[
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: 'Not reviewed yet',
+                  child: Icon(
+                    Icons.schedule,
+                    size: 13,
+                    color: Colors.orange.shade400,
                   ),
                 ),
               ],
-            ),
+              const Spacer(),
+              Text(
+                '${isProfit ? '+' : ''}${_money.format(t.profit)}',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: profitColor,
+                  fontSize: 13.5,
+                ),
+              ),
+            ],
           ),
-
-          /// EXPANDED CONTENT
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 250),
-            crossFadeState: isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            firstChild: const SizedBox(),
-            secondChild: Column(
-              children: [
-                const SizedBox(height: 20),
-                const Divider(height: 1),
-                const SizedBox(height: 16),
-
-                ...journal.trades.map((t) {
-                  final tradeProfitColor = t.profit >= 0
-                      ? Colors.green
-                      : Colors.red;
-
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// TOP ROW
-                        Row(
-                          children: [
-                            Text(
-                              t.asset.symbol,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-
-                            /// Direction Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: t.direction.name == 'LONG'
-                                    ? Colors.green.withOpacity(0.1)
-                                    : Colors.red.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                t.direction.name.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: t.direction.name == 'LONG'
-                                      ? Colors.green
-                                      : Colors.red,
-                                ),
-                              ),
-                            ),
-
-                            const Spacer(),
-
-                            Text(
-                              '${t.profit.toStringAsFixed(2)} \$',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: tradeProfitColor,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        /// STRATEGY BADGE (NEW)
-                        if (t.strategy != null)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              t.strategy!.name,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ),
-
-                        /// Entry / Exit
-                        Text(
-                          'Entry ${t.entryPrice} → Exit ${t.exitPrice}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-
-                        /// Notes
-                        if (t.notes != null && t.notes!.trim().isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            t.notes!,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
+          if (t.strategy != null) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 9,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xFF818CF8).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                t.strategy!.name,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF818CF8),
+                ),
+              ),
             ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            'Entry ${t.entryPrice} → Exit ${t.exitPrice}',
+            style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
           ),
+          if (t.notes != null && t.notes!.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              t.notes!,
+              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500),
+            ),
+          ],
         ],
       ),
     );

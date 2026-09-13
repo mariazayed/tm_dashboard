@@ -29,7 +29,10 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
 
   Future<void> fetchStrategies() async {
     try {
-      final response = await StrategyService.getAll();
+      // Paged transport under the hood (StrategyService.getAllPaged ->
+      // .../strategy/search) instead of one unbounded GET -- see
+      // paginated_response.dart's fetchAllPages doc comment.
+      final response = await StrategyService.getAllPaged();
 
       setState(() {
         strategies = response;

@@ -1,3 +1,7 @@
+// SUPERSEDED (unused): TradesScreen (lib/screens/trade_journal/
+// trade_journal_screen.dart) uses TradeJournalFilters instead. Left in
+// place because this change was made without file-delete access to your
+// machine -- safe to delete along with trade_list_screen.dart.
 import '../../../enums/trade_direction_enum.dart';
 import '../../../models/asset_model.dart';
 import '../../../models/strategy_model.dart';

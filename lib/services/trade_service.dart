@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:tm_dashboard/models/trade_model.dart';
 
 import '../constants/api_constants.dart';
+import '../models/paginated_response.dart';
 
 class TradeService {
   static Future<void> create(List<dynamic> data) async {
@@ -27,6 +28,27 @@ class TradeService {
 
     final List data = jsonDecode(response.body);
     return Future.wait(data.map((e) => Trade.fromJson(e)).toList());
+  }
+
+  /// Paginated fetch backing the Trade List/Journal/Review screens -- pages
+  /// through POST /trade/search instead of getAll() pulling the entire,
+  /// continuously auto-imported trade history into memory on every visit.
+  /// Sorted newest-entry-first by default, same ordering feel as getAll()'s
+  /// createdAt-desc sort.
+  static Future<PaginatedResponse<Trade>> searchPage({
+    required int page,
+    int size = 30,
+    String sortBy = 'entryDateTime',
+    String direction = 'DESC',
+  }) {
+    return fetchSearchPage<Trade>(
+      '${ApiConstants.tradeURL}/search',
+      (json) => Trade.fromJson(json),
+      page: page,
+      size: size,
+      sortBy: sortBy,
+      direction: direction,
+    );
   }
 
   /// PATCH /trade/{id}/review -- confirms the review-flow fields for a

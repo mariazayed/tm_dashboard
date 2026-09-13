@@ -17,6 +17,16 @@ class CapitalScreen extends StatefulWidget {
 }
 
 class _CapitalScreenState extends State<CapitalScreen> {
+  // Deposits/withdraws are user-initiated (not auto-imported like trades),
+  // so the full filtered list is fetched a page at a time (see
+  // CapitalService.getDepositsAndWithdrawsPaged) rather than exposed as an
+  // open-ended infinite scroll -- that keeps "Total Deposits/Withdraws"
+  // below accurate (a partial sum while more pages are still loading would
+  // be actively misleading for a money total) while still avoiding
+  // CapitalService.getAll()'s old cost: pulling the *entire* capital
+  // table -- including a PROFIT/LOSS row for every trade ever imported --
+  // over the network just to throw away everything except DEPOSIT/WITHDRAW.
+
   List<CapitalModel> _capitals = [];
   bool _isLoading = true;
 
@@ -29,20 +39,12 @@ class _CapitalScreenState extends State<CapitalScreen> {
   Future<void> _fetchCapitals() async {
     setState(() => _isLoading = true);
 
-    final capitals = await CapitalService.getAll();
+    final capitals = await CapitalService.getDepositsAndWithdrawsPaged();
 
     if (!mounted) return;
 
     setState(() {
-      _capitals =
-          capitals
-              .where(
-                (c) =>
-                    c.reason == CapitalReasonEnum.DEPOSIT ||
-                    c.reason == CapitalReasonEnum.WITHDRAW,
-              )
-              .toList()
-            ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+      _capitals = capitals;
       _isLoading = false;
     });
   }

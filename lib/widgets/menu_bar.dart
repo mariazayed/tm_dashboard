@@ -266,8 +266,7 @@ List<_MenuItem> _menus(BuildContext context) {
   return [
     _MenuItem(label: 'Home', routeName: RouteNames.home),
     _MenuItem(label: 'Calendar', routeName: RouteNames.calendar),
-    _MenuItem(label: 'Trade Journal', routeName: RouteNames.tradeJournal),
-    _MenuItem(label: 'Trades', routeName: RouteNames.tradeList),
+    _MenuItem(label: 'Trades', routeName: RouteNames.trades),
     _MenuItem(label: 'Trade Review', routeName: RouteNames.tradeReview),
     _MenuItem(label: 'Goals', routeName: RouteNames.goals),
     _MenuItem(label: 'Deposits & Withdraws', routeName: RouteNames.capital),

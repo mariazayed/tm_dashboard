@@ -2,8 +2,9 @@ class RouteNames {
   static const home = 'home';
   static const calendar = 'calendar';
   static const riskManagement = 'riskManagement';
-  static const tradeJournal = 'tradeJournal';
-  static const tradeList = 'tradeList';
+  // Trade Journal and Trades were merged into a single combined screen
+  // (see lib/screens/trade_journal/trade_journal_screen.dart -- TradesScreen).
+  static const trades = 'trades';
   static const tradeReview = 'tradeReview';
   static const assets = 'assets';
   static const reminderNotes = 'reminderNotes';

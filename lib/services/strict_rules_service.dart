@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
+import '../models/paginated_response.dart';
 import '../models/strict_rule_model.dart';
 
 class StrictRulesService {
@@ -39,5 +40,35 @@ class StrictRulesService {
     }
 
     return;
+  }
+
+  /// Paginated fetch, added mainly for consistency with the other list
+  /// screens (strict-rule counts are typically small).
+  static Future<PaginatedResponse<StrictRuleModel>> searchPage({
+    required int page,
+    int size = 30,
+    String sortBy = 'id',
+    String direction = 'DESC',
+  }) {
+    return fetchSearchPage<StrictRuleModel>(
+      '${ApiConstants.strictRulesURL}/search',
+      (json) => StrictRuleModel.fromJson(json),
+      page: page,
+      size: size,
+      sortBy: sortBy,
+      direction: direction,
+    );
+  }
+
+  /// Drop-in replacement for [getAll] that fetches the same full list, but
+  /// a page at a time under the hood via [searchPage]/[fetchAllPages]
+  /// instead of one unbounded GET.
+  static Future<List<StrictRuleModel>> getAllPaged() {
+    return fetchAllPages<StrictRuleModel>(
+      '${ApiConstants.strictRulesURL}/search',
+      (json) => StrictRuleModel.fromJson(json),
+      sortBy: 'id',
+      direction: 'DESC',
+    );
   }
 }

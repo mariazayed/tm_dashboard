@@ -34,8 +34,10 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
     });
 
     try {
-      // Step 2: perform async work outside of setState
-      final response =  await ReminderNotesService.getAll();
+      // Step 2: perform async work outside of setState. Paged transport
+      // under the hood (ReminderNotesService.getAllPaged ->
+      // .../reminder-note/search) instead of one unbounded GET.
+      final response =  await ReminderNotesService.getAllPaged();
 
       if (response.isNotEmpty) {
         final notes = response;

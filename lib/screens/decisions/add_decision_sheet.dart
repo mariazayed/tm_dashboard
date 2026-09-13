@@ -12,14 +12,13 @@ import 'decision_detail_sheet.dart';
 
 class AddDecisionSheet extends StatefulWidget {
   final DecisionModel? existing;
-
-  // Every other decision, used to populate the "reconsiders" dropdown by
-  // title instead of a raw number field, and to preview the selected one
-  // inline. Passed in from DecisionsScreen, which already has the full
-  // list loaded.
   final List<DecisionModel> allDecisions;
 
-  const AddDecisionSheet({super.key, this.existing, required this.allDecisions});
+  const AddDecisionSheet({
+    super.key,
+    this.existing,
+    required this.allDecisions,
+  });
 
   @override
   State<AddDecisionSheet> createState() => _AddDecisionSheetState();
@@ -32,27 +31,23 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
   late TextEditingController _notesController;
   late DecisionCategoryEnum _category;
   late DateTime _decisionDate;
-  int? _relatedDecisionNumber;
+  late List<int> _relatedDecisionNumbers;
   bool _saving = false;
 
   bool get _isEdit => widget.existing != null;
 
-  // Every decision except the one being edited (a decision can't reconsider
-  // itself), sorted so the dropdown reads in the same order as the log.
   List<DecisionModel> get _relatableDecisions {
-    final list = widget.allDecisions
-        .where((d) => widget.existing == null || d.id != widget.existing!.id)
-        .toList()
-      ..sort((a, b) => (a.decisionNumber ?? 0).compareTo(b.decisionNumber ?? 0));
+    final list =
+        widget.allDecisions
+            .where(
+              (d) => widget.existing == null || d.id != widget.existing!.id,
+            )
+            .where((d) => d.decisionNumber != null)
+            .toList()
+          ..sort(
+            (a, b) => (b.decisionNumber ?? 0).compareTo(a.decisionNumber ?? 0),
+          );
     return list;
-  }
-
-  DecisionModel? get _selectedRelated {
-    if (_relatedDecisionNumber == null) return null;
-    for (final d in widget.allDecisions) {
-      if (d.decisionNumber == _relatedDecisionNumber) return d;
-    }
-    return null;
   }
 
   @override
@@ -61,12 +56,16 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
     final existing = widget.existing;
 
     _titleController = TextEditingController(text: existing?.title ?? '');
-    _descriptionController = TextEditingController(text: existing?.description ?? '');
-    _reasoningController = TextEditingController(text: existing?.reasoning ?? '');
+    _descriptionController = TextEditingController(
+      text: existing?.description ?? '',
+    );
+    _reasoningController = TextEditingController(
+      text: existing?.reasoning ?? '',
+    );
     _notesController = TextEditingController(text: existing?.notes ?? '');
     _category = existing?.category ?? DecisionCategoryEnum.SYSTEM;
     _decisionDate = existing?.decisionDate ?? DateTime.now();
-    _relatedDecisionNumber = existing?.relatedDecisionNumber;
+    _relatedDecisionNumbers = [...existing?.relatedDecisionNumbers ?? const []];
   }
 
   @override
@@ -85,31 +84,39 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
       lastDate: DateTime(2100),
       initialDate: _decisionDate,
     );
-    if (picked == null) return;
+    if (picked == null) {
+      return;
+    }
     setState(() => _decisionDate = picked);
   }
 
   Future<void> _submit() async {
-    if (_titleController.text.trim().isEmpty || _descriptionController.text.trim().isEmpty) return;
+    if (_titleController.text.trim().isEmpty ||
+        _descriptionController.text.trim().isEmpty) {
+      return;
+    }
 
     setState(() => _saving = true);
 
     try {
+      final reasoning = _emptyToNull(_reasoningController.text);
+      final notes = _emptyToNull(_notesController.text);
+
       if (_isEdit) {
         final updated = widget.existing!.copyWith(
           decisionDate: _decisionDate,
           title: _titleController.text.trim(),
           category: _category,
           description: _descriptionController.text.trim(),
-          reasoning: _reasoningController.text.trim(),
-          relatedDecisionNumber: _relatedDecisionNumber,
-          clearRelatedDecisionNumber: _relatedDecisionNumber == null,
-          notes: _notesController.text.trim(),
+          reasoning: reasoning,
+          relatedDecisionNumbers: _relatedDecisionNumbers,
+          notes: notes,
         );
-        await DecisionService.update(widget.existing!.id, updated.toUpdateJson());
+        await DecisionService.update(
+          widget.existing!.id,
+          updated.toUpdateJson(),
+        );
       } else {
-        // decisionNumber is left null here -- the server assigns it on
-        // create (continues the log's 1, 2, 3... sequence).
         final draft = DecisionModel(
           id: 0,
           decisionDate: _decisionDate,
@@ -117,9 +124,9 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
           category: _category,
           status: DecisionStatusEnum.ACTIVE,
           description: _descriptionController.text.trim(),
-          reasoning: _reasoningController.text.trim(),
-          relatedDecisionNumber: _relatedDecisionNumber,
-          notes: _notesController.text.trim(),
+          reasoning: reasoning,
+          relatedDecisionNumbers: _relatedDecisionNumbers,
+          notes: notes,
         );
         await DecisionService.create([draft.toCreateJson()]);
       }
@@ -128,24 +135,28 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save decision: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save decision: $e')));
       }
     }
+  }
+
+  String? _emptyToNull(String value) {
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('dd MMM yyyy');
-    final related = _selectedRelated;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
-        24,
+        18,
         20,
-        32 + MediaQuery.of(context).viewInsets.bottom,
+        28 + MediaQuery.of(context).viewInsets.bottom,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -154,28 +165,46 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
       child: ListView(
         shrinkWrap: true,
         children: [
+          Center(
+            child: Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE5E7EB),
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
           Row(
             children: [
-              Text(
-                _isEdit ? 'Edit Decision' : 'New Decision',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  _isEdit ? 'Edit decision' : 'New decision',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
               ),
-              const Spacer(),
               IconButton(
+                tooltip: 'Close',
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
           if (_isEdit && widget.existing!.decisionNumber != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'Decision #${widget.existing!.decisionNumber}',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            Text(
+              'Decision #${widget.existing!.decisionNumber}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w700,
               ),
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           TextFormField(
             controller: _titleController,
             decoration: const InputDecoration(labelText: 'Title'),
@@ -189,57 +218,127 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
             onChanged: (c) => setState(() => _category = c ?? _category),
           ),
           const SizedBox(height: 8),
-          OutlinedButton(
+          OutlinedButton.icon(
+            icon: const Icon(Icons.calendar_today_outlined, size: 18),
             onPressed: _pickDate,
-            child: Padding(
+            label: Padding(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Text('Date: ${fmt.format(_decisionDate)}'),
+              child: Text(fmt.format(_decisionDate)),
             ),
           ),
           const SizedBox(height: 16),
-          MdEditorField(label: 'What was decided', controller: _descriptionController),
+          MdEditorField(
+            label: 'What was decided',
+            controller: _descriptionController,
+          ),
           MdEditorField(
             label: 'Why (reasoning, optional)',
             controller: _reasoningController,
             minLines: 3,
             maxLines: 10,
           ),
-          const SizedBox(height: 4),
-          FormDropdown<DecisionModel?>(
-            label: 'Reconsiders decision (optional)',
-            items: [null, ..._relatableDecisions],
-            value: related,
-            labelBuilder: (d) => d == null ? 'None' : '#${d.decisionNumber} — ${d.title}',
-            onChanged: (d) => setState(() => _relatedDecisionNumber = d?.decisionNumber),
-          ),
-          if (related != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12, top: 2),
-              child: InkWell(
-                onTap: () => showDecisionDetailSheet(context, related, widget.allDecisions),
-                child: Row(
-                  children: [
-                    Icon(Icons.visibility_outlined, size: 14, color: Colors.grey.shade600),
-                    const SizedBox(width: 4),
-                    Text(
-                      'View decision #${related.decisionNumber}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
+          const SizedBox(height: 6),
+          const Text(
+            'Reconsiders',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF64748B),
             ),
-          FormTextAreaField(label: 'Notes / outcome (optional)', controller: _notesController),
+          ),
+          const SizedBox(height: 8),
+          _buildRelatedPicker(),
+          const SizedBox(height: 14),
+          FormTextAreaField(
+            label: 'Notes / outcome (optional)',
+            controller: _notesController,
+          ),
           const SizedBox(height: 24),
-          FilledButton(
+          FilledButton.icon(
+            icon: _saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.check, size: 18),
             onPressed: _saving ? null : _submit,
-            child: Padding(
+            label: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(_saving ? 'Saving...' : (_isEdit ? 'Save Changes' : 'Add Decision')),
+              child: Text(
+                _saving
+                    ? 'Saving...'
+                    : (_isEdit ? 'Save changes' : 'Add decision'),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildRelatedPicker() {
+    final relatable = _relatableDecisions;
+    if (relatable.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: const Text(
+          'No earlier decisions available',
+          style: TextStyle(
+            fontSize: 12,
+            color: Color(0xFF64748B),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: relatable.map((decision) {
+        final number = decision.decisionNumber!;
+        final selected = _relatedDecisionNumbers.contains(number);
+
+        return FilterChip(
+          selected: selected,
+          label: Text('#$number ${decision.title}'),
+          onSelected: (isSelected) {
+            setState(() {
+              if (isSelected) {
+                _relatedDecisionNumbers = {
+                  ..._relatedDecisionNumbers,
+                  number,
+                }.toList()..sort();
+              } else {
+                _relatedDecisionNumbers = _relatedDecisionNumbers
+                    .where((item) => item != number)
+                    .toList();
+              }
+            });
+          },
+          onDeleted: selected ? () => _showRelatedDecision(number) : null,
+          deleteIcon: const Icon(Icons.visibility_outlined, size: 16),
+        );
+      }).toList(),
+    );
+  }
+
+  void _showRelatedDecision(int decisionNumber) {
+    for (final decision in widget.allDecisions) {
+      if (decision.decisionNumber == decisionNumber) {
+        showDecisionDetailSheet(context, decision, widget.allDecisions);
+        return;
+      }
+    }
   }
 }

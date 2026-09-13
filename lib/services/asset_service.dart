@@ -10,6 +10,7 @@ class AssetService {
   static Future<void> createAsset({
     required String name,
     required String symbol,
+    double? contractSize,
   }) async {
     final response = await http.post(
       Uri.parse(ApiConstants.assetURL),
@@ -17,11 +18,41 @@ class AssetService {
       body: jsonEncode({
         'name': name,
         'symbol': symbol,
+        'contractSize': contractSize,
       }),
     );
 
     if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception('Failed to create asset');
+    }
+  }
+
+  /// Update asset. Mirrors GoalService.update -- backend's UpdateAssetRequest
+  /// only touches fields that are non-null in [data], so a partial map is
+  /// fine, but the edit sheet always sends the full set anyway.
+  static Future<Asset> updateAsset(String id, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('${ApiConstants.assetURL}/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(data),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update asset');
+    }
+
+    return Asset.fromJson(jsonDecode(response.body));
+  }
+
+  /// Soft-deletes an asset (AssetController.deleteAsset -> AssetService.delete
+  /// on the backend sets deletedAt rather than removing the row).
+  static Future<void> deleteAsset(String id) async {
+    final response = await http.delete(
+      Uri.parse('${ApiConstants.assetURL}/$id'),
+    );
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete asset');
     }
   }
 

@@ -9,8 +9,8 @@ import 'dart:math';
 class RiskMetrics {
   // ===== Inputs =====
   final double capital;
-  final double winRate;     // 0–1
-  final double riskPct;     // 0–1
+  final double winRate; // 0–1
+  final double riskPct; // 0–1
   final double rrr;
   final int trades;
   final int tradesPerDay;
@@ -48,7 +48,7 @@ class RiskMetrics {
     avgTradeReturnPct = expectancyR * riskPct * 100;
     avgRiskPerTrade = capital * riskPct;
     avgRewardPerTrade = avgRiskPerTrade * rrr;
-    averageRPerTrade = expectancyR;
+    averageRPerTrade = avgRiskPerTrade;
     riskOfRuin = _calculateRiskOfRuin();
 
     // ---------- MONTE-CARLO SIMULATION ----------
@@ -77,11 +77,13 @@ class RiskMetrics {
   /// Risk of ruin approximation for % risk systems
   /// Meaning: probability of very deep drawdown (~90% loss)
   double _calculateRiskOfRuin() {
+    if (riskPct <= 0) return 0;
     if (expectancyR <= 0) return 1.0; // strategy is losing → guaranteed ruin
 
     // Approximation using Kelly/variance
     final edge = expectancyR;
     final variance = winRate * pow(rrr, 2) + (1 - winRate);
+    if (variance <= 0) return 0;
 
     final ruinExponent = -2 * edge / variance;
     final ruinProbability = exp(ruinExponent / riskPct);
@@ -140,7 +142,6 @@ class RiskMetrics {
     return (w, l);
   }
 }
-
 
 /**
  * 📝 Explanation of Metrics (using your variable names)

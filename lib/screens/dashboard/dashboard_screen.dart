@@ -13,13 +13,12 @@ import '../../services/capital_service.dart';
 import '../../services/reminder_notes_service.dart';
 import '../../services/strict_rules_service.dart';
 import '../../services/trade_service.dart';
+import 'capital_growth_chart.dart';
 import 'capital_list.dart';
 import 'capital_stat_card.dart';
 import 'classes/capital_dashboard_helper.dart';
 import 'classes/trade_analytics_helper.dart';
-import 'capital_growth_chart.dart';
 import 'goals_progress_section.dart';
-import 'mistake_tag_chart.dart';
 import 'session_performance_chart.dart';
 import 'strategy_performance_chart.dart';
 import 'summary_section.dart';
@@ -707,7 +706,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         title: "Trade Performance",
                         subtitle: _isTradesLoading || _trades.isEmpty
                             ? null
-                            : "Based on your last ${_trades.length} trade${_trades.length == 1 ? '' : 's'}",
+                            : "Based on the last ${_trades.length} trade${_trades.length == 1 ? '' : 's'}",
                       ),
                     ),
 
@@ -724,13 +723,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ? Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: StrategyPerformanceChart(
-                                  data: analytics.pnlByStrategy(),
-                                  loading: _isTradesLoading,
-                                ),
-                              ),
-                              const SizedBox(width: 24),
+                              // Expanded(
+                              //   child: StrategyPerformanceChart(
+                              //     data: analytics.pnlByStrategy(),
+                              //     loading: _isTradesLoading,
+                              //   ),
+                              // ),
+                              // const SizedBox(width: 24),
                               Expanded(
                                 child: SessionPerformanceChart(
                                   data: analytics.pnlBySession(),
@@ -755,12 +754,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 24),
 
-                    MistakeTagChart(
-                      data: analytics.mistakeTagFrequency(),
-                      loading: _isTradesLoading,
-                    ),
+                    // MistakeTagChart(
+                    //   data: analytics.mistakeTagFrequency(),
+                    //   loading: _isTradesLoading,
+                    // ),
 
-                    const SizedBox(height: 24),
+                    // const SizedBox(height: 24),
 
                     // WeeklyPnlTable(
                     //   profit: _weeklyProfit,

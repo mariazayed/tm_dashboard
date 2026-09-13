@@ -19,7 +19,7 @@ class DecisionModel {
   final String description;
   final String? reasoning;
 
-  final int? relatedDecisionNumber;
+  final List<int> relatedDecisionNumbers;
   final String? notes;
 
   DecisionModel({
@@ -31,9 +31,11 @@ class DecisionModel {
     required this.status,
     required this.description,
     this.reasoning,
-    this.relatedDecisionNumber,
+    List<int>? relatedDecisionNumbers,
     this.notes,
-  });
+  }) : relatedDecisionNumbers = List.unmodifiable(
+         relatedDecisionNumbers ?? const [],
+       );
 
   static final DateFormat _formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
 
@@ -47,7 +49,7 @@ class DecisionModel {
       status: DecisionStatusEnum.fromValue(json['status']),
       description: json['description'] ?? '',
       reasoning: json['reasoning'],
-      relatedDecisionNumber: json['relatedDecisionNumber'],
+      relatedDecisionNumbers: _relatedDecisionNumbersFromJson(json),
       notes: json['notes'],
     );
   }
@@ -60,7 +62,7 @@ class DecisionModel {
     'category': category.value,
     'description': description,
     'reasoning': reasoning,
-    'relatedDecisionNumber': relatedDecisionNumber,
+    'relatedDecisionNumbers': relatedDecisionNumbers,
     'notes': notes,
   };
 
@@ -73,7 +75,7 @@ class DecisionModel {
     'status': status.value,
     'description': description,
     'reasoning': reasoning,
-    'relatedDecisionNumber': relatedDecisionNumber,
+    'relatedDecisionNumbers': relatedDecisionNumbers,
     'notes': notes,
   };
 
@@ -84,8 +86,7 @@ class DecisionModel {
     DecisionStatusEnum? status,
     String? description,
     String? reasoning,
-    int? relatedDecisionNumber,
-    bool clearRelatedDecisionNumber = false,
+    List<int>? relatedDecisionNumbers,
     String? notes,
   }) {
     return DecisionModel(
@@ -97,10 +98,23 @@ class DecisionModel {
       status: status ?? this.status,
       description: description ?? this.description,
       reasoning: reasoning ?? this.reasoning,
-      relatedDecisionNumber: clearRelatedDecisionNumber
-          ? null
-          : (relatedDecisionNumber ?? this.relatedDecisionNumber),
+      relatedDecisionNumbers:
+          relatedDecisionNumbers ?? this.relatedDecisionNumbers,
       notes: notes ?? this.notes,
     );
+  }
+
+  static List<int> _relatedDecisionNumbersFromJson(Map<String, dynamic> json) {
+    final rawList = json['relatedDecisionNumbers'];
+    if (rawList is List) {
+      return rawList.whereType<num>().map((value) => value.toInt()).toList();
+    }
+
+    final legacy = json['relatedDecisionNumber'];
+    if (legacy is num) {
+      return [legacy.toInt()];
+    }
+
+    return const [];
   }
 }

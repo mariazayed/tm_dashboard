@@ -6,10 +6,10 @@ class RiskEquityCurveChart extends StatelessWidget {
   final double startingCapital;
 
   const RiskEquityCurveChart(
-      this.equityCurve, {
-        required this.startingCapital,
-        super.key,
-      });
+    this.equityCurve, {
+    required this.startingCapital,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +19,12 @@ class RiskEquityCurveChart extends StatelessWidget {
 
     final minY = equityCurve.reduce((a, b) => a < b ? a : b) * 0.95;
     final maxY = equityCurve.reduce((a, b) => a > b ? a : b) * 1.05;
+    final gradientStops = equityCurve.length == 1
+        ? const [0.0]
+        : List.generate(
+            equityCurve.length,
+            (i) => i / (equityCurve.length - 1),
+          );
 
     return LineChart(
       LineChartData(
@@ -29,7 +35,10 @@ class RiskEquityCurveChart extends StatelessWidget {
             sideTitles: SideTitles(showTitles: true, reservedSize: 50),
           ),
           bottomTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: true, interval: (equityCurve.length / 5).ceilToDouble()),
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: (equityCurve.length / 5).ceilToDouble(),
+            ),
           ),
         ),
         gridData: FlGridData(show: true, horizontalInterval: (maxY - minY) / 5),
@@ -46,7 +55,7 @@ class RiskEquityCurveChart extends StatelessWidget {
           LineChartBarData(
             spots: List.generate(
               equityCurve.length,
-                  (index) => FlSpot(index.toDouble(), equityCurve[index]),
+              (index) => FlSpot(index.toDouble(), equityCurve[index]),
             ),
             isCurved: true,
             barWidth: 3,
@@ -59,10 +68,10 @@ class RiskEquityCurveChart extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: equityCurve.map((e) {
                   return e >= startingCapital
-                      ? Colors.greenAccent.withOpacity(0.3)
-                      : Colors.redAccent.withOpacity(0.3);
+                      ? Colors.greenAccent.withValues(alpha: 0.3)
+                      : Colors.redAccent.withValues(alpha: 0.3);
                 }).toList(),
-                stops: List.generate(equityCurve.length, (i) => i / (equityCurve.length - 1)),
+                stops: gradientStops,
               ),
             ),
           ),

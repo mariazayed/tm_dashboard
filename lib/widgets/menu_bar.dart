@@ -97,39 +97,43 @@ class _ModernSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
 
-    return Container(
-      width: 260,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
-        border: Border(right: BorderSide(color: Colors.grey.withOpacity(0.1))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 28),
-
-          /// Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              children: const [
-                Text(
-                  "TM 🧠",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Container(
+        width: 260,
+        decoration: BoxDecoration(
+          border: Border(
+            right: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
           ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 28),
 
-          const SizedBox(height: 28),
-
-          /// Scrollable menu area
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(children: _menuItems(context, location)),
+            /// Header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                children: const [
+                  Text(
+                    "TM 🧠",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 28),
+
+            /// Scrollable menu area
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(children: _menuItems(context, location)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -152,10 +156,12 @@ class _ModernSidebar extends StatelessWidget {
               vertical: 2,
             ),
             childrenPadding: const EdgeInsets.only(bottom: 6),
-            iconColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            iconColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
             collapsedIconColor: Theme.of(
               context,
-            ).colorScheme.onSurface.withOpacity(0.6),
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
             title: Text(
               item.label,
               style: TextStyle(
@@ -191,7 +197,7 @@ class _ModernSidebar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
-                ? theme.colorScheme.primary.withOpacity(0.12)
+                ? theme.colorScheme.primary.withValues(alpha: 0.12)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
@@ -227,7 +233,7 @@ class _ModernDrawer extends StatelessWidget {
           ),
         ),
         selected: isSelected,
-        selectedTileColor: theme.colorScheme.primary.withOpacity(0.12),
+        selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         onTap: () {
           Navigator.pop(context);
@@ -312,24 +318,19 @@ List<_MenuItem> _menus(BuildContext context) {
     _MenuItem(label: 'Calendar', routeName: RouteNames.calendar),
     _MenuItem(label: 'Trades', routeName: RouteNames.trades),
     _MenuItem(label: 'Goals', routeName: RouteNames.goals),
-    _MenuItem(label: 'Deposits & Withdraws', routeName: RouteNames.capital),
     _MenuItem(label: 'Decisions', routeName: RouteNames.decisions),
-    _MenuItem(
-      label: 'Rules',
-      children: [
-        _MenuItem(label: 'Strict Rules', routeName: RouteNames.strictRules),
-        _MenuItem(label: 'Reminder Notes', routeName: RouteNames.reminderNotes),
-      ],
-    ),
     _MenuItem(
       label: 'Others',
       children: [
-        _MenuItem(label: 'Strategies', routeName: RouteNames.strategies),
+        _MenuItem(label: 'Assets', routeName: RouteNames.assets),
+        _MenuItem(label: 'Deposits & Withdraws', routeName: RouteNames.capital),
+        _MenuItem(label: 'Reminder Notes', routeName: RouteNames.reminderNotes),
         _MenuItem(
           label: 'Risk Management',
           routeName: RouteNames.riskManagement,
         ),
-        _MenuItem(label: 'Assets', routeName: RouteNames.assets),
+        _MenuItem(label: 'Strategies', routeName: RouteNames.strategies),
+        _MenuItem(label: 'Strict Rules', routeName: RouteNames.strictRules),
       ],
     ),
   ];

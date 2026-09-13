@@ -28,6 +28,13 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
 
   double v(TextEditingController c) => double.tryParse(c.text) ?? 0;
 
+  double _capitalInput() => max(v(capitalCtrl), 1);
+  double _riskPctInput() => (v(riskCtrl) / 100).clamp(0, 1).toDouble();
+  double _winRateInput() => (v(winRateCtrl) / 100).clamp(0, 1).toDouble();
+  double _rrrInput() => max(v(rrrCtrl), 0);
+  int _tradesInput() => max(v(tradesCtrl).toInt(), 0);
+  int _tradesPerDayInput() => max(v(tradesPerDayCtrl).toInt(), 1);
+
   // Monte-Carlo / simulation outputs
   List<double> equityCurve = [];
   double finalCapital = 0;
@@ -56,12 +63,12 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
   Widget build(BuildContext context) {
     // Theoretical metrics
     final metrics = RiskMetrics(
-      capital: max(v(capitalCtrl), 1),
-      riskPct: v(riskCtrl) / 100,
-      winRate: v(winRateCtrl) / 100,
-      rrr: max(v(rrrCtrl), 1),
-      trades: v(tradesCtrl).toInt(),
-      tradesPerDay: max(v(tradesPerDayCtrl).toInt(), 1),
+      capital: _capitalInput(),
+      riskPct: _riskPctInput(),
+      winRate: _winRateInput(),
+      rrr: _rrrInput(),
+      trades: _tradesInput(),
+      tradesPerDay: _tradesPerDayInput(),
     );
 
     return Scaffold(
@@ -119,11 +126,11 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
             onPressed: () {
               setState(() {
                 equityCurve = simulateEquityCurve(
-                  startingCapital: max(v(capitalCtrl), 1),
-                  trades: v(tradesCtrl).toInt(),
-                  winRate: v(winRateCtrl) / 100,
-                  riskPct: v(riskCtrl) / 100,
-                  rrr: max(v(rrrCtrl), 1),
+                  startingCapital: _capitalInput(),
+                  trades: _tradesInput(),
+                  winRate: _winRateInput(),
+                  riskPct: _riskPctInput(),
+                  rrr: _rrrInput(),
                 );
 
                 // Compute derived metrics from curve
@@ -169,9 +176,7 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: LayoutBuilder(
@@ -206,10 +211,7 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                header,
-                child,
-              ],
+              children: [header, child],
             );
           },
         ),
@@ -233,15 +235,14 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
                 Text(
                   stat.value.toStringAsFixed(2),
                   style: TextStyle(
-                      fontWeight: FontWeight.bold, color: valueColor),
+                    fontWeight: FontWeight.bold,
+                    color: valueColor,
+                  ),
                 ),
                 if (showPercent)
                   Text(
                     '${stat.percent.toStringAsFixed(2)}%',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
               ],
             ),
@@ -282,35 +283,39 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
           m.capital,
           '\$',
           tooltip:
-          'Your starting capital.\nGood: higher capital allows more flexibility.\nBad: low capital increases risk per trade impact.',
+              'Starting capital from the Capital input, with a minimum value of 1.',
         ),
         _kpi(
           'Risk / Trade',
           m.riskPct * 100,
           '%',
           tooltip:
-          'Percentage of capital risked per trade.\nGood: 0.5%-2% keeps drawdown low.\nBad: >5% is very risky.',
+              'Risk % input clamped from 0% to 100%. Each simulated trade risks current equity x this percentage.',
         ),
         _kpi(
           'Win Rate',
           m.winRate * 100,
           '%',
           tooltip:
-          'Percentage of trades that are winners.\nGood: >50% consistently.\nBad: <40% indicates low strategy efficiency.',
+              'Win Rate input clamped from 0% to 100%. The simulation uses this as the probability of a winning trade.',
         ),
         _kpi(
           'Ruin',
           m.riskOfRuin * 100,
           '%',
           tooltip:
-          'Risk of ruin based on your strategy.\nGood: <1% means strategy is sustainable.\nBad: >10% is dangerous.',
+              'Approximation: exp((-2 x expectancy R / variance) / risk %), shown as a percentage. Zero risk returns 0%.',
         ),
       ],
     );
   }
 
-  Widget _kpi(String label, double value, String suffix,
-      {required String tooltip}) {
+  Widget _kpi(
+    String label,
+    double value,
+    String suffix, {
+    required String tooltip,
+  }) {
     Color valueColor = Colors.black;
 
     switch (label) {
@@ -318,19 +323,31 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
         valueColor = value >= 10000 ? Colors.green : Colors.orange;
         break;
       case 'Risk / Trade':
-        if (value < 2) valueColor = Colors.green;
-        else if (value < 5) valueColor = Colors.orange;
-        else valueColor = Colors.red;
+        if (value < 2) {
+          valueColor = Colors.green;
+        } else if (value < 5) {
+          valueColor = Colors.orange;
+        } else {
+          valueColor = Colors.red;
+        }
         break;
       case 'Win Rate':
-        if (value > 55) valueColor = Colors.green;
-        else if (value > 45) valueColor = Colors.orange;
-        else valueColor = Colors.red;
+        if (value > 55) {
+          valueColor = Colors.green;
+        } else if (value > 45) {
+          valueColor = Colors.orange;
+        } else {
+          valueColor = Colors.red;
+        }
         break;
       case 'Ruin':
-        if (value < 1) valueColor = Colors.green;
-        else if (value < 5) valueColor = Colors.orange;
-        else valueColor = Colors.red;
+        if (value < 1) {
+          valueColor = Colors.green;
+        } else if (value < 5) {
+          valueColor = Colors.orange;
+        } else {
+          valueColor = Colors.red;
+        }
         break;
     }
 
@@ -353,9 +370,10 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        color: Colors.grey.shade600, fontSize: 13)),
+                Text(
+                  label,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   '${value.toStringAsFixed(2)}$suffix',
@@ -392,9 +410,9 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
               child: equityCurve.isEmpty
                   ? _emptyState()
                   : RiskEquityCurveChart(
-                equityCurve,
-                startingCapital: max(v(capitalCtrl), 1),
-              ),
+                      equityCurve,
+                      startingCapital: _capitalInput(),
+                    ),
             ),
           ),
         ),
@@ -414,7 +432,7 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
               height: 300,
               child: RiskEquityCurveChart(
                 equityCurve,
-                startingCapital: max(v(capitalCtrl), 1),
+                startingCapital: _capitalInput(),
               ),
             ),
           ),
@@ -459,61 +477,140 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
   // ---------------- STATS CALCULATIONS ----------------
 
   Widget _expectancyStats(RiskMetrics m) {
+    final expectancyDollars = m.avgRiskPerTrade * m.expectancyR;
     return _stats({
-      'Average Risk / Trade \$': RiskStat(m.averageRPerTrade, m.averageRPerTrade,
-          tooltip: 'Amount risked per trade. Good: 0.5%-2% of capital. High risk is dangerous.'),
-      'Average Reward / Trade \$': RiskStat(m.avgRewardPerTrade, m.avgRewardPerTrade,
-          tooltip: 'Expected reward per trade based on your RRR.'),
-      'Expectancy \$': RiskStat(m.expectancyR, m.expectancyR,
-          tooltip: 'Average expected gain per trade. Positive is good.'),
-      'Expectancy %': RiskStat(m.expectancyR, m.expectancyR,
-          tooltip: 'Expectancy as % of capital. Higher is better.'),
+      'Average Risk / Trade \$': RiskStat(
+        m.avgRiskPerTrade,
+        m.riskPct * 100,
+        tooltip:
+            'Capital x risk %. ${m.capital.toStringAsFixed(2)} x ${(m.riskPct * 100).toStringAsFixed(2)}%.',
+      ),
+      'Reward / Winning Trade \$': RiskStat(
+        m.avgRewardPerTrade,
+        m.riskPct * m.rrr * 100,
+        tooltip:
+            'Risk dollars x RRR. ${m.avgRiskPerTrade.toStringAsFixed(2)} x ${m.rrr.toStringAsFixed(2)}R.',
+      ),
+      'Expectancy R': RiskStat(
+        m.expectancyR,
+        m.expectancyR * 100,
+        tooltip:
+            '(Win rate x RRR) - loss rate. (${(m.winRate * 100).toStringAsFixed(2)}% x ${m.rrr.toStringAsFixed(2)}R) - ${((1 - m.winRate) * 100).toStringAsFixed(2)}%.',
+      ),
+      'Expectancy \$': RiskStat(
+        expectancyDollars,
+        expectancyDollars / m.capital * 100,
+        tooltip:
+            'Expectancy R x risk dollars. ${m.expectancyR.toStringAsFixed(2)}R x ${m.avgRiskPerTrade.toStringAsFixed(2)}.',
+      ),
+      'Expectancy %': RiskStat(
+        m.avgTradeReturnPct,
+        m.avgTradeReturnPct,
+        tooltip:
+            'Expectancy dollars / capital x 100, equivalent to expectancy R x risk %.',
+      ),
     });
   }
 
   Widget _riskStats(RiskMetrics m) {
     return _stats({
-      'Max Drawdown %': RiskStat(maxDrawdownPct, maxDrawdownPct),
-      'Risk % Per Trade': RiskStat(m.riskPct * 100, m.riskPct * 100),
-      'Trades': RiskStat(m.trades.toDouble(), 0),
-      'Trades / Day': RiskStat(m.tradesPerDay.toDouble(), 0),
+      'Max Drawdown %': RiskStat(
+        maxDrawdownPct,
+        maxDrawdownPct,
+        tooltip: 'Worst peak-to-valley drop in the simulated equity curve.',
+      ),
+      'Risk % Per Trade': RiskStat(
+        m.riskPct * 100,
+        m.riskPct * 100,
+        tooltip:
+            'Clamped input risk percentage, used as equity x risk % on each simulated trade.',
+      ),
+      'Trades': RiskStat(
+        m.trades.toDouble(),
+        0,
+        tooltip: 'Total simulated trades. Negative input is treated as 0.',
+      ),
+      'Trades / Day': RiskStat(
+        m.tradesPerDay.toDouble(),
+        0,
+        tooltip:
+            'Trades divided into trading days. Values below 1 are treated as 1.',
+      ),
     });
   }
 
   Widget _performanceStats(RiskMetrics m) {
+    final simulatedFinalCapital = equityCurve.isEmpty
+        ? m.capital
+        : finalCapital;
+    final netPnl = simulatedFinalCapital - m.capital;
+    final totalReturnPct = netPnl / m.capital * 100;
     return _stats({
-      'Start Capital \$': RiskStat(m.capital, 0),
-      'Final Capital \$': RiskStat(finalCapital, 0),
-      'Net P/L \$': RiskStat(finalCapital - m.capital, (finalCapital - m.capital) / m.capital * 100),
-      'Total Return %': RiskStat((finalCapital - m.capital) / m.capital * 100,
-          (finalCapital - m.capital) / m.capital * 100),
+      'Start Capital \$': RiskStat(
+        m.capital,
+        0,
+        tooltip: 'Starting capital after enforcing a minimum of 1.',
+      ),
+      'Final Capital \$': RiskStat(
+        simulatedFinalCapital,
+        totalReturnPct,
+        tooltip: equityCurve.isEmpty
+            ? 'No simulation has run yet, so this equals starting capital.'
+            : 'Last value in the simulated equity curve after all trades.',
+      ),
+      'Net P/L \$': RiskStat(
+        netPnl,
+        totalReturnPct,
+        tooltip: 'Final capital - starting capital.',
+      ),
+      'Total Return %': RiskStat(
+        totalReturnPct,
+        totalReturnPct,
+        tooltip: 'Net P/L divided by starting capital x 100.',
+      ),
     });
   }
 
   Widget _distributionStats() {
+    final total = wins + losses;
+    final winPct = total == 0 ? 0.0 : wins / total * 100;
+    final lossPct = total == 0 ? 0.0 : losses / total * 100;
     return _stats({
-      'Winning Trades': RiskStat(wins.toDouble(), wins / (wins + losses) * 100),
-      'Losing Trades': RiskStat(losses.toDouble(), losses / (wins + losses) * 100),
+      'Winning Trades': RiskStat(
+        wins.toDouble(),
+        winPct,
+        tooltip:
+            'Count of simulated trades where equity increased. Percentage is wins / simulated trades x 100.',
+      ),
+      'Losing Trades': RiskStat(
+        losses.toDouble(),
+        lossPct,
+        tooltip:
+            'Count of simulated trades where equity decreased or stayed flat. Percentage is losses / simulated trades x 100.',
+      ),
     });
   }
 
   Widget _timeStats(RiskMetrics m) {
     return _stats({
-      'Days': RiskStat(m.days, 0, tooltip: 'Estimated trading days to complete all trades.'),
-      'Weeks': RiskStat(m.weeks, 0, tooltip: 'Estimated weeks to complete trades.'),
-      'Months': RiskStat(m.months, 0, tooltip: 'Estimated months to complete trades.'),
+      'Days': RiskStat(m.days, 0, tooltip: 'Trades / trades per day.'),
+      'Weeks': RiskStat(m.weeks, 0, tooltip: 'Days / 5 trading days.'),
+      'Months': RiskStat(m.months, 0, tooltip: 'Days / 20 trading days.'),
     }, showPercent: false);
   }
 
   Color _statColor(String label, double value) {
     switch (label) {
-      case 'Risk / Trade \$':
+      case 'Average Risk / Trade \$':
         if (value < 100) return Colors.green;
-        else if (value < 500) return Colors.orange;
-        else return Colors.red;
+        if (value < 500) return Colors.orange;
+        return Colors.red;
 
-      case 'Reward / Trade \$':
+      case 'Reward / Winning Trade \$':
       case 'Net P/L \$':
+      case 'Expectancy R':
+      case 'Expectancy \$':
+      case 'Expectancy %':
         return value >= 0 ? Colors.green : Colors.red;
 
       default:

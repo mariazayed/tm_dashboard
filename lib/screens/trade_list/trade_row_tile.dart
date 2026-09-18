@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../enums/trade_direction_enum.dart';
 import '../../models/trade_model.dart';
+import '../../services/trade_calculator_service.dart';
 import '../../theme/app_theme.dart';
 
 /// One row in the Trade List. Tapping it opens a detail bottom sheet --
@@ -33,6 +34,7 @@ class _TradeRowTileState extends State<TradeRowTile> {
     final profitColor = isProfit ? semantic.profit : semantic.loss;
     final isLong = trade.direction == TradeDirectionEnum.LONG;
     final directionColor = isLong ? semantic.profit : semantic.loss;
+    final displayPips = _displayPips;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -60,7 +62,9 @@ class _TradeRowTileState extends State<TradeRowTile> {
                 boxShadow: [
                   BoxShadow(
                     blurRadius: _hovering ? 24 : 14,
-                    color: colorScheme.shadow.withValues(alpha: _hovering ? 0.07 : 0.04),
+                    color: colorScheme.shadow.withValues(
+                      alpha: _hovering ? 0.07 : 0.04,
+                    ),
                     offset: const Offset(0, 8),
                   ),
                 ],
@@ -119,7 +123,9 @@ class _TradeRowTileState extends State<TradeRowTile> {
                                           child: Container(
                                             padding: const EdgeInsets.all(3),
                                             decoration: BoxDecoration(
-                                              color: semantic.orange.withValues(alpha: 0.12),
+                                              color: semantic.orange.withValues(
+                                                alpha: 0.12,
+                                              ),
                                               shape: BoxShape.circle,
                                             ),
                                             child: Icon(
@@ -135,8 +141,11 @@ class _TradeRowTileState extends State<TradeRowTile> {
                                   const SizedBox(height: 6),
                                   Row(
                                     children: [
-                                      Icon(Icons.event_outlined,
-                                          size: 13, color: colorScheme.onSurfaceVariant),
+                                      Icon(
+                                        Icons.event_outlined,
+                                        size: 13,
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
                                       const SizedBox(width: 4),
                                       Text(
                                         _dateFormat.format(trade.entryDateTime),
@@ -147,8 +156,11 @@ class _TradeRowTileState extends State<TradeRowTile> {
                                       ),
                                       if (trade.strategy != null) ...[
                                         const SizedBox(width: 10),
-                                        Icon(Icons.label_outline,
-                                            size: 13, color: colorScheme.onSurfaceVariant),
+                                        Icon(
+                                          Icons.label_outline,
+                                          size: 13,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
@@ -156,7 +168,8 @@ class _TradeRowTileState extends State<TradeRowTile> {
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: colorScheme.onSurfaceVariant,
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
                                             ),
                                           ),
                                         ),
@@ -186,7 +199,7 @@ class _TradeRowTileState extends State<TradeRowTile> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${trade.pips >= 0 ? '+' : ''}${trade.pips.toStringAsFixed(1)} pips',
+                                    '${displayPips >= 0 ? '+' : ''}${displayPips.toStringAsFixed(1)} pips',
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       color: colorScheme.onSurfaceVariant,
@@ -243,6 +256,13 @@ class _TradeRowTileState extends State<TradeRowTile> {
       ),
     );
   }
+
+  double get _displayPips => TradeCalculatorService.calculatePips(
+    asset: trade.asset,
+    direction: trade.direction,
+    entry: trade.entryPrice,
+    exit: trade.exitPrice,
+  );
 
   Widget _directionChip(bool isLong, Color color) {
     return Container(
@@ -321,11 +341,14 @@ class _TradeRowTileState extends State<TradeRowTile> {
           builder: (_, controller) {
             final colorScheme = Theme.of(context).colorScheme;
             final semantic = context.semanticColors;
+            final displayPips = _displayPips;
 
             return Container(
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
               child: ListView(
                 controller: controller,
@@ -346,7 +369,10 @@ class _TradeRowTileState extends State<TradeRowTile> {
                     children: [
                       Text(
                         '${trade.asset.symbol} • ${trade.direction.name}',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const Spacer(),
                       Text(
@@ -354,7 +380,9 @@ class _TradeRowTileState extends State<TradeRowTile> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: trade.profit >= 0 ? semantic.profit : semantic.loss,
+                          color: trade.profit >= 0
+                              ? semantic.profit
+                              : semantic.loss,
                         ),
                       ),
                     ],
@@ -362,27 +390,37 @@ class _TradeRowTileState extends State<TradeRowTile> {
                   const SizedBox(height: 4),
                   Text(
                     '${_dateFormat.format(trade.entryDateTime)}  →  ${_dateFormat.format(trade.exitDateTime)}',
-                    style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const Divider(height: 32),
                   _detailRow('Entry price', trade.entryPrice.toString()),
                   _detailRow('Exit price', trade.exitPrice.toString()),
-                  if (trade.slPrice != null) _detailRow('Stop loss', trade.slPrice.toString()),
-                  if (trade.tpPrice != null) _detailRow('Take profit', trade.tpPrice.toString()),
+                  if (trade.slPrice != null)
+                    _detailRow('Stop loss', trade.slPrice.toString()),
+                  if (trade.tpPrice != null)
+                    _detailRow('Take profit', trade.tpPrice.toString()),
                   _detailRow('Lot size', trade.lot.toString()),
-                  _detailRow('Pips', trade.pips.toStringAsFixed(1)),
-                  if (trade.strategy != null) _detailRow('Strategy', trade.strategy!.name),
+                  _detailRow('Pips', displayPips.toStringAsFixed(1)),
+                  if (trade.strategy != null)
+                    _detailRow('Strategy', trade.strategy!.name),
                   _detailRow(
                     'Reviewed',
                     trade.isReviewed
                         ? _dateFormat.format(trade.reviewedAt!)
                         : 'Not reviewed yet',
                   ),
-                  if (trade.notes != null && trade.notes!.trim().isNotEmpty) ...[
+                  if (trade.notes != null &&
+                      trade.notes!.trim().isNotEmpty) ...[
                     const SizedBox(height: 12),
                     Text(
                       'Notes',
-                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(trade.notes!),
@@ -402,7 +440,12 @@ class _TradeRowTileState extends State<TradeRowTile> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(
+            label,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),

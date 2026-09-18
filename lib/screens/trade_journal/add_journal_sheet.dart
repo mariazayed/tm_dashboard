@@ -47,27 +47,19 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     }
   }
 
-  // Pips come from the asset's own pip size (Asset.pipSize) rather than a
-  // value hardcoded for one symbol -- previously this only computed pips
-  // for XAUUSD (using a size hardcoded to XAUUSD's own 0.1) and silently
-  // zeroed everything else out. Profit follows the same asset-driven
-  // pattern via contractSize, which TradeEnrichmentService already uses
-  // server-side for the equivalent risk-in-currency calculation. Either
-  // figure is simply skipped (left at 0) when the asset doesn't have the
-  // needed size set, rather than guessing.
   void _recalc(TradeDraft d) {
     final priceDiff = TradeCalculatorService.calculatePriceDifference(
       direction: d.signal,
       entry: d.entryPrice,
       target: d.exitPrice,
     );
-    if (priceDiff == null) {
-      d.pips = 0;
-      d.profit = 0;
-      return;
-    }
 
-    d.pips = TradeCalculatorService.calculatePips(priceDiff, d.asset.pipSize);
+    d.pips = TradeCalculatorService.calculatePips(
+      asset: d.asset,
+      direction: d.signal,
+      entry: d.entryPrice,
+      exit: d.exitPrice,
+    );
 
     final contractSize = d.asset.contractSize;
     d.profit = (contractSize == null || contractSize <= 0)

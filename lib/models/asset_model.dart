@@ -12,8 +12,8 @@ class Asset {
 
   // Price distance that equals 1 pip for this asset -- e.g. 0.0001 for a
   // 4-decimal forex pair, 0.01 for a 2-decimal JPY pair, 0.1 for XAUUSD.
-  // Powers the pip figure on manually-entered journal trades (see
-  // AddJournalSheet._recalc); left null until set, in which case pips are
+  // Powers the pip figure on manually-entered journal trades via
+  // TradeCalculatorService; left null until set, in which case pips are
   // simply skipped for trades on this asset rather than guessed.
   final double? pipSize;
 

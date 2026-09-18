@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../enums/decision_category_enum.dart';
 import '../../enums/decision_status_enum.dart';
 import '../../models/decision_model.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/md_editor_field.dart';
 import 'decision_detail_sheet.dart';
 
@@ -28,33 +29,42 @@ class DecisionCard extends StatelessWidget {
     this.onSetStatus,
   });
 
-  Color get _categoryColor {
+  /// Categorical accent per decision category. TRADING/INVESTING/SYSTEM/
+  /// LEARNING map cleanly onto existing semantic/ColorScheme roles;
+  /// PERSONAL (originally a cyan not represented anywhere else in the
+  /// theme) is mapped to the closest existing categorical accent,
+  /// `semanticColors.info`, and OTHERS (a light violet) to
+  /// `semanticColors.violet` -- both a judgment call, not an exact color
+  /// match, since the theme has no dedicated cyan/orchid accent.
+  Color _categoryColor(BuildContext context) {
+    final semantic = context.semanticColors;
     switch (decision.category) {
       case DecisionCategoryEnum.TRADING:
-        return const Color(0xFFF59E0B);
+        return semantic.warning;
       case DecisionCategoryEnum.INVESTING:
-        return const Color(0xFF22C55E);
+        return semantic.profit;
       case DecisionCategoryEnum.PERSONAL:
-        return const Color(0xFF06B6D4);
+        return semantic.info;
       case DecisionCategoryEnum.SYSTEM:
-        return const Color(0xFF6B7280);
+        return Theme.of(context).colorScheme.onSurfaceVariant;
       case DecisionCategoryEnum.LEARNING:
-        return const Color(0xFF818CF8);
+        return Theme.of(context).colorScheme.primary;
       case DecisionCategoryEnum.OTHERS:
-        return const Color(0xFFA78BFA);
+        return semantic.violet;
     }
   }
 
-  Color get _statusColor {
+  Color _statusColor(BuildContext context) {
+    final semantic = context.semanticColors;
     switch (decision.status) {
       case DecisionStatusEnum.ACTIVE:
-        return const Color(0xFF22C55E);
+        return semantic.profit;
       case DecisionStatusEnum.SUPERSEDED:
-        return const Color(0xFF9CA3AF);
+        return Theme.of(context).colorScheme.onSurfaceVariant;
       case DecisionStatusEnum.REVERSED:
-        return const Color(0xFFEF4444);
+        return semantic.loss;
       case DecisionStatusEnum.COMPLETED:
-        return const Color(0xFF818CF8);
+        return Theme.of(context).colorScheme.primary;
     }
   }
 
@@ -75,6 +85,10 @@ class DecisionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFmt = DateFormat('d MMM yyyy');
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final categoryColor = _categoryColor(context);
+    final statusColor = _statusColor(context);
     final relatedDecisions = _relatedDecisions;
     final loadedRelatedNumbers = relatedDecisions
         .map((d) => d.decisionNumber)
@@ -88,12 +102,12 @@ class DecisionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
+            color: colorScheme.shadow.withValues(alpha: 0.035),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -106,7 +120,7 @@ class DecisionCard extends StatelessWidget {
             Container(
               width: 4,
               decoration: BoxDecoration(
-                color: _categoryColor,
+                color: categoryColor,
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(8),
                 ),
@@ -128,44 +142,44 @@ class DecisionCard extends StatelessWidget {
                             ),
                             margin: const EdgeInsets.only(right: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: colorScheme.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: const Color(0xFFE5E7EB),
+                                color: colorScheme.outlineVariant,
                               ),
                             ),
                             child: Text(
                               '#${decision.decisionNumber}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF475569),
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ),
-                        _pill(decision.category.label, _categoryColor),
+                        _pill(decision.category.label, categoryColor),
                         const SizedBox(width: 8),
                         Icon(
                           Icons.calendar_today_outlined,
                           size: 13,
-                          color: Colors.grey.shade500,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           dateFmt.format(decision.decisionDate),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade500,
+                            color: colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const Spacer(),
-                        _pill(decision.status.label, _statusColor),
+                        _pill(decision.status.label, statusColor),
                         PopupMenuButton<String>(
                           tooltip: 'Decision actions',
                           icon: Icon(
                             Icons.more_horiz,
-                            color: Colors.grey.shade500,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                           onSelected: (value) {
                             switch (value) {
@@ -250,8 +264,8 @@ class DecisionCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         child: Text(
                           decision.title,
-                          style: const TextStyle(
-                            color: Color(0xFF334155),
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             height: 1.25,
@@ -263,9 +277,9 @@ class DecisionCard extends StatelessWidget {
                     buildMarkdownPreview(
                       context,
                       decision.description,
-                      baseStyle: const TextStyle(
+                      baseStyle: TextStyle(
                         fontSize: 13,
-                        color: Color(0xFF475569),
+                        color: colorScheme.onSurfaceVariant,
                         height: 1.45,
                       ),
                     ),
@@ -276,28 +290,28 @@ class DecisionCard extends StatelessWidget {
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: colorScheme.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          border: Border.all(color: colorScheme.outlineVariant),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Why',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF64748B),
+                                color: colorScheme.onSurfaceVariant,
                               ),
                             ),
                             const SizedBox(height: 3),
                             buildMarkdownPreview(
                               context,
                               decision.reasoning!,
-                              baseStyle: const TextStyle(
+                              baseStyle: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF64748B),
+                                color: colorScheme.onSurfaceVariant,
                                 fontStyle: FontStyle.italic,
                                 height: 1.45,
                               ),
@@ -321,13 +335,14 @@ class DecisionCard extends StatelessWidget {
                                 allDecisions,
                               ),
                               child: _chip(
+                                context,
                                 'Reconsiders #${related.decisionNumber} - ${related.title}',
                               ),
                             ),
                           ),
                           ...missingRelatedNumbers.map(
                             (decisionNumber) =>
-                                _chip('Reconsiders #$decisionNumber'),
+                                _chip(context, 'Reconsiders #$decisionNumber'),
                           ),
                         ],
                       ),
@@ -338,15 +353,15 @@ class DecisionCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFFBEB),
+                          color: semantic.warning.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFFDE68A)),
+                          border: Border.all(color: semantic.warning.withValues(alpha: 0.4)),
                         ),
                         child: Text(
                           decision.notes!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF92400E),
+                            color: semantic.warning,
                             height: 1.4,
                           ),
                         ),
@@ -380,19 +395,20 @@ class DecisionCard extends StatelessWidget {
     );
   }
 
-  Widget _chip(String text) {
+  Widget _chip(BuildContext context, String text) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 11,
-          color: Color(0xFF475569),
+          color: colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w700,
         ),
       ),

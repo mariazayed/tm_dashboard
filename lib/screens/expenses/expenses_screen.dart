@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/expense_model.dart';
 import '../../services/expense_service.dart';
+import '../../theme/app_theme.dart';
 import 'add_expense_sheet.dart';
 import 'expense_card.dart';
 
@@ -130,6 +131,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       ),
       body: Builder(
         builder: (context) {
+          final colorScheme = Theme.of(context).colorScheme;
+
           if (_expenses == null && _loadError == null) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -162,7 +165,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF818CF8).withOpacity(0.08),
+                    color: colorScheme.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
@@ -173,7 +176,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                         children: [
                           Text(
                             'Total (${filtered.length} expense${filtered.length == 1 ? '' : 's'})',
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -182,7 +185,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           ),
                         ],
                       ),
-                      const Icon(Icons.receipt_long, color: Color(0xFF818CF8), size: 32),
+                      Icon(Icons.receipt_long, color: colorScheme.primary, size: 32),
                     ],
                   ),
                 ),
@@ -201,13 +204,13 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.shade300),
+                          Icon(Icons.receipt_long_outlined, size: 48, color: colorScheme.outlineVariant),
                           const SizedBox(height: 12),
                           Text(
                             expenses.isEmpty
                                 ? 'No expenses yet — add your first one'
                                 : 'No expenses match your search',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),

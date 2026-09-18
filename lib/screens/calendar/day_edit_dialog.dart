@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/day_model.dart';
 import '../../models/trade_model.dart';
+import '../../theme/app_theme.dart';
 import 'calendar_state.dart';
 import 'day_status.dart';
 import 'day_trades_section.dart';
@@ -44,7 +45,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
           width: 1000,
           height: 800,
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
             borderRadius: BorderRadius.circular(28),
           ),
           child: Column(

@@ -5,6 +5,7 @@ import '../../enums/decision_category_enum.dart';
 import '../../enums/decision_status_enum.dart';
 import '../../models/decision_model.dart';
 import '../../services/decision_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/form_dropdown.dart';
 import '../../widgets/form_text_area_field.dart';
 import '../../widgets/md_editor_field.dart';
@@ -150,6 +151,7 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('dd MMM yyyy');
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -158,9 +160,9 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
         20,
         28 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: ListView(
         shrinkWrap: true,
@@ -170,7 +172,7 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
               width: 42,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFE5E7EB),
+                color: colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -181,10 +183,10 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
               Expanded(
                 child: Text(
                   _isEdit ? 'Edit decision' : 'New decision',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF111827),
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -198,9 +200,9 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
           if (_isEdit && widget.existing!.decisionNumber != null)
             Text(
               'Decision #${widget.existing!.decisionNumber}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -238,16 +240,16 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
             maxLines: 10,
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Reconsiders',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF64748B),
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
-          _buildRelatedPicker(),
+          _buildRelatedPicker(context),
           const SizedBox(height: 14),
           FormTextAreaField(
             label: 'Notes / outcome (optional)',
@@ -256,12 +258,12 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
           const SizedBox(height: 24),
           FilledButton.icon(
             icon: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                     ),
                   )
                 : const Icon(Icons.check, size: 18),
@@ -280,22 +282,23 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
     );
   }
 
-  Widget _buildRelatedPicker() {
+  Widget _buildRelatedPicker(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final relatable = _relatableDecisions;
     if (relatable.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
-        child: const Text(
+        child: Text(
           'No earlier decisions available',
           style: TextStyle(
             fontSize: 12,
-            color: Color(0xFF64748B),
+            color: colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           ),
         ),

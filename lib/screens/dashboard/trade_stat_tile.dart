@@ -39,7 +39,7 @@ class TradeStatTile extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   blurRadius: 20,
-                  color: Colors.black.withOpacity(0.05),
+                  color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
                   offset: const Offset(0, 10),
                 ),
               ],
@@ -64,7 +64,7 @@ class TradeStatTile extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

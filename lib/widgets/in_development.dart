@@ -5,22 +5,24 @@ class InDevelopment extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
-        Icon(Icons.construction_rounded, size: 48, color: Colors.grey.shade300),
+        Icon(Icons.construction_rounded, size: 48, color: colorScheme.outline),
         const SizedBox(height: 16),
         Text(
           "Under Development",
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: Colors.grey.shade400,
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           "This section will be available in a future update.",
-          style: TextStyle(color: Colors.grey.shade400),
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
         ),
       ],
     );

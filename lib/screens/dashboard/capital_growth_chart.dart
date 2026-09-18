@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../theme/app_theme.dart';
+
 /// Shows how the account's actual capital has changed over time: a
 /// chronological running balance built from every capital record
 /// (deposits, withdrawals, and trade profit/loss), as opposed to
@@ -63,8 +65,11 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
   @override
   Widget build(BuildContext context) {
     if (widget.loading) {
-      return _buildShimmer();
+      return _buildShimmer(context);
     }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
 
     if (widget.data.isEmpty) {
       return Container(
@@ -72,7 +77,7 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: Theme.of(context).colorScheme.surface,
+          color: colorScheme.surface,
         ),
         child: const Center(child: Text("No capital history yet")),
       );
@@ -83,7 +88,7 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
     final currentCapital = widget.data.last.value;
     final startingCapital = widget.data.first.value;
     final isPositive = currentCapital >= startingCapital;
-    final lineColor = isPositive ? Colors.green.shade500 : Colors.red.shade400;
+    final lineColor = isPositive ? semantic.profit : semantic.loss;
 
     final values = widget.data.map((e) => e.value).toList();
     final minY = values.reduce((a, b) => a < b ? a : b);
@@ -94,11 +99,11 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -112,7 +117,7 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
               Text(
                 "Account Capital",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
                 ),
@@ -186,7 +191,7 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
                     gridData: FlGridData(
                       drawVerticalLine: false,
                       getDrawingHorizontalLine: (value) => FlLine(
-                        color: Colors.grey.withOpacity(0.08),
+                        color: semantic.chartGridLine.withValues(alpha: 0.5),
                         strokeWidth: 1,
                       ),
                     ),
@@ -221,7 +226,7 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
                                 formatter.format(pointDate),
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey.shade600,
+                                  color: semantic.chartAxisLabel,
                                 ),
                               ),
                             );
@@ -262,15 +267,17 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
   }
 
   /// Shimmer loading state
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
+    final semantic = context.semanticColors;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: semantic.shimmerBase,
+      highlightColor: semantic.shimmerHighlight,
       child: Container(
         height: 300,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
         ),
       ),
     );

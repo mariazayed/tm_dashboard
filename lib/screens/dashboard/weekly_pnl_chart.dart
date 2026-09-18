@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../theme/app_theme.dart';
+
 class WeeklyPnlChart extends StatefulWidget {
   final List<MapEntry<DateTime, double>> weeklyData;
   final bool loading;
@@ -56,7 +58,7 @@ class _WeeklyPnlChartState extends State<WeeklyPnlChart>
   @override
   Widget build(BuildContext context) {
     if (widget.loading) {
-      return _buildShimmer();
+      return _buildShimmer(context);
     }
 
     if (widget.weeklyData.isEmpty) {
@@ -66,22 +68,24 @@ class _WeeklyPnlChartState extends State<WeeklyPnlChart>
       );
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     final formatter = DateFormat('MMM d');
 
     final totalPnl = widget.weeklyData.fold(0.0, (sum, e) => sum + e.value);
 
     final isPositive = totalPnl >= 0;
-    final lineColor = isPositive ? Colors.green.shade500 : Colors.red.shade400;
+    final lineColor = isPositive ? semantic.profit : semantic.loss;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -96,7 +100,7 @@ class _WeeklyPnlChartState extends State<WeeklyPnlChart>
               Text(
                 "Total PnL",
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
+                  color: colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
                 ),
@@ -174,7 +178,7 @@ class _WeeklyPnlChartState extends State<WeeklyPnlChart>
                     gridData: FlGridData(
                       drawVerticalLine: false,
                       getDrawingHorizontalLine: (value) => FlLine(
-                        color: Colors.grey.withOpacity(0.08),
+                        color: semantic.chartGridLine.withValues(alpha: 0.5),
                         strokeWidth: 1,
                       ),
                     ),
@@ -208,7 +212,7 @@ class _WeeklyPnlChartState extends State<WeeklyPnlChart>
                                 formatter.format(weekStart),
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey.shade600,
+                                  color: semantic.chartAxisLabel,
                                 ),
                               ),
                             );
@@ -249,15 +253,17 @@ class _WeeklyPnlChartState extends State<WeeklyPnlChart>
   }
 
   /// ✨ Shimmer Loading State
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
+    final semantic = context.semanticColors;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: semantic.shimmerBase,
+      highlightColor: semantic.shimmerHighlight,
       child: Container(
         height: 300,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../theme/app_theme.dart';
 import 'dashboard_bar_row.dart';
 
 /// "PnL by Strategy" card -- net profit/loss per strategy, from
@@ -21,22 +22,21 @@ class StrategyPerformanceChart extends StatelessWidget {
     this.maxVisible = 6,
   });
 
-  static const _green = Color(0xFF16A34A);
-  static const _red = Color(0xFFEF4444);
-
   @override
   Widget build(BuildContext context) {
-    if (loading) return _buildShimmer();
+    if (loading) return _buildShimmer(context);
+
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -51,11 +51,11 @@ class StrategyPerformanceChart extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 "No strategy data yet",
-                style: TextStyle(color: Colors.grey.shade500),
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
             )
           else
-            ..._rows(),
+            ..._rows(context),
         ],
       ),
     );
@@ -68,7 +68,7 @@ class StrategyPerformanceChart extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           ),
           child: Icon(
             Icons.insights,
@@ -88,7 +88,8 @@ class StrategyPerformanceChart extends StatelessWidget {
     );
   }
 
-  List<Widget> _rows() {
+  List<Widget> _rows(BuildContext context) {
+    final semantic = context.semanticColors;
     final visible = data.take(maxVisible).toList();
     final maxAbs = visible
         .map((e) => e.value.abs())
@@ -102,28 +103,30 @@ class StrategyPerformanceChart extends StatelessWidget {
           valueText:
               "${entry.value >= 0 ? '+' : ''}${entry.value.toStringAsFixed(2)}",
           fraction: maxAbs == 0 ? 0 : entry.value.abs() / maxAbs,
-          color: entry.value >= 0 ? _green : _red,
+          color: entry.value >= 0 ? semantic.profit : semantic.loss,
         ),
       if (remaining > 0)
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             "+$remaining more strateg${remaining == 1 ? 'y' : 'ies'}",
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
     ];
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
+    final semantic = context.semanticColors;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: semantic.shimmerBase,
+      highlightColor: semantic.shimmerHighlight,
       child: Container(
         height: 280,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
         ),
       ),
     );

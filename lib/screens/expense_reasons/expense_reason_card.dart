@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/expense_reason_model.dart';
+import '../../theme/app_theme.dart';
 
 /// Same rounded-card look as AssetCard, simplified to a single-line lookup
 /// row since ExpenseReason only carries a name.
@@ -21,35 +22,44 @@ class ExpenseReasonCard extends StatelessWidget {
     this.busy = false,
   });
 
-  static const List<Color> _palette = [
-    Color(0xFF818CF8), // indigo
-    Color(0xFF22C55E), // green
-    Color(0xFF3B82F6), // blue
-    Color(0xFFF59E0B), // amber
-    Color(0xFFEC4899), // pink
-    Color(0xFF14B8A6), // teal
-  ];
+  // Categorical palette used to color-code reason icons by a hash of the
+  // reason's name. `pink`/`teal` have no dedicated theme role, so they stay
+  // as fixed accents in both light and dark mode.
+  List<Color> _palette(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    return [
+      colorScheme.primary, // indigo
+      semantic.profit, // green
+      semantic.info, // blue
+      semantic.warning, // amber
+      const Color(0xFFEC4899), // pink
+      const Color(0xFF14B8A6), // teal
+    ];
+  }
 
-  Color get _color {
+  Color _color(BuildContext context) {
     final sum = reason.name.codeUnits.fold<int>(0, (a, b) => a + b);
-    return _palette[sum % _palette.length];
+    final palette = _palette(context);
+    return palette[sum % palette.length];
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _color;
+    final color = _color(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Opacity(
       opacity: busy ? 0.6 : 1,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: colorScheme.outline),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: colorScheme.shadow.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -86,7 +96,7 @@ class ExpenseReasonCard extends StatelessWidget {
                     ),
                   )
                 : PopupMenuButton<String>(
-                    icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                    icon: Icon(Icons.more_horiz, color: colorScheme.onSurfaceVariant),
                     onSelected: (value) {
                       switch (value) {
                         case 'edit':

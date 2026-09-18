@@ -18,6 +18,8 @@ class FormMultiSelect<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurfaceVariant = Theme.of(context).colorScheme.onSurfaceVariant;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -25,10 +27,10 @@ class FormMultiSelect<T> extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
+              color: onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 12),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../enums/session_enum.dart';
+import '../../theme/app_theme.dart';
 import 'dashboard_bar_row.dart';
 
 const Map<SessionEnum, String> _sessionLabels = {
@@ -26,22 +27,21 @@ class SessionPerformanceChart extends StatelessWidget {
     this.loading = false,
   });
 
-  static const _green = Color(0xFF16A34A);
-  static const _red = Color(0xFFEF4444);
-
   @override
   Widget build(BuildContext context) {
-    if (loading) return _buildShimmer();
+    if (loading) return _buildShimmer(context);
+
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -56,11 +56,11 @@ class SessionPerformanceChart extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 "No session data yet",
-                style: TextStyle(color: Colors.grey.shade500),
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
             )
           else
-            ..._rows(),
+            ..._rows(context),
         ],
       ),
     );
@@ -73,7 +73,7 @@ class SessionPerformanceChart extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
           ),
           child: Icon(
             Icons.schedule,
@@ -93,7 +93,8 @@ class SessionPerformanceChart extends StatelessWidget {
     );
   }
 
-  List<Widget> _rows() {
+  List<Widget> _rows(BuildContext context) {
+    final semantic = context.semanticColors;
     final maxAbs = data
         .map((e) => e.value.abs())
         .fold(0.0, (a, b) => a > b ? a : b);
@@ -105,20 +106,22 @@ class SessionPerformanceChart extends StatelessWidget {
           valueText:
               "${entry.value >= 0 ? '+' : ''}${entry.value.toStringAsFixed(2)}",
           fraction: maxAbs == 0 ? 0 : entry.value.abs() / maxAbs,
-          color: entry.value >= 0 ? _green : _red,
+          color: entry.value >= 0 ? semantic.profit : semantic.loss,
         ),
     ];
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
+    final semantic = context.semanticColors;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: semantic.shimmerBase,
+      highlightColor: semantic.shimmerHighlight,
       child: Container(
         height: 220,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
         ),
       ),
     );

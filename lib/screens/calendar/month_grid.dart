@@ -5,6 +5,7 @@ import 'package:tm_dashboard/screens/calendar/week_row.dart';
 
 import 'calendar_state.dart';
 import '../../models/day_model.dart';
+import '../../theme/app_theme.dart';
 import 'dashed_border.dart';
 
 class MonthGrid extends StatefulWidget {
@@ -22,6 +23,8 @@ class _MonthGridState extends State<MonthGrid> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     return BlocBuilder<CalendarCubit, CalendarState>(builder: (context, state) {
       List<DayModel> days = state.days.values.toList();
 
@@ -93,35 +96,35 @@ class _MonthGridState extends State<MonthGrid> {
                     SizedBox(height: 10),
                     Row(
                       children: [
-                        Icon(Icons.check_circle_outline, size: 18, color: Colors.green.shade300),
+                        Icon(Icons.check_circle_outline, size: 18, color: semantic.profit),
                         const SizedBox(width: 10),
                         Text('Completed'),
                       ],
                     ),
                     Row(
                       children: [
-                        Icon(Icons.block, size: 18, color: Colors.grey),
+                        Icon(Icons.block, size: 18, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 10),
                         Text('No work'),
                       ],
                     ),
                     Row(
                       children: [
-                        Icon(Icons.weekend_outlined, size: 18, color: Colors.orange.shade300),
+                        Icon(Icons.weekend_outlined, size: 18, color: semantic.orange),
                         const SizedBox(width: 10),
                         Text('Weekend'),
                       ],
                     ),
                     Row(
                       children: [
-                        Icon(Icons.note_add, size: 18, color: Colors.blue.shade300),
+                        Icon(Icons.note_add, size: 18, color: semantic.info),
                         const SizedBox(width: 10),
                         Text('Notes'),
                       ],
                     ),
                     Row(
                       children: [
-                        Icon(Icons.hdr_strong, size: 18, color: Colors.purple.shade200),
+                        Icon(Icons.hdr_strong, size: 18, color: semantic.violet),
                         const SizedBox(width: 10),
                         Text('Day exists'),
                       ],
@@ -129,6 +132,11 @@ class _MonthGridState extends State<MonthGrid> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        // Heat-ramp swatches deliberately left as fixed light
+                        // pastel hex values -- they illustrate the same
+                        // fixed _kGreenRamp/_kRedRamp gradient WeekRow's day
+                        // cells paint (see week_row.dart), which has no
+                        // dark-mode counterpart in the theme system yet.
                         _LegendHeatSwatch(colors: [
                           Color(0xFFEFF8F0),
                           Color(0xFFC8E6C9),
@@ -179,7 +187,7 @@ class _LegendHeatSwatch extends StatelessWidget {
               decoration: BoxDecoration(
                 color: c,
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           )

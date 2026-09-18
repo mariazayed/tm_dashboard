@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/asset_model.dart';
 import '../../services/asset_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/form_number_field.dart';
 
 class AddAssetSheet extends StatefulWidget {
@@ -81,6 +82,8 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -88,9 +91,9 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
         20,
         32 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Form(
         key: _formKey,
@@ -134,12 +137,12 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                         ),
                       )
                     : Text(_isEdit ? 'Save Changes' : 'Create Asset'),

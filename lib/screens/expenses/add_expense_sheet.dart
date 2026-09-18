@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/expense_model.dart';
 import '../../models/expense_reason_model.dart';
 import '../../services/expense_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/form_number_field.dart';
 import '../../widgets/form_text_area_field.dart';
 import 'expense_reason_picker_sheet.dart';
@@ -130,6 +131,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('dd MMM yyyy');
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -138,9 +140,9 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
         20,
         32 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Form(
         key: _formKey,
@@ -184,7 +186,7 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
                 child: Text(
                   _reason?.name ?? 'Select a reason…',
                   style: TextStyle(
-                    color: _reason == null ? Colors.grey.shade500 : null,
+                    color: _reason == null ? colorScheme.onSurfaceVariant : null,
                   ),
                 ),
               ),
@@ -197,12 +199,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                         ),
                       )
                     : Text(_isEdit ? 'Save Changes' : 'Add Expense'),

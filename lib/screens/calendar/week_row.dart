@@ -3,15 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../models/day_model.dart';
 import '../../models/trade_model.dart';
+import '../../theme/app_theme.dart';
 import 'calendar_state.dart';
 import 'day_edit_dialog.dart';
-
-/// Two shared status colors used for anything P&L-related in this file --
-/// the same green/red the rest of the app already uses for profit/loss
-/// (TradeRowTile, etc.), kept as named constants so the accent bar and the
-/// P&L figure always agree with each other.
-const Color _kProfitColor = Color(0xFF16A34A);
-const Color _kLossColor = Color(0xFFEF4444);
 
 /// Light -> stronger steps for the day-cell heatmap tint, one arm per side
 /// of zero. Deliberately capped short of Material's darker steps so the
@@ -186,6 +180,8 @@ class _DayCellState extends State<_DayCell> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     final trades = widget.trades;
     final hasTrades = trades.isNotEmpty;
     final double netPnl = trades.fold(0.0, (sum, t) => sum + t.profit);
@@ -197,32 +193,32 @@ class _DayCellState extends State<_DayCell> {
         day.date.day == today.day;
 
     Color backgroundColor;
-    Color textColor = const Color(0xFF1F2937);
+    Color textColor = colorScheme.onSurface;
     double opacity = 1.0;
 
     /// ✅ Psychology background (takes priority over the trades heatmap --
     /// it's a deliberate, user-set rating for the day)
     if (day.psychologyRate != null) {
       backgroundColor =
-          _backgroundForScore(day.psychologyRate!.value) ?? Colors.white;
+          _backgroundForScore(day.psychologyRate!.value) ?? colorScheme.surface;
     } else if (isToday) {
       backgroundColor = Theme.of(context).colorScheme.primaryContainer;
       textColor = Theme.of(context).colorScheme.onPrimaryContainer;
     } else if (day.noWork) {
-      backgroundColor = const Color(0xFFF3F4F6);
-      textColor = Colors.grey.shade400;
+      backgroundColor = colorScheme.surfaceContainerHigh;
+      textColor = colorScheme.onSurfaceVariant;
       opacity = 0.6;
     } else if (day.ended) {
-      backgroundColor = Colors.white;
-      textColor = Colors.grey.shade500;
+      backgroundColor = colorScheme.surface;
+      textColor = colorScheme.onSurfaceVariant;
       opacity = 0.8;
     } else if (day.weekend) {
-      backgroundColor = const Color(0xFFFFF7ED);
-      textColor = const Color(0xFFC2410C);
+      backgroundColor = semantic.orange.withValues(alpha: 0.12);
+      textColor = semantic.orange;
     } else if (hasTrades && netPnl == 0) {
       /// ✅ Breakeven: the neutral midpoint between the win/loss ramps,
       /// rather than defaulting into the green arm.
-      backgroundColor = const Color(0xFFF3F4F6);
+      backgroundColor = colorScheme.surfaceContainerHigh;
     } else if (hasTrades) {
       /// ✅ Trades heatmap: tint scaled by this day's net P&L relative to
       /// the strongest day this month, with a floor so even a small P&L
@@ -235,31 +231,31 @@ class _DayCellState extends State<_DayCell> {
           ? _heatColor(_kGreenRamp, intensity)
           : _heatColor(_kRedRamp, intensity);
     } else {
-      backgroundColor = Colors.white;
+      backgroundColor = colorScheme.surface;
     }
 
     final List<Widget> statusIcons = [
-      if (day.noWork) const Icon(Icons.block, size: 14, color: Colors.grey),
+      if (day.noWork) Icon(Icons.block, size: 14, color: colorScheme.onSurfaceVariant),
 
       if (day.ended)
         Icon(
           Icons.check_circle_outline,
           size: 14,
-          color: Colors.green.shade300,
+          color: semantic.profit,
         ),
 
       if (day.weekend)
         Icon(
           Icons.weekend_outlined,
           size: 14,
-          color: Colors.orange.shade300,
+          color: semantic.orange,
         ),
 
       if (day.notes.isNotEmpty)
-        Icon(Icons.note_add, size: 14, color: Colors.blue.shade300),
+        Icon(Icons.note_add, size: 14, color: semantic.info),
 
       if (day.exists)
-        Icon(Icons.hdr_strong, size: 14, color: Colors.purple.shade200),
+        Icon(Icons.hdr_strong, size: 14, color: semantic.violet),
 
       /// ✅ Psychology Emoji
       if (day.psychologyRate != null)
@@ -270,10 +266,10 @@ class _DayCellState extends State<_DayCell> {
     ];
 
     final pnlColor = netPnl > 0
-        ? _kProfitColor
+        ? semantic.profit
         : netPnl < 0
-        ? _kLossColor
-        : Colors.grey.shade600;
+        ? semantic.loss
+        : colorScheme.onSurfaceVariant;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -296,12 +292,12 @@ class _DayCellState extends State<_DayCell> {
                     ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
                     : (_hovering && hasTrades)
                     ? pnlColor.withOpacity(0.35)
-                    : Colors.grey.shade200,
+                    : colorScheme.outlineVariant,
                 width: isToday ? 2 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(_hovering ? 0.08 : 0.03),
+                  color: colorScheme.shadow.withValues(alpha: _hovering ? 0.08 : 0.03),
                   blurRadius: _hovering ? 16 : 10,
                   offset: const Offset(0, 4),
                 ),
@@ -366,7 +362,7 @@ class _DayCellState extends State<_DayCell> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade600,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],

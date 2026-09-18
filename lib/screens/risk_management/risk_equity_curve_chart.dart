@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+import '../../theme/app_theme.dart';
+
 class RiskEquityCurveChart extends StatelessWidget {
   final List<double> equityCurve;
   final double startingCapital;
@@ -16,6 +18,9 @@ class RiskEquityCurveChart extends StatelessWidget {
     if (equityCurve.isEmpty) {
       return const Center(child: Text('No data'));
     }
+
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
 
     final minY = equityCurve.reduce((a, b) => a < b ? a : b) * 0.95;
     final maxY = equityCurve.reduce((a, b) => a > b ? a : b) * 1.05;
@@ -44,11 +49,11 @@ class RiskEquityCurveChart extends StatelessWidget {
         gridData: FlGridData(show: true, horizontalInterval: (maxY - minY) / 5),
         borderData: FlBorderData(
           show: true,
-          border: const Border(
-            left: BorderSide(color: Colors.grey, width: 1),
-            bottom: BorderSide(color: Colors.grey, width: 1),
-            top: BorderSide(color: Colors.transparent),
-            right: BorderSide(color: Colors.transparent),
+          border: Border(
+            left: BorderSide(color: colorScheme.outline, width: 1),
+            bottom: BorderSide(color: colorScheme.outline, width: 1),
+            top: const BorderSide(color: Colors.transparent),
+            right: const BorderSide(color: Colors.transparent),
           ),
         ),
         lineBarsData: [
@@ -60,7 +65,7 @@ class RiskEquityCurveChart extends StatelessWidget {
             isCurved: true,
             barWidth: 3,
             dotData: FlDotData(show: false),
-            color: Colors.black87, // main line color
+            color: colorScheme.onSurface, // main line color
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
@@ -68,8 +73,8 @@ class RiskEquityCurveChart extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: equityCurve.map((e) {
                   return e >= startingCapital
-                      ? Colors.greenAccent.withValues(alpha: 0.3)
-                      : Colors.redAccent.withValues(alpha: 0.3);
+                      ? semantic.profit.withValues(alpha: 0.3)
+                      : semantic.loss.withValues(alpha: 0.3);
                 }).toList(),
                 stops: gradientStops,
               ),

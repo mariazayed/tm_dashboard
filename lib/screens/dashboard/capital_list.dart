@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
+import '../../theme/app_theme.dart';
 
 class CapitalList extends StatelessWidget {
   final List<CapitalModel> capitals;
@@ -16,6 +17,7 @@ class CapitalList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 18),
       itemBuilder: (_, i) {
         final c = capitals[i];
+        final semantic = context.semanticColors;
 
         late Color primaryColor;
         late IconData icon;
@@ -23,25 +25,25 @@ class CapitalList extends StatelessWidget {
 
         switch (c.reason) {
           case CapitalReasonEnum.DEPOSIT:
-            primaryColor = Colors.green.shade600;
+            primaryColor = semantic.profit;
             icon = Icons.south_west_rounded;
             label = "Deposit";
             break;
 
           case CapitalReasonEnum.WITHDRAW:
-            primaryColor = Colors.red.shade600;
+            primaryColor = semantic.loss;
             icon = Icons.north_east_rounded;
             label = "Withdraw";
             break;
 
           case CapitalReasonEnum.PROFIT:
-            primaryColor = Colors.blue.shade600;
+            primaryColor = semantic.info;
             icon = Icons.trending_up_rounded;
             label = "Profit";
             break;
 
           case CapitalReasonEnum.LOSS:
-            primaryColor = Colors.orange.shade700;
+            primaryColor = semantic.orange;
             icon = Icons.trending_down_rounded;
             label = "Loss";
             break;
@@ -49,7 +51,7 @@ class CapitalList extends StatelessWidget {
 
         return Card(
           elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.05),
+          shadowColor: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -91,7 +93,7 @@ class CapitalList extends StatelessWidget {
                           Text(
                             c.formatter.format(c.dateTime),
                             style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: Colors.grey.shade600),
+                                ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -126,9 +128,9 @@ class CapitalList extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.black.withOpacity(0.04)),
+                      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                     child: Text(
                       c.notes!,

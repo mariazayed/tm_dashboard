@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../theme/app_theme.dart';
 import 'calendar_state.dart';
 
 
@@ -49,14 +50,15 @@ class _HeaderButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: IconButton(
-        icon: Icon(icon, color: const Color(0xFF374151)),
+        icon: Icon(icon, color: colorScheme.onSurface),
         onPressed: onPressed,
       ),
     );

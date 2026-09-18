@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/expense_reason_model.dart';
 import '../../services/expense_reason_service.dart';
+import '../../theme/app_theme.dart';
 import 'add_expense_reason_sheet.dart';
 import 'expense_reason_card.dart';
 
@@ -108,6 +109,7 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
             );
           }
 
+          final colorScheme = Theme.of(context).colorScheme;
           final reasons = snapshot.data ?? [];
           final filtered = _query.trim().isEmpty
               ? reasons
@@ -133,7 +135,7 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -143,13 +145,13 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, size: 48, color: Colors.grey.shade300),
+                          Icon(Icons.receipt_long_outlined, size: 48, color: colorScheme.outlineVariant),
                           const SizedBox(height: 12),
                           Text(
                             reasons.isEmpty
                                 ? 'No expense reasons yet — add your first one'
                                 : 'No reasons match your search',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),

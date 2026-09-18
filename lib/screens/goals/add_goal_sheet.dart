@@ -5,6 +5,7 @@ import '../../enums/goal_category_enum.dart';
 import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
 import '../../services/goal_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/form_dropdown.dart';
 import '../../widgets/form_number_field.dart';
 import '../../widgets/form_text_area_field.dart';
@@ -146,6 +147,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('dd MMM yyyy');
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -154,9 +156,9 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
         20,
         32 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: ListView(
         shrinkWrap: true,
@@ -193,7 +195,7 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
               controller: _targetController,
             ),
           if (_category == GoalCategoryEnum.MANUAL) ...[
-            Text('Progress: $_manualProgress%', style: TextStyle(color: Colors.grey.shade600)),
+            Text('Progress: $_manualProgress%', style: TextStyle(color: colorScheme.onSurfaceVariant)),
             Slider(
               value: _manualProgress.toDouble(),
               min: 0,
@@ -245,12 +247,12 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                       ),
                     )
                   : Text(_isEdit ? 'Save Changes' : 'Create Goal'),

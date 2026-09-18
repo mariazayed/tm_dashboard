@@ -78,7 +78,7 @@ class SummarySection extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 blurRadius: 20,
-                color: Colors.black.withOpacity(0.05),
+                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
                 offset: const Offset(0, 10),
               ),
             ],

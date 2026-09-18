@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../theme/app_theme.dart';
 import 'classes/trade_analytics_helper.dart';
 import 'trade_stat_tile.dart';
 
@@ -13,9 +14,6 @@ class TradeStatsRow extends StatelessWidget {
   final bool loading;
   final VoidCallback? onTap;
 
-  static const _green = Color(0xFF16A34A);
-  static const _red = Color(0xFFEF4444);
-
   const TradeStatsRow({
     super.key,
     required this.analytics,
@@ -27,6 +25,8 @@ class TradeStatsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (loading) return _buildShimmer();
 
+    final semantic = context.semanticColors;
+    final neutral = Theme.of(context).colorScheme.onSurfaceVariant;
     final pf = analytics.profitFactor;
     final streak = analytics.currentStreak;
 
@@ -34,7 +34,7 @@ class TradeStatsRow extends StatelessWidget {
       TradeStatTile(
         title: "Win Rate",
         icon: Icons.track_changes,
-        color: analytics.winRate >= 50 ? _green : _red,
+        color: analytics.winRate >= 50 ? semantic.profit : semantic.loss,
         numericValue: analytics.winRate,
         formatter: (v) => "${v.toStringAsFixed(1)}%",
         onTap: onTap,
@@ -43,8 +43,8 @@ class TradeStatsRow extends StatelessWidget {
         title: "Profit Factor",
         icon: Icons.balance,
         color: pf == null
-            ? Colors.grey.shade500
-            : (pf >= 1 ? _green : _red),
+            ? neutral
+            : (pf >= 1 ? semantic.profit : semantic.loss),
         numericValue: pf ?? 0,
         formatter: (v) => pf == null ? "—" : v.toStringAsFixed(2),
         onTap: onTap,
@@ -52,7 +52,7 @@ class TradeStatsRow extends StatelessWidget {
       TradeStatTile(
         title: "Avg Win",
         icon: Icons.trending_up,
-        color: _green,
+        color: semantic.profit,
         numericValue: analytics.avgWin,
         formatter: (v) => v.toStringAsFixed(2),
         onTap: onTap,
@@ -60,7 +60,7 @@ class TradeStatsRow extends StatelessWidget {
       TradeStatTile(
         title: "Avg Loss",
         icon: Icons.trending_down,
-        color: _red,
+        color: semantic.loss,
         numericValue: analytics.avgLoss,
         formatter: (v) => v.toStringAsFixed(2),
         onTap: onTap,
@@ -68,7 +68,7 @@ class TradeStatsRow extends StatelessWidget {
       TradeStatTile(
         title: "Current Streak",
         icon: Icons.local_fire_department,
-        color: streak > 0 ? _green : (streak < 0 ? _red : Colors.grey.shade500),
+        color: streak > 0 ? semantic.profit : (streak < 0 ? semantic.loss : neutral),
         numericValue: streak.toDouble(),
         formatter: (v) {
           final rounded = v.round();
@@ -109,9 +109,11 @@ class TradeStatsRow extends StatelessWidget {
         const spacing = 16.0;
         final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
+        final semantic = context.semanticColors;
+
         return Shimmer.fromColors(
-          baseColor: Colors.grey.shade300,
-          highlightColor: Colors.grey.shade100,
+          baseColor: semantic.shimmerBase,
+          highlightColor: semantic.shimmerHighlight,
           child: Wrap(
             spacing: spacing,
             runSpacing: spacing,
@@ -122,7 +124,7 @@ class TradeStatsRow extends StatelessWidget {
                   height: 130,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                   ),
                 ),
             ],

@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import '../../services/reminder_notes_service.dart';
+import '../../theme/app_theme.dart';
 
 class ReminderNotesScreen extends StatefulWidget {
   const ReminderNotesScreen({Key? key}) : super(key: key);
@@ -105,16 +106,19 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
         bool isDeleting = false,
         VoidCallback? onDelete,
       }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: isDraft ? Colors.blue.shade50 : Colors.white,
+        color: isDraft ? semantic.info.withValues(alpha: 0.12) : colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black12,
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -129,7 +133,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
                 text,
                 style: TextStyle(
                   fontSize: 16,
-                  color: isDraft ? Colors.black87 : Colors.black,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -144,7 +148,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
               )
             else if (!isDraft && onDelete != null)
               IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                icon: Icon(Icons.delete_outline, color: semantic.loss),
                 onPressed: onDelete,
               ),
           ],
@@ -194,14 +198,15 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        title: const Text('Reminder Notes'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-      ),
+      // No explicit backgroundColor/AppBar overrides here -- falls back to
+      // the theme's scaffoldBackgroundColor/appBarTheme, same as every
+      // other screen (Dashboard included), so this page's background
+      // matches the rest of the app instead of standing out.
+      appBar: AppBar(title: const Text('Reminder Notes')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -219,7 +224,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: semantic.info,
         onPressed: () {
           setState(() {
             _isAdding = !_isAdding;
@@ -231,11 +236,11 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
           ? Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black12,
+              color: colorScheme.shadow.withValues(alpha: 0.05),
               blurRadius: 12,
               offset: const Offset(0, -3),
             ),
@@ -252,7 +257,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
                     decoration: InputDecoration(
                       hintText: 'Enter new note...',
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: colorScheme.surfaceContainerHigh,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
@@ -269,7 +274,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: semantic.info,
                   ),
                   child: const Text('Add'),
                 ),
@@ -281,7 +286,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
                 child: ElevatedButton(
                   onPressed: _isSubmittingDrafts ? null : _submitAllDrafts,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: semantic.profit,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),

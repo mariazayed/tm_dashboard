@@ -4,6 +4,7 @@ import '../../enums/goal_category_enum.dart';
 import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
 import '../../services/goal_service.dart';
+import '../../theme/app_theme.dart';
 import 'add_goal_sheet.dart';
 import 'goal_card.dart';
 
@@ -131,6 +132,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
             );
           }
 
+          final colorScheme = Theme.of(context).colorScheme;
           final goals = snapshot.data ?? [];
 
           final active = goals.where((g) => g.status == GoalStatusEnum.ACTIVE).toList();
@@ -153,13 +155,13 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.flag_outlined, size: 48, color: Colors.grey.shade300),
+                          Icon(Icons.flag_outlined, size: 48, color: colorScheme.outlineVariant),
                           const SizedBox(height: 12),
                           Text(
                             goals.isEmpty
                                 ? 'No goals yet — set your first one'
                                 : 'No active goals in this category',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -175,12 +177,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       children: [
                         Icon(
                           showHistory ? Icons.expand_less : Icons.expand_more,
-                          color: Colors.grey.shade500,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'History (${history.length})',
-                          style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),

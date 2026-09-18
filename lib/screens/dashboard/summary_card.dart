@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_theme.dart';
 import 'capital_stat.dart';
 import 'classes/summary_data.dart';
 
@@ -11,18 +12,19 @@ class SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pnlColor = data.pnl >= 0 ? Colors.green : Colors.red;
+    final semantic = context.semanticColors;
+    final pnlColor = data.pnl >= 0 ? semantic.profit : semantic.loss;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [pnlColor.withOpacity(0.15), Colors.transparent],
+          colors: [pnlColor.withValues(alpha: 0.15), Colors.transparent],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: pnlColor.withOpacity(0.4)),
+        border: Border.all(color: pnlColor.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,10 +53,10 @@ class SummaryCard extends StatelessWidget {
               CapitalStat(
                 label: 'Profit',
                 value: data.profits,
-                color: Colors.green,
+                color: semantic.profit,
               ),
               const SizedBox(width: 16),
-              CapitalStat(label: 'Loss', value: data.losses, color: Colors.red),
+              CapitalStat(label: 'Loss', value: data.losses, color: semantic.loss),
             ],
           ),
         ],

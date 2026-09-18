@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../enums/score_enum.dart';
 import '../../../models/day_model.dart';
 import '../../../services/day_service.dart';
+import '../../theme/app_theme.dart';
 import 'calendar_state.dart';
 
 class DayStatus extends StatefulWidget {
@@ -176,7 +177,7 @@ class _DayStatusState extends State<DayStatus> {
           decoration: InputDecoration(
             hintText: "Write notes about this trading day...",
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../enums/mistake_tag_enum.dart';
+import '../../theme/app_theme.dart';
 import 'dashboard_bar_row.dart';
 
 const Map<MistakeTagEnum, String> _mistakeTagLabels = {
@@ -40,21 +41,21 @@ class MistakeTagChart extends StatelessWidget {
     this.maxVisible = 6,
   });
 
-  static const _amber = Color(0xFFF59E0B);
-
   @override
   Widget build(BuildContext context) {
-    if (loading) return _buildShimmer();
+    if (loading) return _buildShimmer(context);
+
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -69,26 +70,28 @@ class MistakeTagChart extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 "No mistake tags recorded yet",
-                style: TextStyle(color: Colors.grey.shade500),
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
             )
           else
-            ..._rows(),
+            ..._rows(context),
         ],
       ),
     );
   }
 
   Widget _header(BuildContext context) {
+    final amber = context.semanticColors.warning;
+
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: _amber.withOpacity(0.12),
+            color: amber.withValues(alpha: 0.12),
           ),
-          child: const Icon(Icons.warning_amber, size: 18, color: _amber),
+          child: Icon(Icons.warning_amber, size: 18, color: amber),
         ),
         const SizedBox(width: 10),
         Text(
@@ -102,7 +105,8 @@ class MistakeTagChart extends StatelessWidget {
     );
   }
 
-  List<Widget> _rows() {
+  List<Widget> _rows(BuildContext context) {
+    final amber = context.semanticColors.warning;
     final visible = data.take(maxVisible).toList();
     final maxCount = visible.fold(0, (a, b) => a > b.value ? a : b.value);
     final remaining = data.length - visible.length;
@@ -113,28 +117,30 @@ class MistakeTagChart extends StatelessWidget {
           label: _mistakeTagLabels[entry.key] ?? entry.key.name,
           valueText: "${entry.value}",
           fraction: maxCount == 0 ? 0 : entry.value / maxCount,
-          color: _amber,
+          color: amber,
         ),
       if (remaining > 0)
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             "+$remaining more",
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
     ];
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
+    final semantic = context.semanticColors;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: semantic.shimmerBase,
+      highlightColor: semantic.shimmerHighlight,
       child: Container(
         height: 280,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
         ),
       ),
     );

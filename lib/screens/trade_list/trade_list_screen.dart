@@ -19,6 +19,7 @@ import '../../models/trade_model.dart';
 import '../../services/asset_service.dart';
 import '../../services/strategy_service.dart';
 import '../../services/trade_service.dart';
+import '../../theme/app_theme.dart';
 import 'classes/trade_list_filters.dart';
 import 'trade_row_tile.dart';
 
@@ -254,16 +255,18 @@ class _TradeListScreenState extends State<TradeListScreen> {
   // ---------------- FILTER BAR ----------------
 
   Widget _filterCard(double maxWidth) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -273,14 +276,14 @@ class _TradeListScreenState extends State<TradeListScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.tune_rounded, size: 17, color: Colors.grey.shade500),
+              Icon(Icons.tune_rounded, size: 17, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
                 'Filters',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Colors.grey.shade600,
+                  color: colorScheme.onSurfaceVariant,
                   letterSpacing: 0.2,
                 ),
               ),
@@ -305,18 +308,18 @@ class _TradeListScreenState extends State<TradeListScreen> {
               prefixIcon: const Icon(Icons.search_rounded),
               isDense: true,
               filled: true,
-              fillColor: const Color(0xFFF9FAFB),
+              fillColor: colorScheme.surfaceContainerLow,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade100),
+                borderSide: BorderSide(color: colorScheme.outlineVariant),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade100),
+                borderSide: BorderSide(color: colorScheme.outlineVariant),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF818CF8), width: 1.5),
+                borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -505,22 +508,24 @@ class _TradeListScreenState extends State<TradeListScreen> {
   }
 
   InputDecoration _fieldDecoration(String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InputDecoration(
       labelText: label,
       isDense: true,
       filled: true,
-      fillColor: const Color(0xFFF9FAFB),
+      fillColor: colorScheme.surfaceContainerLow,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade100),
+        borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade100),
+        borderSide: BorderSide(color: colorScheme.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF818CF8), width: 1.5),
+        borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
       ),
     );
   }
@@ -528,10 +533,11 @@ class _TradeListScreenState extends State<TradeListScreen> {
   // ---------------- SUMMARY ----------------
 
   Widget _summaryRow(List<Trade> filtered) {
+    final semantic = context.semanticColors;
     final total = filtered.fold(0.0, (a, b) => a + b.profit);
     final wins = filtered.where((t) => t.profit > 0).length;
     final winRate = filtered.isEmpty ? 0.0 : wins / filtered.length * 100;
-    final totalColor = total >= 0 ? const Color(0xFF16A34A) : const Color(0xFFEF4444);
+    final totalColor = total >= 0 ? semantic.profit : semantic.loss;
 
     return Wrap(
       spacing: 12,
@@ -539,7 +545,7 @@ class _TradeListScreenState extends State<TradeListScreen> {
       children: [
         _statPill(
           icon: Icons.receipt_long_rounded,
-          iconColor: const Color(0xFF818CF8),
+          iconColor: Theme.of(context).colorScheme.primary,
           label: 'Trades',
           value: '${filtered.length} / ${_trades.length}',
         ),
@@ -553,7 +559,7 @@ class _TradeListScreenState extends State<TradeListScreen> {
           ),
           _statPill(
             icon: Icons.emoji_events_rounded,
-            iconColor: const Color(0xFFF59E0B),
+            iconColor: semantic.warning,
             label: 'Win rate',
             value: '${winRate.toStringAsFixed(1)}%',
           ),
@@ -569,16 +575,18 @@ class _TradeListScreenState extends State<TradeListScreen> {
     required String value,
     Color? valueColor,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             blurRadius: 14,
-            color: Colors.black.withOpacity(0.04),
+            color: colorScheme.shadow.withValues(alpha: 0.04),
             offset: const Offset(0, 6),
           ),
         ],
@@ -604,7 +612,7 @@ class _TradeListScreenState extends State<TradeListScreen> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade500,
+                  color: colorScheme.onSurfaceVariant,
                   letterSpacing: 0.6,
                 ),
               ),
@@ -614,7 +622,7 @@ class _TradeListScreenState extends State<TradeListScreen> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: valueColor ?? const Color(0xFF374151),
+                  color: valueColor ?? colorScheme.onSurface,
                 ),
               ),
             ],
@@ -625,33 +633,35 @@ class _TradeListScreenState extends State<TradeListScreen> {
   }
 
   Widget _emptyState() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 56),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade100),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF818CF8).withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.inbox_rounded,
               size: 28,
-              color: Color(0xFF818CF8),
+              color: colorScheme.primary,
             ),
           ),
           const SizedBox(height: 14),
           Text(
             _trades.isEmpty ? 'No trades yet' : 'No trades match your filters',
             style: TextStyle(
-              color: Colors.grey.shade600,
+              color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),
@@ -660,7 +670,7 @@ class _TradeListScreenState extends State<TradeListScreen> {
             const SizedBox(height: 4),
             Text(
               'Try adjusting or clearing your filters',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 12.5),
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.5),
             ),
           ],
         ],

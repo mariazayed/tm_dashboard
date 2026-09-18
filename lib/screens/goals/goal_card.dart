@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../enums/goal_category_enum.dart';
 import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
+import '../../theme/app_theme.dart';
 
 class GoalCard extends StatelessWidget {
   final GoalModel goal;
@@ -27,29 +28,35 @@ class GoalCard extends StatelessWidget {
     this.busy = false,
   });
 
-  Color get _categoryColor {
+  Color _categoryColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+
     switch (goal.category) {
       case GoalCategoryEnum.PROFIT:
-        return const Color(0xFF22C55E);
+        return semantic.profit;
       case GoalCategoryEnum.TRADE_QUALITY:
-        return const Color(0xFF818CF8);
+        return colorScheme.primary;
       case GoalCategoryEnum.DISCIPLINE:
-        return const Color(0xFF3B82F6);
+        return semantic.info;
       case GoalCategoryEnum.MANUAL:
-        return const Color(0xFFF59E0B);
+        return semantic.warning;
     }
   }
 
-  Color get _statusColor {
+  Color _statusColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+
     switch (goal.status) {
       case GoalStatusEnum.ACTIVE:
-        return const Color(0xFF818CF8);
+        return colorScheme.primary;
       case GoalStatusEnum.ACHIEVED:
-        return const Color(0xFF22C55E);
+        return semantic.profit;
       case GoalStatusEnum.FAILED:
-        return const Color(0xFFEF4444);
+        return semantic.loss;
       case GoalStatusEnum.ARCHIVED:
-        return Colors.grey;
+        return colorScheme.onSurfaceVariant;
     }
   }
 
@@ -85,17 +92,22 @@ class GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final categoryColor = _categoryColor(context);
+    final statusColor = _statusColor(context);
+
     return Opacity(
       opacity: busy ? 0.6 : 1,
       child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outline),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -109,13 +121,13 @@ class GoalCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _categoryColor.withOpacity(0.12),
+                  color: categoryColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   goal.category.label,
                   style: TextStyle(
-                    color: _categoryColor,
+                    color: categoryColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 12,
                   ),
@@ -123,9 +135,9 @@ class GoalCard extends StatelessWidget {
               ),
               const Spacer(),
               if (goal.achieved && goal.status == GoalStatusEnum.ACTIVE)
-                const Padding(
-                  padding: EdgeInsets.only(right: 4),
-                  child: Icon(Icons.emoji_events, color: Color(0xFFF59E0B), size: 18),
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Icon(Icons.emoji_events, color: semantic.warning, size: 18),
                 ),
               busy
                   ? const Padding(
@@ -137,7 +149,7 @@ class GoalCard extends StatelessWidget {
                       ),
                     )
                   : PopupMenuButton<String>(
-                      icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                      icon: Icon(Icons.more_horiz, color: colorScheme.onSurfaceVariant),
                       onSelected: (value) {
                         switch (value) {
                           case 'edit':
@@ -188,34 +200,34 @@ class GoalCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: (goal.progressPct / 100).clamp(0, 1).toDouble(),
               minHeight: 8,
-              backgroundColor: Colors.grey.shade100,
-              color: _categoryColor,
+              backgroundColor: colorScheme.surfaceContainerHigh,
+              color: categoryColor,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             _valueLabel,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
               Text(
                 _dateRangeLabel,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _statusColor.withOpacity(0.12),
+                  color: statusColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   _timeLabel,
                   style: TextStyle(
                     fontSize: 11,
-                    color: _statusColor,
+                    color: statusColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

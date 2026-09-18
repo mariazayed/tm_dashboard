@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_theme.dart';
+
 class WeeklyPnlTable extends StatelessWidget {
   final double profit;
   final double loss;
@@ -9,16 +11,18 @@ class WeeklyPnlTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final net = profit + loss;
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -51,13 +55,13 @@ class WeeklyPnlTable extends StatelessWidget {
           _buildRow(
             label: "Profit",
             value: profit,
-            color: Colors.green.shade500,
+            color: semantic.profit,
           ),
 
           const SizedBox(height: 14),
 
           /// Loss Row
-          _buildRow(label: "Loss", value: loss, color: Colors.red.shade400),
+          _buildRow(label: "Loss", value: loss, color: semantic.loss),
 
           const Divider(height: 28),
 
@@ -65,7 +69,7 @@ class WeeklyPnlTable extends StatelessWidget {
           _buildRow(
             label: "Net",
             value: net,
-            color: net >= 0 ? Colors.green.shade600 : Colors.red.shade600,
+            color: net >= 0 ? semantic.profit : semantic.loss,
             bold: true,
           ),
         ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
 import '../../services/capital_service.dart';
+import '../../theme/app_theme.dart';
 import '../dashboard/capital_list.dart';
 import '../dashboard/capital_stat_card.dart';
 
@@ -225,7 +226,7 @@ class _CapitalScreenState extends State<CapitalScreen> {
           const SizedBox(height: 12),
           FloatingActionButton.extended(
             heroTag: 'withdraw',
-            backgroundColor: Colors.redAccent,
+            backgroundColor: context.semanticColors.loss,
             onPressed: () => _openCapitalDialog(CapitalReasonEnum.WITHDRAW),
             icon: const Icon(Icons.trending_down),
             // withdraw (capital out)
@@ -246,7 +247,7 @@ class _CapitalScreenState extends State<CapitalScreen> {
                         child: CapitalStatCard(
                           title: "Total Deposits",
                           value: _totalDeposits,
-                          color: Colors.green.shade500,
+                          color: context.semanticColors.profit,
                           icon: Icons.south_west_rounded,
                         ),
                       ),
@@ -255,7 +256,7 @@ class _CapitalScreenState extends State<CapitalScreen> {
                         child: CapitalStatCard(
                           title: "Total Withdraws",
                           value: _totalWithdraws,
-                          color: Colors.red.shade400,
+                          color: context.semanticColors.loss,
                           icon: Icons.north_east_rounded,
                         ),
                       ),

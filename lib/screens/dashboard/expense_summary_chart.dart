@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../theme/app_theme.dart';
 import 'dashboard_bar_row.dart';
 
 /// "Expenses by Reason" card -- total amount spent per expense reason, from
@@ -25,21 +26,21 @@ class ExpenseSummaryChart extends StatelessWidget {
     this.maxVisible = 6,
   });
 
-  static const _violet = Color(0xFF8B5CF6);
-
   @override
   Widget build(BuildContext context) {
-    if (loading) return _buildShimmer();
+    if (loading) return _buildShimmer(context);
+
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -54,29 +55,31 @@ class ExpenseSummaryChart extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
                 "No expenses recorded yet",
-                style: TextStyle(color: Colors.grey.shade500),
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
             )
           else
-            ..._rows(),
+            ..._rows(context),
         ],
       ),
     );
   }
 
   Widget _header(BuildContext context) {
+    final violet = context.semanticColors.violet;
+
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: _violet.withOpacity(0.12),
+            color: violet.withValues(alpha: 0.12),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.receipt_long_outlined,
             size: 18,
-            color: _violet,
+            color: violet,
           ),
         ),
         const SizedBox(width: 10),
@@ -95,14 +98,15 @@ class ExpenseSummaryChart extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
       ],
     );
   }
 
-  List<Widget> _rows() {
+  List<Widget> _rows(BuildContext context) {
+    final violet = context.semanticColors.violet;
     final visible = data.take(maxVisible).toList();
     final maxValue = visible.fold(0.0, (a, b) => a > b.value ? a : b.value);
     final remaining = data.length - visible.length;
@@ -113,28 +117,30 @@ class ExpenseSummaryChart extends StatelessWidget {
           label: entry.key,
           valueText: entry.value.toStringAsFixed(2),
           fraction: maxValue == 0 ? 0 : entry.value / maxValue,
-          color: _violet,
+          color: violet,
         ),
       if (remaining > 0)
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             "+$remaining more reason${remaining == 1 ? '' : 's'}",
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
     ];
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
+    final semantic = context.semanticColors;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade300,
-      highlightColor: Colors.grey.shade100,
+      baseColor: semantic.shimmerBase,
+      highlightColor: semantic.shimmerHighlight,
       child: Container(
         height: 280,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
         ),
       ),
     );

@@ -33,6 +33,8 @@ class _MdEditorFieldState extends State<MdEditorField> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -42,7 +44,7 @@ class _MdEditorFieldState extends State<MdEditorField> {
             children: [
               Text(
                 widget.label,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
               ),
               const Spacer(),
               _ToggleButton(
@@ -66,13 +68,13 @@ class _MdEditorFieldState extends State<MdEditorField> {
             ),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: colorScheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: colorScheme.outlineVariant),
             ),
             child: _preview
                 ? (widget.controller.text.trim().isEmpty
-                    ? Text('Nothing to preview yet', style: TextStyle(color: Colors.grey.shade400))
+                    ? Text('Nothing to preview yet', style: TextStyle(color: colorScheme.onSurfaceVariant))
                     : buildMarkdownPreview(context, widget.controller.text))
                 : TextField(
                     controller: widget.controller,
@@ -100,13 +102,15 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: selected ? Theme.of(context).colorScheme.primary.withOpacity(0.12) : Colors.transparent,
+          color: selected ? colorScheme.primary.withValues(alpha: 0.12) : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Text(
@@ -114,7 +118,7 @@ class _ToggleButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? Theme.of(context).colorScheme.primary : Colors.grey.shade500,
+            color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -129,6 +133,7 @@ class _ToggleButton extends StatelessWidget {
 Widget buildMarkdownPreview(BuildContext context, String source, {TextStyle? baseStyle}) {
   final theme = Theme.of(context);
   final style = baseStyle ?? theme.textTheme.bodyMedium ?? const TextStyle(fontSize: 13);
+  final codeBackground = theme.colorScheme.surfaceContainerHigh;
 
   final lines = source.split('\n');
   final widgets = <Widget>[];
@@ -139,7 +144,7 @@ Widget buildMarkdownPreview(BuildContext context, String source, {TextStyle? bas
     widgets.add(
       Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: _richText(paragraph.join(' '), style),
+        child: _richText(paragraph.join(' '), style, codeBackground),
       ),
     );
     paragraph = [];
@@ -180,7 +185,7 @@ Widget buildMarkdownPreview(BuildContext context, String source, {TextStyle? bas
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('•  ', style: style),
-              Expanded(child: _richText(bullet.group(1)!, style)),
+              Expanded(child: _richText(bullet.group(1)!, style, codeBackground)),
             ],
           ),
         ),
@@ -198,7 +203,7 @@ Widget buildMarkdownPreview(BuildContext context, String source, {TextStyle? bas
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('${numbered.group(1)}.  ', style: style),
-              Expanded(child: _richText(numbered.group(2)!, style)),
+              Expanded(child: _richText(numbered.group(2)!, style, codeBackground)),
             ],
           ),
         ),
@@ -218,7 +223,7 @@ Widget buildMarkdownPreview(BuildContext context, String source, {TextStyle? bas
 }
 
 /// Inline `**bold**` / `*italic*` / `` `code` `` spans within one line.
-Widget _richText(String text, TextStyle baseStyle) {
+Widget _richText(String text, TextStyle baseStyle, Color codeBackground) {
   final spans = <InlineSpan>[];
   final pattern = RegExp(r'(\*\*.+?\*\*|\*.+?\*|`.+?`)');
   var last = 0;
@@ -236,7 +241,7 @@ Widget _richText(String text, TextStyle baseStyle) {
     } else if (token.startsWith('`')) {
       spans.add(TextSpan(
         text: token.substring(1, token.length - 1),
-        style: baseStyle.copyWith(fontFamily: 'monospace', backgroundColor: Colors.grey.shade200),
+        style: baseStyle.copyWith(fontFamily: 'monospace', backgroundColor: codeBackground),
       ));
     } else {
       spans.add(TextSpan(

@@ -3,6 +3,7 @@ import 'package:tm_dashboard/models/strategy_model.dart';
 
 import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
+import '../../theme/app_theme.dart';
 import 'classes/trade_draft.dart';
 
 class TradeCard extends StatefulWidget {
@@ -164,7 +165,9 @@ class _TradeCardState extends State<TradeCard> {
                   child: Text(
                     'P/L: \$${d.profit.toStringAsFixed(2)}',
                     style: TextStyle(
-                      color: d.profit >= 0 ? Colors.green : Colors.red,
+                      color: d.profit >= 0
+                          ? context.semanticColors.profit
+                          : context.semanticColors.loss,
                     ),
                   ),
                 ),

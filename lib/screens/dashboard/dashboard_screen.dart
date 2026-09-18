@@ -15,6 +15,7 @@ import '../../services/expense_service.dart';
 import '../../services/reminder_notes_service.dart';
 import '../../services/strict_rules_service.dart';
 import '../../services/trade_service.dart';
+import '../../theme/app_theme.dart';
 import 'capital_growth_chart.dart';
 import 'capital_list.dart';
 import 'capital_stat_card.dart';
@@ -64,23 +65,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<ExpenseModel> _expenses = [];
   bool _isExpensesLoading = true;
 
-  // Modern light colors for sticky notes
-  final List<Color> _colors = [
-    Colors.yellow.shade100,
-    Colors.blue.shade50,
-    Colors.green.shade50,
-    Colors.pink.shade50,
-    Colors.orange.shade50,
-    Colors.purple.shade50,
-  ];
-
   // Accent colors for the Reminder / Strict Rule cards -- distinct from the
   // green/red PnL convention and from every categorical hue already used by
   // the charts further down this page (violet for Expenses, amber for
   // Mistake Frequency), so these two cards read as their own thing rather
-  // than borrowing another section's meaning.
-  static const _reminderAccent = Color(0xFF3B82F6);
-  static const _ruleAccent = Color(0xFFF97316);
+  // than borrowing another section's meaning. Sourced from
+  // AppSemanticColors.info/orange (see _reminderAccent/_ruleAccent getters
+  // below) rather than hardcoded here, since they need to shift with
+  // light/dark mode and a field initializer has no BuildContext to read
+  // the theme from.
+  Color _reminderAccent(BuildContext context) => context.semanticColors.info;
+  Color _ruleAccent(BuildContext context) => context.semanticColors.orange;
 
   CapitalDashboardHelper get helper {
     final h = _helper;
@@ -262,7 +257,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
+                      color: Theme.of(context).colorScheme.outline,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -287,8 +282,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: total >= 0
-                          ? Colors.green.shade500
-                          : Colors.red.shade400,
+                          ? context.semanticColors.profit
+                          : context.semanticColors.loss,
                     ),
                   ),
 
@@ -341,7 +336,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
+                      color: Theme.of(context).colorScheme.outline,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -462,13 +457,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 border: Border.all(
                   color: isHovered
                       ? accentColor.withOpacity(0.35)
-                      : Colors.black.withOpacity(0.04),
+                      : Theme.of(context).colorScheme.outlineVariant,
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 20,
-                    color: Colors.black.withOpacity(0.05),
+                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
                     offset: const Offset(0, 10),
                   ),
                   if (isHovered)
@@ -526,9 +521,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                         Expanded(
                           child: loading
-                              ? _buildNoteShimmer()
+                              ? _buildNoteShimmer(context)
                               : isEmpty
-                              ? _buildNoteEmptyState(icon, isNotesCard)
+                              ? _buildNoteEmptyState(context, icon, isNotesCard)
                               : Align(
                                   alignment: Alignment.centerLeft,
                                   child: AnimatedSwitcher(
@@ -593,26 +588,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildNoteEmptyState(IconData icon, bool isNotesCard) {
+  Widget _buildNoteEmptyState(BuildContext context, IconData icon, bool isNotesCard) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 32, color: Colors.grey.shade300),
+          Icon(icon, size: 32, color: colorScheme.outline),
           const SizedBox(height: 8),
           Text(
             isNotesCard ? "No reminders yet" : "No strict rules yet",
-            style: TextStyle(color: Colors.grey.shade500),
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNoteShimmer() {
+  Widget _buildNoteShimmer(BuildContext context) {
+    final semantic = context.semanticColors;
+    final surface = Theme.of(context).colorScheme.surface;
+
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.grey.shade100,
+      baseColor: semantic.shimmerBase,
+      highlightColor: semantic.shimmerHighlight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -621,7 +621,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             height: 16,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: surface,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -630,7 +630,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             height: 16,
             width: 220,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: surface,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -658,7 +658,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ],
@@ -688,7 +688,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: _buildDashboardNoteCard(
                                   title: "Reminder",
                                   icon: Icons.lightbulb_outline,
-                                  accentColor: _reminderAccent,
+                                  accentColor: _reminderAccent(context),
                                   loading: _isNotesLoading,
                                   isEmpty: _notes.isEmpty,
                                   text: _notes.isNotEmpty
@@ -704,7 +704,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: _buildDashboardNoteCard(
                                   title: "Strict Rule",
                                   icon: Icons.rule_folder_outlined,
-                                  accentColor: _ruleAccent,
+                                  accentColor: _ruleAccent(context),
                                   loading: _isRulesLoading,
                                   isEmpty: _rules.isEmpty,
                                   text: _rules.isNotEmpty
@@ -722,7 +722,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _buildDashboardNoteCard(
                                 title: "Reminder",
                                 icon: Icons.lightbulb_outline,
-                                accentColor: _reminderAccent,
+                                accentColor: _reminderAccent(context),
                                 loading: _isNotesLoading,
                                 isEmpty: _notes.isEmpty,
                                 text: _notes.isNotEmpty
@@ -736,7 +736,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _buildDashboardNoteCard(
                                 title: "Strict Rule",
                                 icon: Icons.rule_folder_outlined,
-                                accentColor: _ruleAccent,
+                                accentColor: _ruleAccent(context),
                                 loading: _isRulesLoading,
                                 isEmpty: _rules.isEmpty,
                                 text: _rules.isNotEmpty
@@ -777,7 +777,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: CapitalStatCard(
                             title: "Total Deposits",
                             value: helper.totalDeposits,
-                            color: Colors.green.shade500,
+                            color: context.semanticColors.profit,
                             icon: Icons.south_west_rounded,
                             onTap: () => _openFilteredCapitalDialog(
                               CapitalReasonEnum.DEPOSIT,
@@ -789,7 +789,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: CapitalStatCard(
                             title: "Total Withdraws",
                             value: _totalWithdraws,
-                            color: Colors.red.shade400,
+                            color: context.semanticColors.loss,
                             icon: Icons.north_east_rounded,
                             onTap: () => _openFilteredCapitalDialog(
                               CapitalReasonEnum.WITHDRAW,

@@ -4,6 +4,7 @@ import '../../enums/decision_category_enum.dart';
 import '../../enums/decision_status_enum.dart';
 import '../../models/decision_model.dart';
 import '../../services/decision_service.dart';
+import '../../theme/app_theme.dart';
 import 'add_decision_sheet.dart';
 import 'decision_card.dart';
 
@@ -85,10 +86,13 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F7F9),
+      // No explicit backgroundColor override -- falls back to the theme's
+      // scaffoldBackgroundColor/appBarTheme, same as every other screen
+      // (Dashboard included), so this page's background matches the rest
+      // of the app instead of standing out.
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF6F7F9),
         surfaceTintColor: Colors.transparent,
         title: const Text('Decisions'),
         actions: [
@@ -169,14 +173,14 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
                               Icon(
                                 Icons.fact_check_outlined,
                                 size: 48,
-                                color: Colors.grey.shade300,
+                                color: colorScheme.outline,
                               ),
                               const SizedBox(height: 12),
                               Text(
                                 decisions.isEmpty
                                     ? 'No decisions logged yet'
                                     : 'No decisions in this category',
-                                style: TextStyle(color: Colors.grey.shade500),
+                                style: TextStyle(color: colorScheme.onSurfaceVariant),
                               ),
                             ],
                           ),
@@ -226,13 +230,15 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
     int resolvedCount,
   ) {
     final latest = decisions.isEmpty ? null : decisions.first;
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: Wrap(
         spacing: 10,
@@ -242,30 +248,30 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
           _summaryMetric(
             'Active',
             activeCount.toString(),
-            const Color(0xFF16A34A),
+            semantic.profit,
           ),
           _summaryMetric(
             'Resolved',
             resolvedCount.toString(),
-            const Color(0xFF64748B),
+            colorScheme.onSurfaceVariant,
           ),
           _summaryMetric(
             'Total',
             decisions.length.toString(),
-            const Color(0xFF4F46E5),
+            colorScheme.primary,
           ),
           if (latest != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
+                color: colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: colorScheme.outlineVariant),
               ),
               child: Text(
                 'Latest: #${latest.decisionNumber ?? '-'}',
-                style: const TextStyle(
-                  color: Color(0xFF475569),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -277,6 +283,7 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
   }
 
   Widget _summaryMetric(String label, String value, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       decoration: BoxDecoration(
@@ -297,8 +304,8 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF475569),
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -330,7 +337,12 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
     );
   }
 
+  /// Selected filter now uses the brand primary color (instead of the
+  /// original design's near-black) so its selected/unselected contrast
+  /// stays correct in dark mode too -- a deliberate judgment call, not an
+  /// exact color port.
   Widget _filterButton(String label, bool selected, VoidCallback onTap) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
@@ -340,25 +352,25 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF111827) : Colors.white,
+            color: selected ? colorScheme.primary : colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: selected
-                  ? const Color(0xFF111827)
-                  : const Color(0xFFE5E7EB),
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant,
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (selected) ...[
-                const Icon(Icons.check, size: 14, color: Colors.white),
+                Icon(Icons.check, size: 14, color: colorScheme.onPrimary),
                 const SizedBox(width: 6),
               ],
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? Colors.white : const Color(0xFF475569),
+                  color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),
@@ -371,15 +383,16 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
   }
 
   Widget _buildResolvedToggle(int count) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () => setState(() => showResolved = !showResolved),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
         child: Row(
           children: [
@@ -387,13 +400,13 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
               showResolved
                   ? Icons.keyboard_arrow_up
                   : Icons.keyboard_arrow_down,
-              color: const Color(0xFF64748B),
+              color: colorScheme.onSurfaceVariant,
             ),
             const SizedBox(width: 6),
             Text(
               'Resolved archive',
               style: TextStyle(
-                color: Colors.grey.shade800,
+                color: colorScheme.onSurface,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -401,13 +414,13 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 count.toString(),
-                style: const TextStyle(
-                  color: Color(0xFF64748B),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),

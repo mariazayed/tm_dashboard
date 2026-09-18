@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/expense_model.dart';
+import '../../theme/app_theme.dart';
 
 class ExpenseCard extends StatelessWidget {
   final ExpenseModel expense;
@@ -20,23 +21,33 @@ class ExpenseCard extends StatelessWidget {
     this.busy = false,
   });
 
-  static const List<Color> _palette = [
-    Color(0xFF818CF8), // indigo
-    Color(0xFF22C55E), // green
-    Color(0xFF3B82F6), // blue
-    Color(0xFFF59E0B), // amber
-    Color(0xFFEC4899), // pink
-    Color(0xFF14B8A6), // teal
-  ];
+  // Categorical palette used to color-code expense-reason badges by a hash
+  // of the reason's name. `pink`/`teal` have no dedicated theme role, so
+  // they stay as fixed accents in both light and dark mode.
+  List<Color> _palette(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    return [
+      colorScheme.primary, // indigo
+      semantic.profit, // green
+      semantic.info, // blue
+      semantic.warning, // amber
+      const Color(0xFFEC4899), // pink
+      const Color(0xFF14B8A6), // teal
+    ];
+  }
 
-  Color get _reasonColor {
+  Color _reasonColor(BuildContext context) {
     final sum = expense.expenseReason.name.codeUnits.fold<int>(0, (a, b) => a + b);
-    return _palette[sum % _palette.length];
+    final palette = _palette(context);
+    return palette[sum % palette.length];
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _reasonColor;
+    final color = _reasonColor(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     final dateFmt = DateFormat('MMM d, yyyy');
 
     return Opacity(
@@ -44,12 +55,12 @@ class ExpenseCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: colorScheme.outline),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: colorScheme.shadow.withValues(alpha: 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -82,7 +93,7 @@ class ExpenseCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         dateFmt.format(expense.date),
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                        style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -92,7 +103,7 @@ class ExpenseCard extends StatelessWidget {
                       expense.notes!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ],
@@ -101,10 +112,10 @@ class ExpenseCard extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               '-\$${expense.amount.toStringAsFixed(2)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFFEF4444),
+                color: semantic.loss,
               ),
             ),
             busy
@@ -117,7 +128,7 @@ class ExpenseCard extends StatelessWidget {
                     ),
                   )
                 : PopupMenuButton<String>(
-                    icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                    icon: Icon(Icons.more_horiz, color: colorScheme.onSurfaceVariant),
                     onSelected: (value) {
                       switch (value) {
                         case 'edit':

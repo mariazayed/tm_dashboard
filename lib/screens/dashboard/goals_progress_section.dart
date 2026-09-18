@@ -6,6 +6,7 @@ import '../../enums/goal_category_enum.dart';
 import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
 import '../../services/goal_service.dart';
+import '../../theme/app_theme.dart';
 
 /// Compact "Goals Progress" widget for the dashboard home page.
 ///
@@ -33,16 +34,18 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
     setState(() => _future = GoalService.getAll());
   }
 
-  Color _categoryColor(GoalCategoryEnum category) {
+  Color _categoryColor(BuildContext context, GoalCategoryEnum category) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     switch (category) {
       case GoalCategoryEnum.PROFIT:
-        return const Color(0xFF22C55E);
+        return semantic.profit;
       case GoalCategoryEnum.TRADE_QUALITY:
-        return const Color(0xFF818CF8);
+        return colorScheme.primary;
       case GoalCategoryEnum.DISCIPLINE:
-        return const Color(0xFF3B82F6);
+        return semantic.info;
       case GoalCategoryEnum.MANUAL:
-        return const Color(0xFFF59E0B);
+        return semantic.warning;
     }
   }
 
@@ -54,16 +57,18 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -118,7 +123,7 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Text(
                     'Failed to load goals',
-                    style: TextStyle(color: Colors.grey.shade500),
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
                   ),
                 );
               }
@@ -138,14 +143,14 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
                     children: [
                       Icon(
                         Icons.flag_outlined,
-                        color: Colors.grey.shade300,
+                        color: colorScheme.outlineVariant,
                         size: 28,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'No active goals — set one to track your progress',
-                          style: TextStyle(color: Colors.grey.shade500),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
                         ),
                       ),
                       TextButton(
@@ -188,7 +193,8 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
   }
 
   Widget _buildGoalRow(BuildContext context, GoalModel goal) {
-    final color = _categoryColor(goal.category);
+    final color = _categoryColor(context, goal.category);
+    final colorScheme = Theme.of(context).colorScheme;
     final pct = (goal.progressPct / 100).clamp(0, 1).toDouble();
 
     return InkWell(
@@ -238,14 +244,14 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
                   child: LinearProgressIndicator(
                     value: pct,
                     minHeight: 6,
-                    backgroundColor: Colors.grey.shade100,
+                    backgroundColor: colorScheme.surfaceContainerHigh,
                     color: color,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _timeLabel(goal),
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                 ),
               ],
             ),

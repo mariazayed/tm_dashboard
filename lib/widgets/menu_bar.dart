@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../constants/route_names.dart';
+import '../theme/app_theme.dart';
 
 class MenuEntry {
   const MenuEntry({
@@ -118,7 +120,7 @@ class _ModernSidebarState extends State<_ModernSidebar> {
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           border: Border(
-            right: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+            right: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
           ),
         ),
         child: Column(
@@ -142,23 +144,7 @@ class _ModernSidebarState extends State<_ModernSidebar> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                  Tooltip(
-                    message: _collapsed ? 'Expand sidebar' : 'Collapse sidebar',
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: _toggleCollapsed,
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Icon(
-                          _collapsed ? Icons.menu : Icons.menu_open,
-                          size: 20,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildHeaderActions(context),
                 ],
               ),
             ),
@@ -174,6 +160,46 @@ class _ModernSidebarState extends State<_ModernSidebar> {
           ],
         ),
       ),
+    );
+  }
+
+  /// The sidebar header's icon button(s) -- the theme toggle and the
+  /// collapse/expand toggle. Laid out side by side when the sidebar is
+  /// expanded (there's room next to the "TM 🧠" wordmark) and stacked when
+  /// it's collapsed (the rail is too narrow for two icons side by side).
+  Widget _buildHeaderActions(BuildContext context) {
+    final themeButton = BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, mode) {
+        final (icon, tooltip) = switch (mode) {
+          ThemeMode.light => (Icons.light_mode_outlined, 'Light theme · tap for dark'),
+          ThemeMode.dark => (Icons.dark_mode_outlined, 'Dark theme · tap to follow system'),
+          ThemeMode.system => (Icons.brightness_auto_outlined, 'Following system theme · tap for light'),
+        };
+
+        return _HeaderIconButton(
+          icon: icon,
+          tooltip: tooltip,
+          onTap: () => context.read<ThemeCubit>().cycle(),
+        );
+      },
+    );
+
+    final collapseButton = _HeaderIconButton(
+      icon: _collapsed ? Icons.menu : Icons.menu_open,
+      tooltip: _collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+      onTap: _toggleCollapsed,
+    );
+
+    if (_collapsed) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [collapseButton, const SizedBox(height: 2), themeButton],
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [themeButton, const SizedBox(width: 2), collapseButton],
     );
   }
 
@@ -297,6 +323,40 @@ class _ModernSidebarState extends State<_ModernSidebar> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: _collapsed ? Tooltip(message: item.label, child: leaf) : leaf,
+    );
+  }
+}
+
+/// Small square icon button shared by the sidebar header's theme and
+/// collapse toggles -- pulled out so both read the same size/tooltip/ripple
+/// behavior instead of repeating the Tooltip+InkWell+Padding boilerplate.
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Icon(
+            icon,
+            size: 20,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
+      ),
     );
   }
 }

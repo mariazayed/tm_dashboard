@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/asset_model.dart';
 import '../../services/asset_service.dart';
+import '../../theme/app_theme.dart';
 import 'add_asset_sheet.dart';
 import 'asset_card.dart';
 
@@ -116,6 +117,7 @@ class _AssetScreenState extends State<AssetScreen> {
             );
           }
 
+          final colorScheme = Theme.of(context).colorScheme;
           final assets = snapshot.data ?? [];
           final filtered = _query.trim().isEmpty
               ? assets
@@ -143,7 +145,7 @@ class _AssetScreenState extends State<AssetScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -153,13 +155,13 @@ class _AssetScreenState extends State<AssetScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade300),
+                          Icon(Icons.inventory_2_outlined, size: 48, color: colorScheme.outlineVariant),
                           const SizedBox(height: 12),
                           Text(
                             assets.isEmpty
                                 ? 'No assets yet — add your first symbol'
                                 : 'No assets match your search',
-                            style: TextStyle(color: Colors.grey.shade500),
+                            style: TextStyle(color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),

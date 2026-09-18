@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/expense_reason_model.dart';
 import '../../services/expense_reason_service.dart';
+import '../../theme/app_theme.dart';
 
 /// Create/edit bottom sheet for a single expense reason -- same shape as
 /// AddAssetSheet, just a single name field.
@@ -60,6 +61,8 @@ class _AddExpenseReasonSheetState extends State<AddExpenseReasonSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -67,9 +70,9 @@ class _AddExpenseReasonSheetState extends State<AddExpenseReasonSheet> {
         20,
         32 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Form(
         key: _formKey,
@@ -103,12 +106,12 @@ class _AddExpenseReasonSheetState extends State<AddExpenseReasonSheet> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                         ),
                       )
                     : Text(_isEdit ? 'Save Changes' : 'Add Reason'),

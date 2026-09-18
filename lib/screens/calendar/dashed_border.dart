@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../theme/app_theme.dart';
+
 class DashedBorder extends StatelessWidget {
   final Widget child;
   const DashedBorder({required this.child, super.key});
@@ -11,7 +13,9 @@ class DashedBorder extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(4),
       child: CustomPaint(
-        painter: _DashedRectPainter(),
+        painter: _DashedRectPainter(
+          color: Theme.of(context).colorScheme.primary,
+        ),
         child: child,
       ),
     );
@@ -19,12 +23,20 @@ class DashedBorder extends StatelessWidget {
 }
 
 class _DashedRectPainter extends CustomPainter {
+  /// Dash color to draw with. Optional (rather than required) so any
+  /// existing `_DashedRectPainter()` call sites keep compiling -- the one
+  /// call site in this file passes `Theme.of(context).colorScheme.primary`
+  /// so the dashed border follows light/dark mode.
+  const _DashedRectPainter({this.color});
+
+  final Color? color;
+
   @override
   void paint(Canvas canvas, Size size) {
     const dashWidth = 5.0;
     const dashSpace = 3.0;
     final paint = Paint()
-      ..color = Colors.deepPurple
+      ..color = color ?? AppPalette.indigo400
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
@@ -44,5 +56,6 @@ class _DashedRectPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _DashedRectPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

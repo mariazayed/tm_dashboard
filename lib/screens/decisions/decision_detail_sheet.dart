@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../enums/decision_category_enum.dart';
 import '../../enums/decision_status_enum.dart';
 import '../../models/decision_model.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/md_editor_field.dart';
 
 /// Shows a decision's full details as a bottom sheet over whatever screen
@@ -56,39 +57,49 @@ class _DecisionDetailSheet extends StatelessWidget {
         .toList();
   }
 
-  Color get _categoryColor {
+  /// See `decision_card.dart`'s `_categoryColor` for the same mapping and
+  /// the judgment call on PERSONAL/OTHERS (no exact cyan/orchid theme
+  /// equivalent exists, so they fall back to the closest categorical
+  /// accents, `info`/`violet`).
+  Color _categoryColor(BuildContext context) {
+    final semantic = context.semanticColors;
     switch (decision.category) {
       case DecisionCategoryEnum.TRADING:
-        return const Color(0xFFF59E0B);
+        return semantic.warning;
       case DecisionCategoryEnum.INVESTING:
-        return const Color(0xFF22C55E);
+        return semantic.profit;
       case DecisionCategoryEnum.PERSONAL:
-        return const Color(0xFF06B6D4);
+        return semantic.info;
       case DecisionCategoryEnum.SYSTEM:
-        return const Color(0xFF6B7280);
+        return Theme.of(context).colorScheme.onSurfaceVariant;
       case DecisionCategoryEnum.LEARNING:
-        return const Color(0xFF818CF8);
+        return Theme.of(context).colorScheme.primary;
       case DecisionCategoryEnum.OTHERS:
-        return const Color(0xFFA78BFA);
+        return semantic.violet;
     }
   }
 
-  Color get _statusColor {
+  Color _statusColor(BuildContext context) {
+    final semantic = context.semanticColors;
     switch (decision.status) {
       case DecisionStatusEnum.ACTIVE:
-        return const Color(0xFF22C55E);
+        return semantic.profit;
       case DecisionStatusEnum.SUPERSEDED:
-        return const Color(0xFF9CA3AF);
+        return Theme.of(context).colorScheme.onSurfaceVariant;
       case DecisionStatusEnum.REVERSED:
-        return const Color(0xFFEF4444);
+        return semantic.loss;
       case DecisionStatusEnum.COMPLETED:
-        return const Color(0xFF818CF8);
+        return Theme.of(context).colorScheme.primary;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final dateFmt = DateFormat('d MMM yyyy');
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final categoryColor = _categoryColor(context);
+    final statusColor = _statusColor(context);
     final relatedDecisions = _relatedDecisions;
     final loadedRelatedNumbers = relatedDecisions
         .map((d) => d.decisionNumber)
@@ -106,9 +117,9 @@ class _DecisionDetailSheet extends StatelessWidget {
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: ListView(
             controller: scrollController,
@@ -119,7 +130,7 @@ class _DecisionDetailSheet extends StatelessWidget {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
+                    color: colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -136,26 +147,26 @@ class _DecisionDetailSheet extends StatelessWidget {
                       ),
                       margin: const EdgeInsets.only(right: 8, top: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: colorScheme.outlineVariant),
                       ),
                       child: Text(
                         '#${decision.decisionNumber}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF475569),
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
                   Expanded(
                     child: Text(
                       decision.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF111827),
+                        color: colorScheme.onSurface,
                         height: 1.2,
                       ),
                     ),
@@ -173,14 +184,14 @@ class _DecisionDetailSheet extends StatelessWidget {
                   Icon(
                     Icons.calendar_today_outlined,
                     size: 14,
-                    color: Colors.grey.shade500,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     dateFmt.format(decision.decisionDate),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -191,19 +202,20 @@ class _DecisionDetailSheet extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  _tag(decision.category.label, _categoryColor),
-                  _tag(decision.status.label, _statusColor),
+                  _tag(decision.category.label, categoryColor),
+                  _tag(decision.status.label, statusColor),
                 ],
               ),
               const SizedBox(height: 18),
               _section(
+                context,
                 title: 'What was decided',
                 child: buildMarkdownPreview(
                   context,
                   decision.description,
-                  baseStyle: const TextStyle(
+                  baseStyle: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF334155),
+                    color: colorScheme.onSurface,
                     height: 1.5,
                   ),
                 ),
@@ -212,14 +224,15 @@ class _DecisionDetailSheet extends StatelessWidget {
                   decision.reasoning!.trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _section(
+                  context,
                   title: 'Why',
                   tinted: true,
                   child: buildMarkdownPreview(
                     context,
                     decision.reasoning!,
-                    baseStyle: const TextStyle(
+                    baseStyle: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF64748B),
+                      color: colorScheme.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
                       height: 1.5,
                     ),
@@ -233,7 +246,7 @@ class _DecisionDetailSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Colors.grey.shade600,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -253,24 +266,24 @@ class _DecisionDetailSheet extends StatelessWidget {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
+                          color: colorScheme.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          border: Border.all(color: colorScheme.outlineVariant),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.north_east,
                               size: 14,
-                              color: Color(0xFF64748B),
+                              color: colorScheme.onSurfaceVariant,
                             ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 '#${related.decisionNumber} - ${related.title}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: Color(0xFF334155),
+                                  color: colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -291,15 +304,15 @@ class _DecisionDetailSheet extends StatelessWidget {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8FAFC),
+                        color: colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        border: Border.all(color: colorScheme.outlineVariant),
                       ),
                       child: Text(
                         'Decision #$decisionNumber (not loaded)',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFF64748B),
+                          color: colorScheme.onSurfaceVariant,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -311,13 +324,14 @@ class _DecisionDetailSheet extends StatelessWidget {
                   decision.notes!.trim().isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _section(
+                  context,
                   title: 'Notes',
                   warning: true,
                   child: Text(
                     decision.notes!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF92400E),
+                      color: semantic.warning,
                       height: 1.45,
                     ),
                   ),
@@ -344,18 +358,23 @@ class _DecisionDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _section({
+  Widget _section(
+    BuildContext context, {
     required String title,
     required Widget child,
     bool tinted = false,
     bool warning = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     final background = warning
-        ? const Color(0xFFFFFBEB)
+        ? semantic.warning.withValues(alpha: 0.12)
         : tinted
-        ? const Color(0xFFF8FAFC)
-        : Colors.white;
-    final border = warning ? const Color(0xFFFDE68A) : const Color(0xFFE5E7EB);
+        ? colorScheme.surfaceContainerLow
+        : colorScheme.surface;
+    final border = warning
+        ? semantic.warning.withValues(alpha: 0.4)
+        : colorScheme.outlineVariant;
 
     return Container(
       width: double.infinity,
@@ -370,10 +389,10 @@ class _DecisionDetailSheet extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF64748B),
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 6),

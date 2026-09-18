@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import '../../theme/app_theme.dart';
 import 'risk_equity_curve_chart.dart';
 import 'risk_metrics.dart';
 import 'risk_stat.dart';
@@ -160,7 +161,7 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
         decoration: InputDecoration(
           labelText: l,
           filled: true,
-          fillColor: Colors.grey.shade100,
+          fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -220,6 +221,8 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
   }
 
   Widget _stats(Map<String, RiskStat> data, {bool showPercent = true}) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Column(
       children: data.entries.map((e) {
         final stat = e.value;
@@ -242,7 +245,7 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
                 if (showPercent)
                   Text(
                     '${stat.percent.toStringAsFixed(2)}%',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
               ],
             ),
@@ -254,10 +257,10 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
             message: stat.tooltip!,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.grey.shade900,
+              color: colorScheme.inverseSurface,
               borderRadius: BorderRadius.circular(8),
             ),
-            textStyle: const TextStyle(color: Colors.white),
+            textStyle: TextStyle(color: colorScheme.onInverseSurface),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: child,
@@ -316,37 +319,40 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
     String suffix, {
     required String tooltip,
   }) {
-    Color valueColor = Colors.black;
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+
+    Color valueColor = colorScheme.onSurface;
 
     switch (label) {
       case 'Capital':
-        valueColor = value >= 10000 ? Colors.green : Colors.orange;
+        valueColor = value >= 10000 ? semantic.profit : semantic.orange;
         break;
       case 'Risk / Trade':
         if (value < 2) {
-          valueColor = Colors.green;
+          valueColor = semantic.profit;
         } else if (value < 5) {
-          valueColor = Colors.orange;
+          valueColor = semantic.orange;
         } else {
-          valueColor = Colors.red;
+          valueColor = semantic.loss;
         }
         break;
       case 'Win Rate':
         if (value > 55) {
-          valueColor = Colors.green;
+          valueColor = semantic.profit;
         } else if (value > 45) {
-          valueColor = Colors.orange;
+          valueColor = semantic.orange;
         } else {
-          valueColor = Colors.red;
+          valueColor = semantic.loss;
         }
         break;
       case 'Ruin':
         if (value < 1) {
-          valueColor = Colors.green;
+          valueColor = semantic.profit;
         } else if (value < 5) {
-          valueColor = Colors.orange;
+          valueColor = semantic.orange;
         } else {
-          valueColor = Colors.red;
+          valueColor = semantic.loss;
         }
         break;
     }
@@ -356,10 +362,10 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
         message: tooltip,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: Colors.grey.shade900,
+          color: colorScheme.inverseSurface,
           borderRadius: BorderRadius.circular(8),
         ),
-        textStyle: const TextStyle(color: Colors.white),
+        textStyle: TextStyle(color: colorScheme.onInverseSurface),
         child: Card(
           elevation: 3,
           shape: RoundedRectangleBorder(
@@ -372,7 +378,7 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -459,15 +465,17 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
   }
 
   Widget _emptyState() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.show_chart, size: 48, color: Colors.grey.shade400),
+          Icon(Icons.show_chart, size: 48, color: colorScheme.onSurfaceVariant),
           const SizedBox(height: 12),
           Text(
             'Run simulation to generate equity curve',
-            style: TextStyle(color: Colors.grey.shade600),
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -600,21 +608,24 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
   }
 
   Color _statColor(String label, double value) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+
     switch (label) {
       case 'Average Risk / Trade \$':
-        if (value < 100) return Colors.green;
-        if (value < 500) return Colors.orange;
-        return Colors.red;
+        if (value < 100) return semantic.profit;
+        if (value < 500) return semantic.orange;
+        return semantic.loss;
 
       case 'Reward / Winning Trade \$':
       case 'Net P/L \$':
       case 'Expectancy R':
       case 'Expectancy \$':
       case 'Expectancy %':
-        return value >= 0 ? Colors.green : Colors.red;
+        return value >= 0 ? semantic.profit : semantic.loss;
 
       default:
-        return Colors.black;
+        return colorScheme.onSurface;
     }
   }
 

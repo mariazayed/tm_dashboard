@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/asset_model.dart';
+import '../../theme/app_theme.dart';
 
 class AssetCard extends StatelessWidget {
   final Asset asset;
@@ -21,18 +22,27 @@ class AssetCard extends StatelessWidget {
     this.busy = false,
   });
 
-  static const List<Color> _palette = [
-    Color(0xFF818CF8), // indigo
-    Color(0xFF22C55E), // green
-    Color(0xFF3B82F6), // blue
-    Color(0xFFF59E0B), // amber
-    Color(0xFFEC4899), // pink
-    Color(0xFF14B8A6), // teal
-  ];
+  /// Cycling accent palette for the per-asset avatar. Built from the theme
+  /// so it follows light/dark mode -- pink and teal have no direct
+  /// semantic-color equivalent, so they fall back to the closest available
+  /// categorical accents ([AppSemanticColors.violet] / `.orange`).
+  List<Color> _palette(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    return [
+      colorScheme.primary, // indigo
+      semantic.profit, // green
+      semantic.info, // blue
+      semantic.warning, // amber
+      semantic.violet, // pink
+      semantic.orange, // teal
+    ];
+  }
 
-  Color get _color {
+  Color _color(BuildContext context) {
+    final palette = _palette(context);
     final sum = asset.symbol.codeUnits.fold<int>(0, (a, b) => a + b);
-    return _palette[sum % _palette.length];
+    return palette[sum % palette.length];
   }
 
   String get _initials {
@@ -55,19 +65,20 @@ class AssetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _color;
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = _color(context);
 
     return Opacity(
       opacity: busy ? 0.6 : 1,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: colorScheme.outline),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: colorScheme.shadow.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -105,13 +116,13 @@ class AssetCard extends StatelessWidget {
                     asset.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -120,7 +131,7 @@ class AssetCard extends StatelessWidget {
                           : 'Contract size not set',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade600,
+                        color: colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -138,7 +149,7 @@ class AssetCard extends StatelessWidget {
                     ),
                   )
                 : PopupMenuButton<String>(
-                    icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                    icon: Icon(Icons.more_horiz, color: colorScheme.onSurfaceVariant),
                     onSelected: (value) {
                       switch (value) {
                         case 'edit':

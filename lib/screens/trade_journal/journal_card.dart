@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../enums/trade_direction_enum.dart';
 import '../../models/trade_model.dart';
+import '../../theme/app_theme.dart';
 import 'classes/trade_journal.dart';
 
 /// One trade bucket (a calendar day/week/month, or a custom N-day interval
@@ -37,9 +38,9 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
 
   @override
   Widget build(BuildContext context) {
-    final profitColor = group.isProfit
-        ? const Color(0xFF16A34A)
-        : const Color(0xFFEF4444);
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final profitColor = group.isProfit ? semantic.profit : semantic.loss;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -51,17 +52,17 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
           curve: Curves.easeOut,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: _hovering
                   ? profitColor.withOpacity(0.25)
-                  : Colors.grey.shade100,
+                  : colorScheme.outlineVariant,
             ),
             boxShadow: [
               BoxShadow(
                 blurRadius: _hovering ? 24 : 16,
-                color: Colors.black.withOpacity(_hovering ? 0.07 : 0.04),
+                color: colorScheme.shadow.withValues(alpha: _hovering ? 0.07 : 0.04),
                 offset: const Offset(0, 8),
               ),
             ],
@@ -97,7 +98,7 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                                         Icon(
                                           Icons.event_outlined,
                                           size: 14,
-                                          color: Colors.grey.shade400,
+                                          color: colorScheme.onSurfaceVariant,
                                         ),
                                         const SizedBox(width: 6),
                                         Flexible(
@@ -118,13 +119,13 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                                             child: Container(
                                               padding: const EdgeInsets.all(3),
                                               decoration: BoxDecoration(
-                                                color: Colors.orange.shade50,
+                                                color: semantic.orange.withValues(alpha: 0.12),
                                                 shape: BoxShape.circle,
                                               ),
                                               child: Icon(
                                                 Icons.schedule,
                                                 size: 11,
-                                                color: Colors.orange.shade700,
+                                                color: semantic.orange,
                                               ),
                                             ),
                                           ),
@@ -174,7 +175,7 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                   padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
                   child: Column(
                     children: [
-                      Divider(height: 1, color: Colors.grey.shade100),
+                      Divider(height: 1, color: colorScheme.outlineVariant),
                       const SizedBox(height: 14),
                       ...group.trades.map(_tradeTile),
                     ],
@@ -189,23 +190,25 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
   }
 
   Widget _metaChip(IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.grey.shade500),
+          Icon(icon, size: 12, color: colorScheme.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -248,39 +251,39 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
   }
 
   Widget _expandButton() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return AnimatedRotation(
       turns: _isExpanded ? 0.5 : 0,
       duration: const Duration(milliseconds: 200),
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           Icons.keyboard_arrow_down_rounded,
           size: 20,
-          color: Colors.grey.shade600,
+          color: colorScheme.onSurfaceVariant,
         ),
       ),
     );
   }
 
   Widget _tradeTile(Trade t) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     final isProfit = t.profit >= 0;
-    final profitColor = isProfit
-        ? const Color(0xFF16A34A)
-        : const Color(0xFFEF4444);
+    final profitColor = isProfit ? semantic.profit : semantic.loss;
     final isLong = t.direction == TradeDirectionEnum.LONG;
-    final directionColor = isLong
-        ? const Color(0xFF16A34A)
-        : const Color(0xFFEF4444);
+    final directionColor = isLong ? semantic.profit : semantic.loss;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
@@ -337,7 +340,7 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                   child: Icon(
                     Icons.schedule,
                     size: 13,
-                    color: Colors.orange.shade400,
+                    color: semantic.orange,
                   ),
                 ),
               ],
@@ -360,15 +363,15 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                 vertical: 4,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFF818CF8).withOpacity(0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 t.strategy!.name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF818CF8),
+                  color: colorScheme.primary,
                 ),
               ),
             ),
@@ -376,13 +379,13 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
           const SizedBox(height: 8),
           Text(
             'Entry ${t.entryPrice} → Exit ${t.exitPrice}',
-            style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+            style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
           ),
           if (t.notes != null && t.notes!.trim().isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
               t.notes!,
-              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500),
+              style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
             ),
           ],
         ],

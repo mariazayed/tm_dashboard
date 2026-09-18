@@ -6,6 +6,7 @@ import 'package:tm_dashboard/services/strategy_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/strategy_model.dart';
+import '../../theme/app_theme.dart';
 
 class StrategiesScreen extends StatefulWidget {
   const StrategiesScreen({super.key});
@@ -71,6 +72,8 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
   }
 
   Widget _buildBody() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -93,11 +96,11 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
           margin: const EdgeInsets.only(bottom: 18),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: colorScheme.shadow.withValues(alpha: 0.04),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
               ),
@@ -142,10 +145,10 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
+                        color: colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: Colors.grey.shade300,
+                          color: colorScheme.outline,
                           width: 0.8,
                         ),
                       ),
@@ -154,7 +157,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade800,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     );
@@ -341,6 +344,7 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
 
   Widget _buildLink(String link) {
     final Uri uri = Uri.parse(link);
+    final info = context.semanticColors.info;
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),
@@ -352,27 +356,27 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.06),
+          color: info.withOpacity(0.06),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
           children: [
-            const Icon(Icons.link_rounded, size: 16, color: Colors.blue),
+            Icon(Icons.link_rounded, size: 16, color: info),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 link,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: Colors.blue,
+                  color: info,
                 ),
               ),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.open_in_new_rounded, size: 14, color: Colors.blue),
+            Icon(Icons.open_in_new_rounded, size: 14, color: info),
           ],
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:tm_dashboard/models/strategy_model.dart';
 import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
 import '../../services/trade_service.dart';
+import '../../theme/app_theme.dart';
 import 'classes/trade_draft.dart';
 import 'trade_card.dart';
 
@@ -121,11 +122,13 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: ListView(
         children: [
@@ -231,12 +234,12 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: _submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                       ),
                     )
                   : const Text('Submit Journal'),

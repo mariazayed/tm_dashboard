@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/expense_reason_model.dart';
 import '../../services/expense_reason_service.dart';
+import '../../theme/app_theme.dart';
 
 /// Bottom sheet used by AddExpenseSheet to pick the expense reason. Per the
 /// user's request, this isn't a plain dropdown: each option row carries its
@@ -152,11 +153,13 @@ class _ExpenseReasonPickerSheetState extends State<ExpenseReasonPickerSheet> {
       maxChildSize: 0.9,
       expand: false,
       builder: (context, scrollController) {
+        final colorScheme = Theme.of(context).colorScheme;
+
         return Container(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
@@ -190,7 +193,7 @@ class _ExpenseReasonPickerSheetState extends State<ExpenseReasonPickerSheet> {
                       return Center(
                         child: Text(
                           'No reasons yet — add one below',
-                          style: TextStyle(color: Colors.grey.shade500),
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
                         ),
                       );
                     }
@@ -209,7 +212,7 @@ class _ExpenseReasonPickerSheetState extends State<ExpenseReasonPickerSheet> {
                           child: Material(
                             color: selected
                                 ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
-                                : Colors.grey.shade50,
+                                : colorScheme.surfaceContainerLow,
                             borderRadius: BorderRadius.circular(12),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
@@ -279,10 +282,10 @@ class _ExpenseReasonPickerSheetState extends State<ExpenseReasonPickerSheet> {
                   IconButton.filled(
                     onPressed: _addingReason ? null : _addReason,
                     icon: _addingReason
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(strokeWidth: 2, color: colorScheme.onPrimary),
                           )
                         : const Icon(Icons.add),
                   ),

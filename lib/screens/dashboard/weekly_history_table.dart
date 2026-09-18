@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../theme/app_theme.dart';
 import 'classes/weekly_breakdown.dart';
 
 class WeeklyHistoryTable extends StatelessWidget {
@@ -18,16 +19,18 @@ class WeeklyHistoryTable extends StatelessWidget {
     }
 
     final formatter = DateFormat('MMM d');
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
             blurRadius: 20,
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.shadow.withValues(alpha: 0.05),
             offset: const Offset(0, 10),
           ),
         ],
@@ -76,7 +79,7 @@ class WeeklyHistoryTable extends StatelessWidget {
                     child: Text(
                       week.profit.toStringAsFixed(2),
                       style: TextStyle(
-                        color: Colors.green.shade500,
+                        color: semantic.profit,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -86,7 +89,7 @@ class WeeklyHistoryTable extends StatelessWidget {
                     child: Text(
                       week.loss.toStringAsFixed(2),
                       style: TextStyle(
-                        color: Colors.red.shade400,
+                        color: semantic.loss,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -96,9 +99,7 @@ class WeeklyHistoryTable extends StatelessWidget {
                     child: Text(
                       week.net.toStringAsFixed(2),
                       style: TextStyle(
-                        color: week.net >= 0
-                            ? Colors.green.shade600
-                            : Colors.red.shade600,
+                        color: week.net >= 0 ? semantic.profit : semantic.loss,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

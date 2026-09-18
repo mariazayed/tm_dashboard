@@ -19,6 +19,7 @@ import '../../models/static_data.dart';
 import '../../models/trade_model.dart';
 import '../../services/static_data_service.dart';
 import '../../services/trade_service.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/form_chip_select.dart';
 import '../../widgets/form_multi_select.dart';
 
@@ -291,15 +292,16 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
             );
           }
 
+          final colorScheme = Theme.of(context).colorScheme;
           final trade = _current;
           if (trade == null) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
                   "You're all caught up -- no trades waiting for review.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
+                  style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
                 ),
               ),
             );
@@ -314,10 +316,10 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
                 // since the true total isn't known without fetching
                 // everything (defeating the point of paging it in).
                 'Trade ${_currentIndex + 1} of ${_queue.length}${_hasMorePages ? '+' : ''}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 12),
@@ -365,12 +367,12 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         child: _submitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 18,
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: colorScheme.onPrimary,
                                 ),
                               )
                             : const Text('Confirm'),
@@ -388,18 +390,20 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
   }
 
   Widget _buildHeaderCard(Trade t) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
     final isProfit = t.profit >= 0;
-    final profitColor = isProfit ? Colors.green : Colors.red;
+    final profitColor = isProfit ? semantic.profit : semantic.loss;
     final isLong = t.direction.name == 'LONG';
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: colorScheme.shadow.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -418,7 +422,9 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isLong ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                  color: isLong
+                      ? semantic.profit.withValues(alpha: 0.1)
+                      : semantic.loss.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -426,7 +432,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: isLong ? Colors.green : Colors.red,
+                    color: isLong ? semantic.profit : semantic.loss,
                   ),
                 ),
               ),
@@ -435,15 +441,15 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey.withOpacity(0.1),
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     t.source == TradeSourceEnum.AUTO_IMPORTED ? 'MT5 IMPORT' : 'MANUAL',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Colors.blueGrey,
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -458,25 +464,25 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
           const SizedBox(height: 12),
           Text(
             'Entry ${t.entryPrice} → Exit ${t.exitPrice}',
-            style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 4),
           Text(
             '${DateFormat('dd MMM yyyy • HH:mm').format(t.entryDateTime)} → '
             '${DateFormat('dd MMM yyyy • HH:mm').format(t.exitDateTime)}',
-            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
           if (t.strategy != null) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.08),
+                color: semantic.info.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 t.strategy!.name,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.blue),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: semantic.info),
               ),
             ),
           ],
@@ -537,6 +543,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
       (s) => s.id == _disciplineValue.round(),
       orElse: () => _staticData!.scoreList.first,
     );
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -545,7 +552,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
         children: [
           Text(
             'Discipline Score${_disciplineTouched ? ' — ${scoreLabel.enName}' : ''}',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant),
           ),
           Slider(
             value: _disciplineValue,
@@ -564,14 +571,16 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
   }
 
   Widget _buildFollowedPlanToggle() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Followed Plan?',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF6B7280)),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 12),
           SegmentedButton<bool>(

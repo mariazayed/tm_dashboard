@@ -4,7 +4,6 @@ import 'package:tm_dashboard/models/strategy_model.dart';
 import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import 'classes/trade_draft.dart';
 
 class TradeCard extends StatefulWidget {
@@ -60,85 +59,62 @@ class _TradeCardState extends State<TradeCard> {
   @override
   Widget build(BuildContext context) {
     final d = widget.draft;
-    final isMobile = Responsive.isMobile(context);
-
-    final directionDropdown = DropdownButton<TradeDirectionEnum>(
-      value: d.signal,
-      isExpanded: isMobile,
-      items: TradeDirectionEnum.values
-          .map(
-            (e) => DropdownMenuItem(
-              value: e,
-              child: Text(e.name.toUpperCase()),
-            ),
-          )
-          .toList(),
-      onChanged: (v) {
-        if (v != null) {
-          d.signal = v;
-          widget.onChanged();
-        }
-      },
-    );
-
-    final assetDropdown = DropdownButtonFormField<Asset>(
-      value: widget.assets.contains(d.asset) ? d.asset : null,
-      items: widget.assets
-          .map(
-            (a) => DropdownMenuItem(
-              value: a,
-              child: Text('${a.symbol} • ${a.name}'),
-            ),
-          )
-          .toList(),
-      onChanged: (v) {
-        if (v != null) {
-          d.asset = v;
-          widget.onChanged();
-        }
-      },
-      decoration: const InputDecoration(labelText: 'Pair'),
-    );
-
-    final removeButton = widget.onRemove != null
-        ? IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: widget.onRemove,
-          )
-        : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
-        padding: EdgeInsets.fromLTRB(isMobile ? 12 : 16, 16, isMobile ? 12 : 16, 20),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Direction + Asset: stacked on mobile so the asset dropdown
-            // (which can show a long symbol/name) never gets squeezed.
-            if (isMobile)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: directionDropdown),
-                      if (removeButton != null) removeButton,
-                    ],
+            // Direction + Asset (unchanged)
+            Row(
+              children: [
+                DropdownButton<TradeDirectionEnum>(
+                  value: d.signal,
+                  items: TradeDirectionEnum.values
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e.name.toUpperCase()),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      d.signal = v;
+                      widget.onChanged();
+                    }
+                  },
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<Asset>(
+                    value: widget.assets.contains(d.asset) ? d.asset : null,
+                    items: widget.assets
+                        .map(
+                          (a) => DropdownMenuItem(
+                            value: a,
+                            child: Text('${a.symbol} • ${a.name}'),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        d.asset = v;
+                        widget.onChanged();
+                      }
+                    },
+                    decoration: const InputDecoration(labelText: 'Pair'),
                   ),
-                  const SizedBox(height: 12),
-                  assetDropdown,
-                ],
-              )
-            else
-              Row(
-                children: [
-                  directionDropdown,
-                  const SizedBox(width: 16),
-                  Expanded(child: assetDropdown),
-                  if (removeButton != null) removeButton,
-                ],
-              ),
+                ),
+                if (widget.onRemove != null)
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: widget.onRemove,
+                  ),
+              ],
+            ),
 
             const SizedBox(height: 24),
 
@@ -182,17 +158,17 @@ class _TradeCardState extends State<TradeCard> {
 
             const SizedBox(height: 24),
 
-            Wrap(
-              spacing: 16,
-              runSpacing: 8,
+            Row(
               children: [
-                Text('Pips: ${d.pips.toStringAsFixed(1)}'),
-                Text(
-                  'P/L: \$${d.profit.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    color: d.profit >= 0
-                        ? context.semanticColors.profit
-                        : context.semanticColors.loss,
+                Expanded(child: Text('Pips: ${d.pips.toStringAsFixed(1)}')),
+                Expanded(
+                  child: Text(
+                    'P/L: \$${d.profit.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: d.profit >= 0
+                          ? context.semanticColors.profit
+                          : context.semanticColors.loss,
+                    ),
                   ),
                 ),
               ],

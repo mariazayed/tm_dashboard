@@ -51,13 +51,11 @@ class SectionCard extends StatelessWidget {
                         size: 20, color: Theme.of(context).colorScheme.primary),
                   ),
                 if (icon != null) const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],

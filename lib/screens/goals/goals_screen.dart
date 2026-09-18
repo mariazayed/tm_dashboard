@@ -5,7 +5,6 @@ import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
 import '../../services/goal_service.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import 'add_goal_sheet.dart';
 import 'goal_card.dart';
 
@@ -146,7 +145,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           return RefreshIndicator(
             onRefresh: () async => _refresh(),
             child: ListView(
-              padding: Responsive.pagePadding(context),
+              padding: const EdgeInsets.all(24),
               children: [
                 _buildCategoryFilters(),
                 const SizedBox(height: 20),
@@ -226,14 +225,13 @@ class _GoalsScreenState extends State<GoalsScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = (constraints.maxWidth / 340).floor().clamp(1, 3).toInt();
-        final isNarrow = Responsive.isNarrow(constraints);
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: goals.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisExtent: isNarrow ? 210 : 190,
+            mainAxisExtent: 190,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),

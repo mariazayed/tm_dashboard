@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import '../../enums/trade_direction_enum.dart';
 import '../../models/trade_model.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 
 /// One row in the Trade List. Tapping it opens a detail bottom sheet --
 /// same DraggableScrollableSheet pattern the Dashboard screen already uses
@@ -82,13 +81,19 @@ class _TradeRowTileState extends State<TradeRowTile> {
                     ),
                     Expanded(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: Responsive.isMobile(context) ? 12 : 16,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
                           vertical: 14,
                         ),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final assetInfo = Column(
+                        child: Row(
+                          children: [
+                            _assetAvatar(directionColor),
+                            const SizedBox(width: 14),
+
+                            // Asset + direction + strategy
+                            Expanded(
+                              flex: 3,
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -159,73 +164,43 @@ class _TradeRowTileState extends State<TradeRowTile> {
                                     ],
                                   ),
                                 ],
-                              );
+                              ),
+                            ),
 
-                            final lotPips = Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '${trade.lot} lot',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onSurface,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${trade.pips >= 0 ? '+' : ''}${trade.pips.toStringAsFixed(1)} pips',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            );
+                            const SizedBox(width: 8),
 
-                            final profitBadge = _profitBadge(isProfit, profitColor);
-
-                            // Narrow tiles (phone width) put lot/pips + the
-                            // profit badge on their own row below the asset
-                            // info instead of squeezing three flexed columns
-                            // side by side.
-                            if (constraints.maxWidth < 340) {
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            // Lot / pips
+                            Expanded(
+                              flex: 2,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _assetAvatar(directionColor),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        assetInfo,
-                                        const SizedBox(height: 10),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [lotPips, profitBadge],
-                                        ),
-                                      ],
+                                  Text(
+                                    '${trade.lot} lot',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${trade.pips >= 0 ? '+' : ''}${trade.pips.toStringAsFixed(1)} pips',
+                                    style: TextStyle(
+                                      fontSize: 11.5,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
-                              );
-                            }
+                              ),
+                            ),
 
-                            return Row(
-                              children: [
-                                _assetAvatar(directionColor),
-                                const SizedBox(width: 14),
-                                Expanded(flex: 3, child: assetInfo),
-                                const SizedBox(width: 8),
-                                Expanded(flex: 2, child: lotPips),
-                                const SizedBox(width: 14),
-                                profitBadge,
-                              ],
-                            );
-                          },
+                            const SizedBox(width: 14),
+
+                            // Profit badge
+                            _profitBadge(isProfit, profitColor),
+                          ],
                         ),
                       ),
                     ),

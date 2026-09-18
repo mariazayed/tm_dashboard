@@ -42,12 +42,11 @@ class _MdEditorFieldState extends State<MdEditorField> {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
-                ),
+              Text(
+                widget.label,
+                style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
               ),
+              const Spacer(),
               _ToggleButton(
                 label: 'Write',
                 selected: !_preview,

@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import 'risk_equity_curve_chart.dart';
 import 'risk_metrics.dart';
 import 'risk_stat.dart';
@@ -79,25 +78,20 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth > 1200;
           final isTablet = constraints.maxWidth > 800;
-          final isNarrow = Responsive.isNarrow(constraints);
 
           return SingleChildScrollView(
-            padding: Responsive.pagePadding(context),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _kpiBar(metrics, isNarrow: isNarrow),
+                _kpiBar(metrics),
                 const SizedBox(height: 24),
                 if (isDesktop)
                   _desktopMainLayout(metrics)
                 else
                   _mobileMainLayout(metrics),
                 const SizedBox(height: 24),
-                _secondaryStatsGrid(
-                  isTablet ? 3 : 1,
-                  metrics,
-                  isNarrow: isNarrow,
-                ),
+                _secondaryStatsGrid(isTablet ? 3 : 1, metrics),
               ],
             ),
           );
@@ -284,53 +278,39 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
 
   // ---------------- KPI BAR ----------------
 
-  Widget _kpiBar(RiskMetrics m, {bool isNarrow = false}) {
-    final cards = [
-      _kpi(
-        'Capital',
-        m.capital,
-        '\$',
-        tooltip:
-            'Starting capital from the Capital input, with a minimum value of 1.',
-      ),
-      _kpi(
-        'Risk / Trade',
-        m.riskPct * 100,
-        '%',
-        tooltip:
-            'Risk % input clamped from 0% to 100%. Each simulated trade risks current equity x this percentage.',
-      ),
-      _kpi(
-        'Win Rate',
-        m.winRate * 100,
-        '%',
-        tooltip:
-            'Win Rate input clamped from 0% to 100%. The simulation uses this as the probability of a winning trade.',
-      ),
-      _kpi(
-        'Ruin',
-        m.riskOfRuin * 100,
-        '%',
-        tooltip:
-            'Approximation: exp((-2 x expectancy R / variance) / risk %), shown as a percentage. Zero risk returns 0%.',
-      ),
-    ];
-
-    // On phone widths, four KPI cards squeezed into one Row clip their
-    // values -- lay them out as a 2x2 grid instead.
-    if (isNarrow) {
-      return GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.6,
-        children: cards,
-      );
-    }
-
-    return Row(children: cards.map((c) => Expanded(child: c)).toList());
+  Widget _kpiBar(RiskMetrics m) {
+    return Row(
+      children: [
+        _kpi(
+          'Capital',
+          m.capital,
+          '\$',
+          tooltip:
+              'Starting capital from the Capital input, with a minimum value of 1.',
+        ),
+        _kpi(
+          'Risk / Trade',
+          m.riskPct * 100,
+          '%',
+          tooltip:
+              'Risk % input clamped from 0% to 100%. Each simulated trade risks current equity x this percentage.',
+        ),
+        _kpi(
+          'Win Rate',
+          m.winRate * 100,
+          '%',
+          tooltip:
+              'Win Rate input clamped from 0% to 100%. The simulation uses this as the probability of a winning trade.',
+        ),
+        _kpi(
+          'Ruin',
+          m.riskOfRuin * 100,
+          '%',
+          tooltip:
+              'Approximation: exp((-2 x expectancy R / variance) / risk %), shown as a percentage. Zero risk returns 0%.',
+        ),
+      ],
+    );
   }
 
   Widget _kpi(
@@ -377,7 +357,8 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
         break;
     }
 
-    return Tooltip(
+    return Expanded(
+      child: Tooltip(
         message: tooltip,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
@@ -412,7 +393,8 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   // ---------------- MAIN LAYOUTS ----------------
@@ -464,20 +446,14 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
     );
   }
 
-  Widget _secondaryStatsGrid(
-    int columns,
-    RiskMetrics m, {
-    bool isNarrow = false,
-  }) {
+  Widget _secondaryStatsGrid(int columns, RiskMetrics m) {
     return GridView.count(
       crossAxisCount: columns,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
-      // Single-column cards on a phone still need to fit ~5 stat rows --
-      // a squarer 1.25 ratio clips content, so give them more height.
-      childAspectRatio: isNarrow ? 0.85 : 1.25,
+      childAspectRatio: 1.25,
       children: [
         _card('Expectancy 🎯', _expectancyStats(m)),
         _card('Risk Exposure ⚠️', _riskStats(m)),

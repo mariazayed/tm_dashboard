@@ -64,37 +64,27 @@ class WeekRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Approximate per-cell width (7 columns) so cells can shrink their
-        // padding/typography on narrow (phone) screens instead of clipping.
-        final cellWidth = constraints.maxWidth / 7;
-        final compact = cellWidth < 56;
+    return Row(
+      children: List.generate(7, (i) {
+        if (i < placeholders) return const Expanded(child: SizedBox());
 
-        return Row(
-          children: List.generate(7, (i) {
-            if (i < placeholders) return const Expanded(child: SizedBox());
+        final dayIndex = i - placeholders;
+        if (dayIndex >= row.length) {
+          return const Expanded(child: SizedBox());
+        }
 
-            final dayIndex = i - placeholders;
-            if (dayIndex >= row.length) {
-              return const Expanded(child: SizedBox());
-            }
+        final DayModel day = row[dayIndex];
+        final List<Trade> dayTrades = tradesByDay[day.date.day] ?? const [];
 
-            final DayModel day = row[dayIndex];
-            final List<Trade> dayTrades = tradesByDay[day.date.day] ?? const [];
-
-            return Expanded(
-              child: _DayCell(
-                day: day,
-                trades: dayTrades,
-                maxAbsPnl: maxAbsPnl,
-                compact: compact,
-                onOpen: () => _openDayDialog(context, day, dayTrades),
-              ),
-            );
-          }),
+        return Expanded(
+          child: _DayCell(
+            day: day,
+            trades: dayTrades,
+            maxAbsPnl: maxAbsPnl,
+            onOpen: () => _openDayDialog(context, day, dayTrades),
+          ),
         );
-      },
+      }),
     );
   }
 
@@ -114,14 +104,12 @@ class _DayCell extends StatefulWidget {
   final DayModel day;
   final List<Trade> trades;
   final double maxAbsPnl;
-  final bool compact;
   final VoidCallback onOpen;
 
   const _DayCell({
     required this.day,
     required this.trades,
     required this.maxAbsPnl,
-    this.compact = false,
     required this.onOpen,
   });
 
@@ -294,7 +282,7 @@ class _DayCellState extends State<_DayCell> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             curve: Curves.easeOut,
-            margin: EdgeInsets.all(widget.compact ? 3 : 6),
+            margin: const EdgeInsets.all(6),
             transform: Matrix4.translationValues(0, _hovering ? -2 : 0, 0),
             decoration: BoxDecoration(
               color: backgroundColor,
@@ -323,14 +311,14 @@ class _DayCellState extends State<_DayCell> {
                 children: [
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.all(widget.compact ? 6 : 12),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             day.date.day.toString(),
                             style: TextStyle(
-                              fontSize: widget.compact ? 13 : 18,
+                              fontSize: 18,
                               fontWeight: FontWeight.w800,
                               color: textColor,
                             ),
@@ -358,32 +346,31 @@ class _DayCellState extends State<_DayCell> {
                                     child: Text(
                                       "${netPnl >= 0 ? '+' : ''}${netPnl.toStringAsFixed(2)}",
                                       style: TextStyle(
-                                        fontSize: widget.compact ? 11 : 15,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.w800,
                                         letterSpacing: -0.2,
                                         color: pnlColor,
                                       ),
                                     ),
                                   ),
-                                  if (!widget.compact)
-                                    Text(
-                                      trades.length == 1
-                                          ? "1 trade"
-                                          : "${trades.length} trades",
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
+                                  Text(
+                                    trades.length == 1
+                                        ? "1 trade"
+                                        : "${trades.length} trades",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
+                                  ),
                                 ],
                               ),
                             ),
 
                           const Spacer(),
-                          if (statusIcons.isNotEmpty && !widget.compact)
+                          if (statusIcons.isNotEmpty)
                             SizedBox(
                               height: 16,
                               child: Wrap(

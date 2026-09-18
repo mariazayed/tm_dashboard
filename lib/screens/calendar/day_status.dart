@@ -150,11 +150,9 @@ class _DayStatusState extends State<DayStatus> {
 
             const SizedBox(height: 12),
 
-            /// Emoji scale row (1 → 10). Wrapped so it reflows onto a
-            /// second line instead of clipping/squeezing on phone widths.
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              runSpacing: 8,
+            /// Emoji scale row (1 → 10)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(10, (index) {
                 final score = index + 1;
                 return Text(

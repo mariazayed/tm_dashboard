@@ -6,7 +6,6 @@ import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
 import '../../services/goal_service.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import '../../widgets/form_dropdown.dart';
 import '../../widgets/form_number_field.dart';
 import '../../widgets/form_text_area_field.dart';
@@ -208,21 +207,25 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
             const SizedBox(height: 8),
           ],
           const SizedBox(height: 8),
-          ResponsiveRow(
-            breakpoint: 420,
+          Row(
             children: [
-              OutlinedButton(
-                onPressed: () => _pickDate(true),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text('Start: ${fmt.format(_startDate)}'),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _pickDate(true),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Text('Start: ${fmt.format(_startDate)}'),
+                  ),
                 ),
               ),
-              OutlinedButton(
-                onPressed: () => _pickDate(false),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Text('End: ${fmt.format(_endDate)}'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => _pickDate(false),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Text('End: ${fmt.format(_endDate)}'),
+                  ),
                 ),
               ),
             ],

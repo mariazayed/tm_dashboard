@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../models/expense_reason_model.dart';
 import '../../services/expense_reason_service.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/responsive.dart';
 import 'add_expense_reason_sheet.dart';
 import 'expense_reason_card.dart';
 
@@ -121,7 +120,7 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
           return RefreshIndicator(
             onRefresh: () async => _refresh(),
             child: ListView(
-              padding: Responsive.pagePadding(context),
+              padding: const EdgeInsets.all(24),
               children: [
                 TextField(
                   onChanged: (v) => setState(() => _query = v),

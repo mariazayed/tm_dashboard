@@ -112,274 +112,265 @@ class DecisionCard extends StatelessWidget {
           ),
         ],
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 4,
-              decoration: BoxDecoration(
-                color: categoryColor,
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(8),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                width: 4,
+                decoration: BoxDecoration(
+                  color: categoryColor,
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(8),
+                  ),
                 ),
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        if (decision.decisionNumber != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: colorScheme.outlineVariant,
-                              ),
-                            ),
-                            child: Text(
-                              '#${decision.decisionNumber}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        _pill(decision.category.label, categoryColor),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 13,
-                          color: colorScheme.onSurfaceVariant,
+                    if (decision.decisionNumber != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          dateFmt.format(decision.decisionDate),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: colorScheme.outlineVariant),
+                        ),
+                        child: Text(
+                          '#${decision.decisionNumber}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
                             color: colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const Spacer(),
-                        _pill(decision.status.label, statusColor),
-                        PopupMenuButton<String>(
-                          tooltip: 'Decision actions',
-                          icon: Icon(
-                            Icons.more_horiz,
-                            color: colorScheme.onSurfaceVariant,
+                      ),
+                    _pill(decision.category.label, categoryColor),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 13,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      dateFmt.format(decision.decisionDate),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    _pill(decision.status.label, statusColor),
+                    PopupMenuButton<String>(
+                      tooltip: 'Decision actions',
+                      icon: Icon(
+                        Icons.more_horiz,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'view':
+                            showDecisionDetailSheet(
+                              context,
+                              decision,
+                              allDecisions,
+                              onEdit: onEdit,
+                            );
+                            break;
+                          case 'edit':
+                            onEdit?.call();
+                            break;
+                          case 'active':
+                            onSetStatus?.call(DecisionStatusEnum.ACTIVE);
+                            break;
+                          case 'superseded':
+                            onSetStatus?.call(DecisionStatusEnum.SUPERSEDED);
+                            break;
+                          case 'reversed':
+                            onSetStatus?.call(DecisionStatusEnum.REVERSED);
+                            break;
+                          case 'completed':
+                            onSetStatus?.call(DecisionStatusEnum.COMPLETED);
+                            break;
+                          case 'delete':
+                            onDelete?.call();
+                            break;
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'view',
+                          child: Text('View details'),
+                        ),
+                        const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        if (decision.status != DecisionStatusEnum.ACTIVE)
+                          const PopupMenuItem(
+                            value: 'active',
+                            child: Text('Mark active'),
                           ),
-                          onSelected: (value) {
-                            switch (value) {
-                              case 'view':
-                                showDecisionDetailSheet(
-                                  context,
-                                  decision,
-                                  allDecisions,
-                                  onEdit: onEdit,
-                                );
-                                break;
-                              case 'edit':
-                                onEdit?.call();
-                                break;
-                              case 'active':
-                                onSetStatus?.call(DecisionStatusEnum.ACTIVE);
-                                break;
-                              case 'superseded':
-                                onSetStatus?.call(
-                                  DecisionStatusEnum.SUPERSEDED,
-                                );
-                                break;
-                              case 'reversed':
-                                onSetStatus?.call(DecisionStatusEnum.REVERSED);
-                                break;
-                              case 'completed':
-                                onSetStatus?.call(DecisionStatusEnum.COMPLETED);
-                                break;
-                              case 'delete':
-                                onDelete?.call();
-                                break;
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'view',
-                              child: Text('View details'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Text('Edit'),
-                            ),
-                            if (decision.status != DecisionStatusEnum.ACTIVE)
-                              const PopupMenuItem(
-                                value: 'active',
-                                child: Text('Mark active'),
-                              ),
-                            if (decision.status !=
-                                DecisionStatusEnum.SUPERSEDED)
-                              const PopupMenuItem(
-                                value: 'superseded',
-                                child: Text('Mark superseded'),
-                              ),
-                            if (decision.status != DecisionStatusEnum.REVERSED)
-                              const PopupMenuItem(
-                                value: 'reversed',
-                                child: Text('Mark reversed'),
-                              ),
-                            if (decision.status != DecisionStatusEnum.COMPLETED)
-                              const PopupMenuItem(
-                                value: 'completed',
-                                child: Text('Mark completed'),
-                              ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Delete'),
-                            ),
-                          ],
+                        if (decision.status != DecisionStatusEnum.SUPERSEDED)
+                          const PopupMenuItem(
+                            value: 'superseded',
+                            child: Text('Mark superseded'),
+                          ),
+                        if (decision.status != DecisionStatusEnum.REVERSED)
+                          const PopupMenuItem(
+                            value: 'reversed',
+                            child: Text('Mark reversed'),
+                          ),
+                        if (decision.status != DecisionStatusEnum.COMPLETED)
+                          const PopupMenuItem(
+                            value: 'completed',
+                            child: Text('Mark completed'),
+                          ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Delete'),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    InkWell(
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: () => showDecisionDetailSheet(
-                        context,
-                        decision,
-                        allDecisions,
-                        onEdit: onEdit,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Text(
-                          decision.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: colorScheme.onSurface,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            height: 1.25,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _previewText(decision.description),
-                      maxLines: 3,
+                  ],
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: () => showDecisionDetailSheet(
+                    context,
+                    decision,
+                    allDecisions,
+                    onEdit: onEdit,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                      decision.title,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: colorScheme.onSurfaceVariant,
-                        height: 1.45,
+                        color: colorScheme.onSurface,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        height: 1.25,
                       ),
                     ),
-                    if (decision.reasoning != null &&
-                        decision.reasoning!.trim().isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: colorScheme.outlineVariant),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Why',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              _previewText(decision.reasoning!),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colorScheme.onSurfaceVariant,
-                                fontStyle: FontStyle.italic,
-                                height: 1.45,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    if (decision.relatedDecisionNumbers.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          ...relatedDecisions.map(
-                            (related) => InkWell(
-                              borderRadius: BorderRadius.circular(6),
-                              onTap: () => showDecisionDetailSheet(
-                                context,
-                                related,
-                                allDecisions,
-                              ),
-                              child: _chip(
-                                context,
-                                'Reconsiders #${related.decisionNumber} - ${related.title}',
-                              ),
-                            ),
-                          ),
-                          ...missingRelatedNumbers.map(
-                            (decisionNumber) =>
-                                _chip(context, 'Reconsiders #$decisionNumber'),
-                          ),
-                        ],
-                      ),
-                    ],
-                    if (decision.notes != null &&
-                        decision.notes!.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: semantic.warning.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: semantic.warning.withValues(alpha: 0.4),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  _previewText(decision.description),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                ),
+                if (decision.reasoning != null &&
+                    decision.reasoning!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Why',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        child: Text(
-                          decision.notes!,
+                        const SizedBox(height: 3),
+                        Text(
+                          _previewText(decision.reasoning!),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: semantic.warning,
-                            height: 1.4,
+                            color: colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (decision.relatedDecisionNumbers.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ...relatedDecisions.map(
+                        (related) => InkWell(
+                          borderRadius: BorderRadius.circular(6),
+                          onTap: () => showDecisionDetailSheet(
+                            context,
+                            related,
+                            allDecisions,
+                          ),
+                          child: _chip(
+                            context,
+                            'Reconsiders #${related.decisionNumber} - ${related.title}',
                           ),
                         ),
                       ),
+                      ...missingRelatedNumbers.map(
+                        (decisionNumber) =>
+                            _chip(context, 'Reconsiders #$decisionNumber'),
+                      ),
                     ],
-                  ],
-                ),
-              ),
+                  ),
+                ],
+                if (decision.notes != null && decision.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: semantic.warning.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: semantic.warning.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Text(
+                      decision.notes!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: semantic.warning,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/trade_model.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import '../trade_list/trade_row_tile.dart';
 
 /// The "Trades" section of the day-detail dialog: a summary strip (trade
@@ -50,23 +51,42 @@ class DayTradesSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: colorScheme.outlineVariant),
             ),
-            child: Row(
-              children: [
-                _SummaryStat(label: "Trades", value: "${trades.length}"),
-                _divider(context),
-                _SummaryStat(
-                  label: "Net P&L",
-                  value:
-                      "${netPnl >= 0 ? '+' : ''}${netPnl.toStringAsFixed(2)}",
-                  color: pnlColor,
-                ),
-                _divider(context),
-                _SummaryStat(
-                  label: "Win rate",
-                  value: "${winRate.toStringAsFixed(0)}%",
-                ),
-              ],
-            ),
+            child: Responsive.isMobile(context)
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SummaryStat(label: "Trades", value: "${trades.length}"),
+                      const SizedBox(height: 12),
+                      _SummaryStat(
+                        label: "Net P&L",
+                        value:
+                            "${netPnl >= 0 ? '+' : ''}${netPnl.toStringAsFixed(2)}",
+                        color: pnlColor,
+                      ),
+                      const SizedBox(height: 12),
+                      _SummaryStat(
+                        label: "Win rate",
+                        value: "${winRate.toStringAsFixed(0)}%",
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      _SummaryStat(label: "Trades", value: "${trades.length}"),
+                      _divider(context),
+                      _SummaryStat(
+                        label: "Net P&L",
+                        value:
+                            "${netPnl >= 0 ? '+' : ''}${netPnl.toStringAsFixed(2)}",
+                        color: pnlColor,
+                      ),
+                      _divider(context),
+                      _SummaryStat(
+                        label: "Win rate",
+                        value: "${winRate.toStringAsFixed(0)}%",
+                      ),
+                    ],
+                  ),
           ),
           const SizedBox(height: 16),
 
@@ -94,22 +114,22 @@ class _SummaryStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color ?? colorScheme.onSurface,
-            ),
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(label, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: color ?? colorScheme.onSurface,
           ),
-        ],
-      ),
+        ),
+      ],
     );
+    return Responsive.isMobile(context) ? content : Expanded(child: content);
   }
 }

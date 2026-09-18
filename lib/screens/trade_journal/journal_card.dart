@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../enums/trade_direction_enum.dart';
 import '../../models/trade_model.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import 'classes/trade_journal.dart';
 
 /// One trade bucket (a calendar day/week/month, or a custom N-day interval
@@ -41,6 +42,8 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
     final colorScheme = Theme.of(context).colorScheme;
     final semantic = context.semanticColors;
     final profitColor = group.isProfit ? semantic.profit : semantic.loss;
+    final isMobile = Responsive.isMobile(context);
+    final headerPadding = isMobile ? 12.0 : 18.0;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -81,9 +84,9 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                       Container(width: 5, color: profitColor),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 18,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: headerPadding,
+                            vertical: headerPadding,
                           ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,9 +153,9 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              _profitBadge(group.isProfit, profitColor),
-                              const SizedBox(width: 10),
+                              SizedBox(width: isMobile ? 8 : 12),
+                              _profitBadge(group.isProfit, profitColor, isMobile),
+                              SizedBox(width: isMobile ? 6 : 10),
                               _expandButton(),
                             ],
                           ),
@@ -172,7 +175,12 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                     : CrossFadeState.showFirst,
                 firstChild: const SizedBox(width: double.infinity),
                 secondChild: Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                  padding: EdgeInsets.fromLTRB(
+                    headerPadding,
+                    0,
+                    headerPadding,
+                    headerPadding,
+                  ),
                   child: Column(
                     children: [
                       Divider(height: 1, color: colorScheme.outlineVariant),
@@ -216,10 +224,13 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
     );
   }
 
-  Widget _profitBadge(bool isProfit, Color color) {
+  Widget _profitBadge(bool isProfit, Color color, [bool isMobile = false]) {
     return Container(
-      constraints: const BoxConstraints(minWidth: 100),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      constraints: BoxConstraints(minWidth: isMobile ? 72 : 100),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 8 : 12,
+        vertical: isMobile ? 7 : 9,
+      ),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),

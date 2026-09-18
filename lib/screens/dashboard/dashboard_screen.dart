@@ -16,6 +16,7 @@ import '../../services/reminder_notes_service.dart';
 import '../../services/strict_rules_service.dart';
 import '../../services/trade_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import 'capital_growth_chart.dart';
 import 'capital_list.dart';
 import 'capital_stat_card.dart';
@@ -671,10 +672,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(title: const Text('Dashboard')),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 900;
+          final isWide = constraints.maxWidth > Responsive.tablet;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: Responsive.pagePadding(context),
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
@@ -771,29 +772,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 24),
 
-                    Row(
+                    ResponsiveRow(
+                      spacing: 16,
+                      runSpacing: 16,
                       children: [
-                        Expanded(
-                          child: CapitalStatCard(
-                            title: "Total Deposits",
-                            value: helper.totalDeposits,
-                            color: context.semanticColors.profit,
-                            icon: Icons.south_west_rounded,
-                            onTap: () => _openFilteredCapitalDialog(
-                              CapitalReasonEnum.DEPOSIT,
-                            ),
+                        CapitalStatCard(
+                          title: "Total Deposits",
+                          value: helper.totalDeposits,
+                          color: context.semanticColors.profit,
+                          icon: Icons.south_west_rounded,
+                          onTap: () => _openFilteredCapitalDialog(
+                            CapitalReasonEnum.DEPOSIT,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: CapitalStatCard(
-                            title: "Total Withdraws",
-                            value: _totalWithdraws,
-                            color: context.semanticColors.loss,
-                            icon: Icons.north_east_rounded,
-                            onTap: () => _openFilteredCapitalDialog(
-                              CapitalReasonEnum.WITHDRAW,
-                            ),
+                        CapitalStatCard(
+                          title: "Total Withdraws",
+                          value: _totalWithdraws,
+                          color: context.semanticColors.loss,
+                          icon: Icons.north_east_rounded,
+                          onTap: () => _openFilteredCapitalDialog(
+                            CapitalReasonEnum.WITHDRAW,
                           ),
                         ),
                       ],

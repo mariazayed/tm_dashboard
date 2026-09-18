@@ -9,6 +9,7 @@ import '../../models/trade_model.dart';
 import '../../services/asset_service.dart';
 import '../../services/trade_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import '../trade_list/trade_row_tile.dart';
 import 'add_journal_sheet.dart';
 import 'classes/trade_journal.dart';
@@ -247,11 +248,13 @@ class _TradesScreenState extends State<TradesScreen> {
           // grouping bar + summary scrolling away as a normal header while
           // only building rows/cards near the viewport, and drives the
           // infinite-scroll page fetches via _scrollController.
+          final pagePadding = Responsive.pagePadding(context).horizontal / 2;
+
           return CustomScrollView(
             controller: _scrollController,
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: EdgeInsets.fromLTRB(pagePadding, pagePadding, pagePadding, 0),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,12 +276,12 @@ class _TradesScreenState extends State<TradesScreen> {
               if (!grouped) ...[
                 if (filteredTrades.isEmpty)
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: EdgeInsets.fromLTRB(pagePadding, 0, pagePadding, pagePadding),
                     sliver: SliverToBoxAdapter(child: _emptyState()),
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: EdgeInsets.fromLTRB(pagePadding, 0, pagePadding, pagePadding),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, i) => TradeRowTile(trade: filteredTrades[i]),
@@ -289,12 +292,12 @@ class _TradesScreenState extends State<TradesScreen> {
               ] else ...[
                 if (groups.isEmpty)
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: EdgeInsets.fromLTRB(pagePadding, 0, pagePadding, pagePadding),
                     sliver: SliverToBoxAdapter(child: _emptyState()),
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: EdgeInsets.fromLTRB(pagePadding, 0, pagePadding, pagePadding),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (context, i) => TradeGroupCard(group: groups[i]),
@@ -384,8 +387,10 @@ class _TradesScreenState extends State<TradesScreen> {
   Widget _filterCard() {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final padding = Responsive.isMobile(context) ? 14.0 : 18.0;
+
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -476,9 +481,22 @@ class _TradesScreenState extends State<TradesScreen> {
     );
   }
 
+  // On mobile the Wrap in _filterCard() only ever fits one field per line
+  // anyway (see the fixed desktop widths below), so let each field span the
+  // full available width there instead of leaving it stranded narrower than
+  // the row it occupies.
+  double _fieldWidth(double desktopWidth) {
+    if (Responsive.isMobile(context)) {
+      final available =
+          MediaQuery.sizeOf(context).width - (Responsive.pagePadding(context).horizontal) - 36;
+      return available.clamp(0, double.infinity).toDouble();
+    }
+    return desktopWidth;
+  }
+
   Widget _assetDropdown() {
     return SizedBox(
-      width: 200,
+      width: _fieldWidth(200),
       child: DropdownButtonFormField<Asset?>(
         initialValue: _filters.asset,
         isExpanded: true,
@@ -500,7 +518,7 @@ class _TradesScreenState extends State<TradesScreen> {
 
   Widget _strategyDropdown() {
     return SizedBox(
-      width: 200,
+      width: _fieldWidth(200),
       child: DropdownButtonFormField<Strategy?>(
         initialValue: _filters.strategy,
         isExpanded: true,
@@ -523,7 +541,7 @@ class _TradesScreenState extends State<TradesScreen> {
 
   Widget _directionDropdown() {
     return SizedBox(
-      width: 160,
+      width: _fieldWidth(160),
       child: DropdownButtonFormField<TradeDirectionEnum?>(
         initialValue: _filters.direction,
         isExpanded: true,
@@ -549,7 +567,7 @@ class _TradesScreenState extends State<TradesScreen> {
 
   Widget _resultDropdown() {
     return SizedBox(
-      width: 160,
+      width: _fieldWidth(160),
       child: DropdownButtonFormField<JournalResultFilter>(
         initialValue: _filters.result,
         isExpanded: true,
@@ -575,7 +593,7 @@ class _TradesScreenState extends State<TradesScreen> {
 
   Widget _reviewDropdown() {
     return SizedBox(
-      width: 170,
+      width: _fieldWidth(170),
       child: DropdownButtonFormField<JournalReviewFilter>(
         initialValue: _filters.reviewed,
         isExpanded: true,
@@ -604,7 +622,7 @@ class _TradesScreenState extends State<TradesScreen> {
         : '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
     return SizedBox(
-      width: 260,
+      width: _fieldWidth(260),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: _pickDateRange,
@@ -703,8 +721,10 @@ class _TradesScreenState extends State<TradesScreen> {
   Widget _groupingBar() {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final horizontal = Responsive.isMobile(context) ? 14.0 : 18.0;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: horizontal, vertical: 14),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -780,7 +800,7 @@ class _TradesScreenState extends State<TradesScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SizedBox(
-      width: 130,
+      width: _fieldWidth(130),
       child: TextField(
         controller: _customDaysCtrl,
         keyboardType: TextInputType.number,

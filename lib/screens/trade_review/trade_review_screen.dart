@@ -20,6 +20,7 @@ import '../../models/trade_model.dart';
 import '../../services/static_data_service.dart';
 import '../../services/trade_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import '../../widgets/form_chip_select.dart';
 import '../../widgets/form_multi_select.dart';
 
@@ -308,7 +309,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: Responsive.pagePadding(context),
             children: [
               Text(
                 // _queue.length is only what's been fetched so far -- append
@@ -349,34 +350,31 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
               _buildMistakeTagsSection(),
 
               const SizedBox(height: 24),
-              Row(
+              ResponsiveRow(
+                spacing: 16,
+                runSpacing: 12,
                 children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _submitting ? null : _skip,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        child: Text('Skip'),
-                      ),
+                  OutlinedButton(
+                    onPressed: _submitting ? null : _skip,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Text('Skip'),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _submitting ? null : _confirm,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: _submitting
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.onPrimary,
-                                ),
-                              )
-                            : const Text('Confirm'),
-                      ),
+                  FilledButton(
+                    onPressed: _submitting ? null : _confirm,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: _submitting
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colorScheme.onPrimary,
+                              ),
+                            )
+                          : const Text('Confirm'),
                     ),
                   ),
                 ],
@@ -397,7 +395,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
     final isLong = t.direction.name == 'LONG';
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(Responsive.isMobile(context) ? 14 : 20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
@@ -412,13 +410,15 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10,
+            runSpacing: 8,
             children: [
               Text(
                 t.asset.symbol,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
-              const SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -436,8 +436,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
                   ),
                 ),
               ),
-              if (t.source != null) ...[
-                const SizedBox(width: 8),
+              if (t.source != null)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -453,8 +452,6 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
                     ),
                   ),
                 ),
-              ],
-              const Spacer(),
               Text(
                 '${t.profit.toStringAsFixed(2)} \$',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: profitColor),

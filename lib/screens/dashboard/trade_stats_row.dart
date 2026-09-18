@@ -83,7 +83,7 @@ class TradeStatsRow extends StatelessWidget {
       builder: (context, constraints) {
         final columns = _columnsFor(constraints.maxWidth);
         const spacing = 16.0;
-        final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        final width = _tileWidth(constraints.maxWidth, columns, spacing);
 
         return Wrap(
           spacing: spacing,
@@ -102,12 +102,23 @@ class TradeStatsRow extends StatelessWidget {
     return 2;
   }
 
+  /// Column width for [columns] tiles across [maxWidth], never negative.
+  /// [maxWidth] can be 0 (or, transiently during a resize/hot-restart on
+  /// Flutter web, even slightly negative) before the surrounding layout has
+  /// settled, which would otherwise make [Wrap] throw on a negative
+  /// [SizedBox] width.
+  double _tileWidth(double maxWidth, int columns, double spacing) {
+    final available = maxWidth < 0 ? 0.0 : maxWidth;
+    final raw = (available - spacing * (columns - 1)) / columns;
+    return raw < 0 ? 0.0 : raw;
+  }
+
   Widget _buildShimmer() {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = _columnsFor(constraints.maxWidth);
         const spacing = 16.0;
-        final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        final width = _tileWidth(constraints.maxWidth, columns, spacing);
 
         final semantic = context.semanticColors;
 

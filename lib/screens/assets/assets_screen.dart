@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/asset_model.dart';
 import '../../services/asset_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import 'add_asset_sheet.dart';
 import 'asset_card.dart';
 
@@ -130,7 +131,7 @@ class _AssetScreenState extends State<AssetScreen> {
           return RefreshIndicator(
             onRefresh: () async => _refresh(),
             child: ListView(
-              padding: const EdgeInsets.all(24),
+              padding: Responsive.pagePadding(context),
               children: [
                 TextField(
                   onChanged: (v) => setState(() => _query = v),
@@ -181,13 +182,16 @@ class _AssetScreenState extends State<AssetScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = (constraints.maxWidth / 320).floor().clamp(1, 3).toInt();
+        // A single narrow column (phone width) needs a taller cell -- the
+        // badge Wrap is more likely to run onto a second line there.
+        final mainAxisExtent = columns == 1 ? 148.0 : 132.0;
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: assets.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisExtent: 132,
+            mainAxisExtent: mainAxisExtent,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),

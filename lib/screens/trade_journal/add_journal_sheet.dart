@@ -6,6 +6,7 @@ import '../../models/asset_model.dart';
 import '../../services/trade_calculator_service.dart';
 import '../../services/trade_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import 'classes/trade_draft.dart';
 import 'trade_card.dart';
 
@@ -138,8 +139,15 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final horizontalPadding = Responsive.isMobile(context) ? 12.0 : 20.0;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        24,
+        horizontalPadding,
+        32,
+      ),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -164,44 +172,41 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
           const SizedBox(height: 32),
 
           // Date pickers
-          Row(
+          ResponsiveRow(
+            spacing: 20,
+            runSpacing: 12,
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _pickDateTime(true),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 8,
-                    ),
-                    child: Text(
-                      entryDateTime == null
-                          ? 'Entry DateTime'
-                          : DateFormat(
-                              'dd MMM yyyy HH:mm',
-                            ).format(entryDateTime!),
-                      textAlign: TextAlign.center,
-                    ),
+              OutlinedButton(
+                onPressed: () => _pickDateTime(true),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 8,
+                  ),
+                  child: Text(
+                    entryDateTime == null
+                        ? 'Entry DateTime'
+                        : DateFormat(
+                            'dd MMM yyyy HH:mm',
+                          ).format(entryDateTime!),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => _pickDateTime(false),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 8,
-                    ),
-                    child: Text(
-                      exitDateTime == null
-                          ? 'Exit DateTime'
-                          : DateFormat(
-                              'dd MMM yyyy HH:mm',
-                            ).format(exitDateTime!),
-                      textAlign: TextAlign.center,
-                    ),
+              OutlinedButton(
+                onPressed: () => _pickDateTime(false),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 8,
+                  ),
+                  child: Text(
+                    exitDateTime == null
+                        ? 'Exit DateTime'
+                        : DateFormat(
+                            'dd MMM yyyy HH:mm',
+                          ).format(exitDateTime!),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),

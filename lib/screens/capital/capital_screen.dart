@@ -4,6 +4,7 @@ import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
 import '../../services/capital_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import '../dashboard/capital_list.dart';
 import '../dashboard/capital_stat_card.dart';
 
@@ -240,25 +241,20 @@ class _CapitalScreenState extends State<CapitalScreen> {
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
+                  padding: Responsive.pagePadding(context),
+                  child: ResponsiveRow(
                     children: [
-                      Expanded(
-                        child: CapitalStatCard(
-                          title: "Total Deposits",
-                          value: _totalDeposits,
-                          color: context.semanticColors.profit,
-                          icon: Icons.south_west_rounded,
-                        ),
+                      CapitalStatCard(
+                        title: "Total Deposits",
+                        value: _totalDeposits,
+                        color: context.semanticColors.profit,
+                        icon: Icons.south_west_rounded,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: CapitalStatCard(
-                          title: "Total Withdraws",
-                          value: _totalWithdraws,
-                          color: context.semanticColors.loss,
-                          icon: Icons.north_east_rounded,
-                        ),
+                      CapitalStatCard(
+                        title: "Total Withdraws",
+                        value: _totalWithdraws,
+                        color: context.semanticColors.loss,
+                        icon: Icons.north_east_rounded,
                       ),
                     ],
                   ),

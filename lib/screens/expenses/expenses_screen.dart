@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/expense_model.dart';
 import '../../services/expense_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import 'add_expense_sheet.dart';
 import 'expense_card.dart';
 
@@ -160,7 +161,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           return RefreshIndicator(
             onRefresh: _load,
             child: ListView(
-              padding: const EdgeInsets.all(24),
+              padding: Responsive.pagePadding(context),
               children: [
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -168,8 +169,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     color: colorScheme.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../theme/app_theme.dart';
+import '../../utils/responsive.dart';
 import 'classes/weekly_breakdown.dart';
 
 class WeeklyHistoryTable extends StatelessWidget {
@@ -47,67 +48,74 @@ class WeeklyHistoryTable extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          /// Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Expanded(child: Text("Week")),
-              Expanded(child: Text("Profit")),
-              Expanded(child: Text("Loss")),
-              Expanded(child: Text("Net")),
-            ],
+          HorizontalScrollOnMobile(
+            minWidth: 480,
+            child: Column(
+              children: [
+                /// Header Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Expanded(child: Text("Week")),
+                    Expanded(child: Text("Profit")),
+                    Expanded(child: Text("Loss")),
+                    Expanded(child: Text("Net")),
+                  ],
+                ),
+
+                const Divider(height: 28),
+
+                ...weeks.map((week) {
+                  final weekEnd = week.weekStart.add(const Duration(days: 6));
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "${formatter.format(week.weekStart)} - ${formatter.format(weekEnd)}",
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+
+                        Expanded(
+                          child: Text(
+                            week.profit.toStringAsFixed(2),
+                            style: TextStyle(
+                              color: semantic.profit,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          child: Text(
+                            week.loss.toStringAsFixed(2),
+                            style: TextStyle(
+                              color: semantic.loss,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+
+                        Expanded(
+                          child: Text(
+                            week.net.toStringAsFixed(2),
+                            style: TextStyle(
+                              color: week.net >= 0 ? semantic.profit : semantic.loss,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
           ),
-
-          const Divider(height: 28),
-
-          ...weeks.map((week) {
-            final weekEnd = week.weekStart.add(const Duration(days: 6));
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      "${formatter.format(week.weekStart)} - ${formatter.format(weekEnd)}",
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Text(
-                      week.profit.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: semantic.profit,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Text(
-                      week.loss.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: semantic.loss,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-
-                  Expanded(
-                    child: Text(
-                      week.net.toStringAsFixed(2),
-                      style: TextStyle(
-                        color: week.net >= 0 ? semantic.profit : semantic.loss,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
         ],
       ),
     );

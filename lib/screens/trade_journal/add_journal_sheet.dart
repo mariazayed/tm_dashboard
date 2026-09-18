@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tm_dashboard/models/strategy_model.dart';
 
-import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
+import '../../services/trade_calculator_service.dart';
 import '../../services/trade_service.dart';
 import '../../theme/app_theme.dart';
 import 'classes/trade_draft.dart';
@@ -33,8 +33,6 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
   // where the sheet looks unresponsive while waiting on the server.
   bool _submitting = false;
 
-  static const double xauPipSize = 0.1;
-
   @override
   void initState() {
     super.initState();
@@ -49,16 +47,32 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     }
   }
 
+  // Pips come from the asset's own pip size (Asset.pipSize) rather than a
+  // value hardcoded for one symbol -- previously this only computed pips
+  // for XAUUSD (using a size hardcoded to XAUUSD's own 0.1) and silently
+  // zeroed everything else out. Profit follows the same asset-driven
+  // pattern via contractSize, which TradeEnrichmentService already uses
+  // server-side for the equivalent risk-in-currency calculation. Either
+  // figure is simply skipped (left at 0) when the asset doesn't have the
+  // needed size set, rather than guessing.
   void _recalc(TradeDraft d) {
-    if (d.asset.symbol != 'XAUUSD') {
+    final priceDiff = TradeCalculatorService.calculatePriceDifference(
+      direction: d.signal,
+      entry: d.entryPrice,
+      target: d.exitPrice,
+    );
+    if (priceDiff == null) {
       d.pips = 0;
       d.profit = 0;
       return;
     }
-    final diff = d.exitPrice - d.entryPrice;
-    final raw = diff / xauPipSize;
-    d.pips = d.signal == TradeDirectionEnum.LONG ? raw : -raw;
-    d.profit = d.pips * d.lot * 10;
+
+    d.pips = TradeCalculatorService.calculatePips(priceDiff, d.asset.pipSize);
+
+    final contractSize = d.asset.contractSize;
+    d.profit = (contractSize == null || contractSize <= 0)
+        ? 0
+        : priceDiff * d.lot * contractSize;
   }
 
   Future<void> _pickDateTime(bool entry) async {

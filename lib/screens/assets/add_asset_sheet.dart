@@ -19,6 +19,7 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
   late TextEditingController _nameController;
   late TextEditingController _symbolController;
   late TextEditingController _contractSizeController;
+  late TextEditingController _pipSizeController;
   bool _saving = false;
 
   bool get _isEdit => widget.existing != null;
@@ -32,6 +33,9 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
     _contractSizeController = TextEditingController(
       text: existing?.contractSize != null ? _trimZeros(existing!.contractSize!) : '',
     );
+    _pipSizeController = TextEditingController(
+      text: existing?.pipSize != null ? _trimZeros(existing!.pipSize!) : '',
+    );
   }
 
   @override
@@ -39,6 +43,7 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
     _nameController.dispose();
     _symbolController.dispose();
     _contractSizeController.dispose();
+    _pipSizeController.dispose();
     super.dispose();
   }
 
@@ -53,6 +58,8 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
     final symbol = _symbolController.text.trim().toUpperCase();
     final contractSizeText = _contractSizeController.text.trim();
     final contractSize = contractSizeText.isEmpty ? null : double.tryParse(contractSizeText);
+    final pipSizeText = _pipSizeController.text.trim();
+    final pipSize = pipSizeText.isEmpty ? null : double.tryParse(pipSizeText);
 
     try {
       if (_isEdit) {
@@ -60,12 +67,14 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
           'name': name,
           'symbol': symbol,
           'contractSize': contractSize,
+          'pipSize': pipSize,
         });
       } else {
         await AssetService.createAsset(
           name: name,
           symbol: symbol,
           contractSize: contractSize,
+          pipSize: pipSize,
         );
       }
 
@@ -130,6 +139,11 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
             FormNumberField(
               label: 'Contract size per lot (optional)',
               controller: _contractSizeController,
+            ),
+            const SizedBox(height: 12),
+            FormNumberField(
+              label: 'Pip size (optional, e.g. 0.0001, 0.1 for XAUUSD)',
+              controller: _pipSizeController,
             ),
             const SizedBox(height: 12),
             FilledButton(

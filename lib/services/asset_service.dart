@@ -11,6 +11,7 @@ class AssetService {
     required String name,
     required String symbol,
     double? contractSize,
+    double? pipSize,
   }) async {
     final response = await http.post(
       Uri.parse(ApiConstants.assetURL),
@@ -19,6 +20,7 @@ class AssetService {
         'name': name,
         'symbol': symbol,
         'contractSize': contractSize,
+        'pipSize': pipSize,
       }),
     );
 

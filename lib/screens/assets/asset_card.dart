@@ -63,6 +63,33 @@ class AssetCard extends StatelessWidget {
     return parts.length > 1 ? '$whole.${parts[1]}' : whole;
   }
 
+  // Pip sizes are small decimals (0.0001, 0.01, 0.1, ...) rather than
+  // thousands-scale figures, so this just trims trailing zeros instead of
+  // reusing _formatContractSize's thousands-separator formatting.
+  String _formatPipSize(double v) {
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toString();
+  }
+
+  Widget _badge(BuildContext context, String text) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -119,22 +146,23 @@ class AssetCard extends StatelessWidget {
                     style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      asset.contractSize != null
-                          ? '${_formatContractSize(asset.contractSize!)} / lot'
-                          : 'Contract size not set',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      _badge(
+                        context,
+                        asset.contractSize != null
+                            ? '${_formatContractSize(asset.contractSize!)} / lot'
+                            : 'Contract size not set',
                       ),
-                    ),
+                      _badge(
+                        context,
+                        asset.pipSize != null
+                            ? 'Pip: ${_formatPipSize(asset.pipSize!)}'
+                            : 'Pip size not set',
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -12,8 +12,15 @@ class TradeCalculatorService {
     return diff;
   }
 
-  static double calculatePips(double priceDiff) {
-    return priceDiff * 10;
+  // pipSize is the price distance that equals 1 pip for the trade's asset
+  // (Asset.pipSize -- e.g. 0.0001 for a 4-decimal forex pair, 0.1 for
+  // XAUUSD). Returns 0 when it isn't set rather than guessing at a size
+  // that may not apply to this asset.
+  static double calculatePips(double priceDiff, double? pipSize) {
+    if (pipSize == null || pipSize <= 0) {
+      return 0;
+    }
+    return priceDiff / pipSize;
   }
 
   static double calculateUsd(double priceDiff, double lotSize) {

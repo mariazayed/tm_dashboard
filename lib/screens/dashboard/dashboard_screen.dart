@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
+import '../../models/expense_model.dart';
 import '../../models/reminder_note_model.dart';
 import '../../models/strict_rule_model.dart';
 import '../../models/trade_model.dart';
 import '../../services/capital_service.dart';
+import '../../services/expense_service.dart';
 import '../../services/reminder_notes_service.dart';
 import '../../services/strict_rules_service.dart';
 import '../../services/trade_service.dart';
@@ -17,7 +19,9 @@ import 'capital_growth_chart.dart';
 import 'capital_list.dart';
 import 'capital_stat_card.dart';
 import 'classes/capital_dashboard_helper.dart';
+import 'classes/expense_dashboard_helper.dart';
 import 'classes/trade_analytics_helper.dart';
+import 'expense_summary_chart.dart';
 import 'goals_progress_section.dart';
 import 'session_performance_chart.dart';
 import 'strategy_performance_chart.dart';
@@ -53,6 +57,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Trade> _trades = [];
   bool _isTradesLoading = true;
 
+  // Backing the Expenses summary chart. Expenses is a manually-maintained
+  // standalone log (not auto-imported like Trades), so this is the same
+  // full, paged-under-the-hood fetch used for the Capital ledger rather
+  // than a bounded/recent one.
+  List<ExpenseModel> _expenses = [];
+  bool _isExpensesLoading = true;
+
   // Modern light colors for sticky notes
   final List<Color> _colors = [
     Colors.yellow.shade100,
@@ -62,6 +73,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Colors.orange.shade50,
     Colors.purple.shade50,
   ];
+
+  // Accent colors for the Reminder / Strict Rule cards -- distinct from the
+  // green/red PnL convention and from every categorical hue already used by
+  // the charts further down this page (violet for Expenses, amber for
+  // Mistake Frequency), so these two cards read as their own thing rather
+  // than borrowing another section's meaning.
+  static const _reminderAccent = Color(0xFF3B82F6);
+  static const _ruleAccent = Color(0xFFF97316);
 
   CapitalDashboardHelper get helper {
     final h = _helper;
@@ -75,6 +94,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   TradeAnalyticsHelper get analytics => TradeAnalyticsHelper(_trades);
 
+  ExpenseDashboardHelper get expenseHelper => ExpenseDashboardHelper(_expenses);
+
   @override
   void initState() {
     super.initState();
@@ -82,6 +103,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _fetchNotes();
     _fetchRules();
     _fetchTrades();
+    _fetchExpenses();
   }
 
   @override
@@ -184,6 +206,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (!mounted) return;
       setState(() => _isTradesLoading = false);
       debugPrint('Error fetching trades for dashboard analytics: $e');
+    }
+  }
+
+  Future<void> _fetchExpenses() async {
+    try {
+      // Paged transport under the hood instead of one unbounded GET -- same
+      // pattern as Capital. Expenses is a manually-maintained standalone log
+      // (not auto-imported like Trades), so there's no need to bound this
+      // to a recent window the way TradeService.getRecentForAnalytics does.
+      final expenses = await ExpenseService.fetchAllPaged();
+
+      if (!mounted) return;
+
+      setState(() {
+        _expenses = expenses;
+        _isExpensesLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isExpensesLoading = false);
+      debugPrint('Error fetching expenses for dashboard summary: $e');
     }
   }
 
@@ -347,6 +390,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildDashboardNoteCard({
     required String title,
     required IconData icon,
+    required Color accentColor,
     required bool loading,
     required bool isEmpty,
     required String text,
@@ -376,10 +420,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // hover regions can re-layout under the pointer), and without
             // this guard each spurious exit stacked another live
             // Timer.periodic on top of the old one. Every stacked timer
-            // kept firing setState -> rebuilding the BackdropFilter blur
-            // below, so hovering these cards repeatedly made the dashboard
-            // progressively heavier (more concurrent timers + GPU blur
-            // recomposites) the longer it stayed open.
+            // kept firing setState -> rebuilding this card, so hovering it
+            // repeatedly made the dashboard progressively heavier (more
+            // concurrent timers) the longer it stayed open.
             if (isNotesCard && _notes.isNotEmpty) {
               _notesTimer?.cancel();
               _notesTimer = Timer.periodic(
@@ -401,52 +444,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }
           },
           child: AnimatedScale(
-            scale: isHovered ? 1.02 : 1.0,
+            scale: isHovered ? 1.015 : 1.0,
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOut,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOut,
+              height: 200, // <-- FIXED HEIGHT (keeps both cards aligned)
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(24),
+                // Solid surface + shadow, matching every other card on this
+                // page -- the previous frosted/blurred glass look had
+                // nothing colorful behind it to blur, so it just read as a
+                // flat gray box with no depth or identity.
+                color: Theme.of(context).colorScheme.surface,
+                border: Border.all(
+                  color: isHovered
+                      ? accentColor.withOpacity(0.35)
+                      : Colors.black.withOpacity(0.04),
+                  width: 1.2,
+                ),
                 boxShadow: [
-                  /// Base shadow
                   BoxShadow(
-                    blurRadius: 30,
+                    blurRadius: 20,
                     color: Colors.black.withOpacity(0.05),
-                    offset: const Offset(0, 15),
+                    offset: const Offset(0, 10),
                   ),
-
-                  /// Glow shadow (only when hovered)
                   if (isHovered)
                     BoxShadow(
-                      blurRadius: 40,
-                      spreadRadius: 2,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withOpacity(0.25),
+                      blurRadius: 32,
+                      spreadRadius: 1,
+                      color: accentColor.withOpacity(0.18),
                     ),
                 ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: Container(
-                    height: 260, // <-- FIXED HEIGHT
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: Colors.white.withOpacity(0.55),
-                      border: Border.all(
-                        color: isHovered
-                            ? Theme.of(
-                                context,
-                              ).colorScheme.primary.withOpacity(0.5)
-                            : Colors.white.withOpacity(0.4),
+                child: Stack(
+                  children: [
+                    // Large faint watermark icon for texture -- purely
+                    // decorative, clipped to the card's rounded corners.
+                    Positioned(
+                      right: -14,
+                      bottom: -14,
+                      child: Icon(
+                        icon,
+                        size: 96,
+                        color: accentColor.withOpacity(0.06),
                       ),
                     ),
-                    child: Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         /// Header
@@ -456,76 +504,138 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.1),
+                                color: accentColor.withOpacity(0.12),
                               ),
-                              child: Icon(
-                                icon,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
+                              child: Icon(icon, size: 18, color: accentColor),
                             ),
                             const SizedBox(width: 10),
                             Text(
                               title,
                               style: const TextStyle(
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                                 fontSize: 15,
                               ),
                             ),
                             const Spacer(),
                             if (total > 1)
-                              Text(
-                                "${index + 1}/$total",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
+                              _buildNoteDots(total, index, accentColor),
                           ],
                         ),
 
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
 
-                        if (loading)
-                          const Center(child: CircularProgressIndicator())
-                        else if (isEmpty)
-                          const Text("No data available")
-                        else
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 500),
-                            transitionBuilder: (child, animation) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(0.08, 0),
-                                    end: Offset.zero,
-                                  ).animate(animation),
-                                  child: child,
+                        Expanded(
+                          child: loading
+                              ? _buildNoteShimmer()
+                              : isEmpty
+                              ? _buildNoteEmptyState(icon, isNotesCard)
+                              : Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(
+                                      milliseconds: 500,
+                                    ),
+                                    transitionBuilder: (child, animation) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: SlideTransition(
+                                          position: Tween<Offset>(
+                                            begin: const Offset(0.08, 0),
+                                            end: Offset.zero,
+                                          ).animate(animation),
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      text,
+                                      key: ValueKey(text),
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        height: 1.6,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              );
-                            },
-                            child: Text(
-                              text,
-                              key: ValueKey(text),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                height: 1.6,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
+                        ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  /// Small pill-dot pagination indicator -- replaces the old plain "1/3"
+  /// text with something that reads at a glance and matches the rest of
+  /// this dashboard's visual language (accent-colored, not just gray text).
+  Widget _buildNoteDots(int total, int index, Color accentColor) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < total; i++)
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: const EdgeInsets.only(left: 4),
+            width: i == index ? 14 : 6,
+            height: 6,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(3),
+              color: i == index ? accentColor : accentColor.withOpacity(0.25),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildNoteEmptyState(IconData icon, bool isNotesCard) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 32, color: Colors.grey.shade300),
+          const SizedBox(height: 8),
+          Text(
+            isNotesCard ? "No reminders yet" : "No strict rules yet",
+            style: TextStyle(color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoteShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey.shade200,
+      highlightColor: Colors.grey.shade100,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 16,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            height: 16,
+            width: 220,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -578,6 +688,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: _buildDashboardNoteCard(
                                   title: "Reminder",
                                   icon: Icons.lightbulb_outline,
+                                  accentColor: _reminderAccent,
                                   loading: _isNotesLoading,
                                   isEmpty: _notes.isEmpty,
                                   text: _notes.isNotEmpty
@@ -593,6 +704,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: _buildDashboardNoteCard(
                                   title: "Strict Rule",
                                   icon: Icons.rule_folder_outlined,
+                                  accentColor: _ruleAccent,
                                   loading: _isRulesLoading,
                                   isEmpty: _rules.isEmpty,
                                   text: _rules.isNotEmpty
@@ -610,6 +722,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _buildDashboardNoteCard(
                                 title: "Reminder",
                                 icon: Icons.lightbulb_outline,
+                                accentColor: _reminderAccent,
                                 loading: _isNotesLoading,
                                 isEmpty: _notes.isEmpty,
                                 text: _notes.isNotEmpty
@@ -623,6 +736,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _buildDashboardNoteCard(
                                 title: "Strict Rule",
                                 icon: Icons.rule_folder_outlined,
+                                accentColor: _ruleAccent,
                                 loading: _isRulesLoading,
                                 isEmpty: _rules.isEmpty,
                                 text: _rules.isNotEmpty
@@ -692,6 +806,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 24),
 
                     WeeklyPnlChart(weeklyData: helper.weeklyPnl()),
+
+                    const SizedBox(height: 24),
+
+                    // --- Expenses: the standalone expense log (see the
+                    // Expenses feature writeup) is never netted against
+                    // Capital/PnL above -- this is a pure display summary. ---
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _buildSectionHeader(
+                        context,
+                        title: "Expenses",
+                        subtitle: _isExpensesLoading || _expenses.isEmpty
+                            ? null
+                            : "${_expenses.length} expense${_expenses.length == 1 ? '' : 's'} logged",
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    ExpenseSummaryChart(
+                      data: expenseHelper.totalByReason(),
+                      total: expenseHelper.totalSpent,
+                      loading: _isExpensesLoading,
+                    ),
 
                     const SizedBox(height: 24),
 

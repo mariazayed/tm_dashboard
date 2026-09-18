@@ -8,6 +8,8 @@ import '../screens/calendar/calendar_screen.dart';
 import '../screens/capital/capital_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/decisions/decisions_screen.dart';
+import '../screens/expense_reasons/expense_reasons_screen.dart';
+import '../screens/expenses/expenses_screen.dart';
 import '../screens/goals/goals_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
@@ -75,6 +77,16 @@ final GoRouter routes = GoRouter(
               name: RouteNames.strategies,
               path: 'strategies',
               builder: (context, state) => StrategiesScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.expenses,
+              path: 'expenses',
+              builder: (context, state) => ExpensesScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.expenseReasons,
+              path: 'expense-reasons',
+              builder: (context, state) => ExpenseReasonsScreen(),
             ),
           ],
         ),

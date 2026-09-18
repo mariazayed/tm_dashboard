@@ -92,15 +92,30 @@ class MainMenu extends StatelessWidget {
   }
 }
 
-class _ModernSidebar extends StatelessWidget {
+class _ModernSidebar extends StatefulWidget {
+  @override
+  State<_ModernSidebar> createState() => _ModernSidebarState();
+}
+
+class _ModernSidebarState extends State<_ModernSidebar> {
+  bool _collapsed = false;
+
+  static const double _expandedWidth = 260;
+  static const double _collapsedWidth = 76;
+
+  void _toggleCollapsed() => setState(() => _collapsed = !_collapsed);
+
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.path;
 
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Container(
-        width: 260,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        width: _collapsed ? _collapsedWidth : _expandedWidth,
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           border: Border(
             right: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
@@ -113,18 +128,42 @@ class _ModernSidebar extends StatelessWidget {
 
             /// Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.symmetric(horizontal: _collapsed ? 12 : 24),
               child: Row(
-                children: const [
-                  Text(
-                    "TM 🧠",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                mainAxisAlignment: _collapsed
+                    ? MainAxisAlignment.center
+                    : MainAxisAlignment.spaceBetween,
+                children: [
+                  if (!_collapsed)
+                    const Text(
+                      "TM 🧠",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  Tooltip(
+                    message: _collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: _toggleCollapsed,
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Icon(
+                          _collapsed ? Icons.menu : Icons.menu_open,
+                          size: 20,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 20),
 
             /// Scrollable menu area
             Expanded(
@@ -146,6 +185,32 @@ class _ModernSidebar extends StatelessWidget {
         final hasSelectedChild = item.children!.any(
           (child) => _isActiveRoute(context, location, child.routeName),
         );
+        final iconColor = hasSelectedChild
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
+
+        if (_collapsed) {
+          // Collapsed: show only the group's icon. Tapping it expands the
+          // sidebar again so its children become reachable.
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Tooltip(
+              message: item.label,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: _toggleCollapsed,
+                child: Container(
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(item.icon, size: 20, color: iconColor),
+                ),
+              ),
+            ),
+          );
+        }
 
         return Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -162,6 +227,9 @@ class _ModernSidebar extends StatelessWidget {
             collapsedIconColor: Theme.of(
               context,
             ).colorScheme.onSurface.withValues(alpha: 0.6),
+            leading: item.icon != null
+                ? Icon(item.icon, size: 20, color: iconColor)
+                : null,
             title: Text(
               item.label,
               style: TextStyle(
@@ -186,31 +254,49 @@ class _ModernSidebar extends StatelessWidget {
   Widget _buildLeaf(BuildContext context, _MenuItem item, String location) {
     final isSelected = _isActiveRoute(context, location, item.routeName);
     final theme = Theme.of(context);
+    final contentColor = isSelected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withValues(alpha: 0.7);
+
+    final leaf = InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => context.goNamed(item.routeName!),
+      child: Container(
+        height: 44,
+        alignment: _collapsed ? Alignment.center : Alignment.centerLeft,
+        padding: EdgeInsets.symmetric(horizontal: _collapsed ? 0 : 16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary.withValues(alpha: 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: _collapsed
+            ? Icon(item.icon, size: 20, color: contentColor)
+            : Row(
+                children: [
+                  if (item.icon != null) ...[
+                    Icon(item.icon, size: 18, color: contentColor),
+                    const SizedBox(width: 12),
+                  ],
+                  Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: isSelected ? theme.colorScheme.primary : null,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => context.goNamed(item.routeName!),
-        child: Container(
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primary.withValues(alpha: 0.12)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            item.label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? theme.colorScheme.primary : null,
-            ),
-          ),
-        ),
-      ),
+      child: _collapsed ? Tooltip(message: item.label, child: leaf) : leaf,
     );
   }
 }
@@ -225,6 +311,12 @@ class _ModernDrawer extends StatelessWidget {
       final isSelected = _isActiveRoute(context, location, item.routeName);
 
       return ListTile(
+        leading: item.icon != null
+            ? Icon(
+                item.icon,
+                color: isSelected ? theme.colorScheme.primary : null,
+              )
+            : null,
         title: Text(
           item.label,
           style: TextStyle(
@@ -263,6 +355,14 @@ class _ModernDrawer extends StatelessWidget {
 
                     return ExpansionTile(
                       initiallyExpanded: hasSelectedChild,
+                      leading: item.icon != null
+                          ? Icon(
+                              item.icon,
+                              color: hasSelectedChild
+                                  ? theme.colorScheme.primary
+                                  : null,
+                            )
+                          : null,
                       title: Text(
                         item.label,
                         style: TextStyle(
@@ -305,32 +405,85 @@ bool _isActiveRoute(BuildContext context, String location, String? routeName) {
 class _MenuItem {
   final String label;
   final String? routeName;
+  final IconData? icon;
   final List<_MenuItem>? children;
 
   bool get hasChildren => children != null && children!.isNotEmpty;
 
-  _MenuItem({required this.label, this.routeName, this.children});
+  _MenuItem({required this.label, this.routeName, this.icon, this.children});
 }
 
 List<_MenuItem> _menus(BuildContext context) {
   return [
-    _MenuItem(label: 'Home', routeName: RouteNames.home),
-    _MenuItem(label: 'Calendar', routeName: RouteNames.calendar),
-    _MenuItem(label: 'Trades', routeName: RouteNames.trades),
-    _MenuItem(label: 'Goals', routeName: RouteNames.goals),
-    _MenuItem(label: 'Decisions', routeName: RouteNames.decisions),
+    _MenuItem(
+      label: 'Home',
+      routeName: RouteNames.home,
+      icon: Icons.space_dashboard_outlined,
+    ),
+    _MenuItem(
+      label: 'Calendar',
+      routeName: RouteNames.calendar,
+      icon: Icons.calendar_month_outlined,
+    ),
+    _MenuItem(
+      label: 'Trades',
+      routeName: RouteNames.trades,
+      icon: Icons.show_chart_outlined,
+    ),
+    _MenuItem(
+      label: 'Goals',
+      routeName: RouteNames.goals,
+      icon: Icons.flag_outlined,
+    ),
+    _MenuItem(
+      label: 'Decisions',
+      routeName: RouteNames.decisions,
+      icon: Icons.fact_check_outlined,
+    ),
+    _MenuItem(
+      label: 'Expenses',
+      routeName: RouteNames.expenses,
+      icon: Icons.receipt_long_outlined,
+    ),
     _MenuItem(
       label: 'Others',
+      icon: Icons.more_horiz_outlined,
       children: [
-        _MenuItem(label: 'Assets', routeName: RouteNames.assets),
-        _MenuItem(label: 'Deposits & Withdraws', routeName: RouteNames.capital),
-        _MenuItem(label: 'Reminder Notes', routeName: RouteNames.reminderNotes),
+        _MenuItem(
+          label: 'Assets',
+          routeName: RouteNames.assets,
+          icon: Icons.account_balance_wallet_outlined,
+        ),
+        _MenuItem(
+          label: 'Deposits & Withdraws',
+          routeName: RouteNames.capital,
+          icon: Icons.swap_horiz_outlined,
+        ),
+        _MenuItem(
+          label: 'Expense Reasons',
+          routeName: RouteNames.expenseReasons,
+          icon: Icons.sell_outlined,
+        ),
+        _MenuItem(
+          label: 'Reminder Notes',
+          routeName: RouteNames.reminderNotes,
+          icon: Icons.push_pin_outlined,
+        ),
         _MenuItem(
           label: 'Risk Management',
           routeName: RouteNames.riskManagement,
+          icon: Icons.shield_outlined,
         ),
-        _MenuItem(label: 'Strategies', routeName: RouteNames.strategies),
-        _MenuItem(label: 'Strict Rules', routeName: RouteNames.strictRules),
+        _MenuItem(
+          label: 'Strategies',
+          routeName: RouteNames.strategies,
+          icon: Icons.psychology_outlined,
+        ),
+        _MenuItem(
+          label: 'Strict Rules',
+          routeName: RouteNames.strictRules,
+          icon: Icons.gavel_outlined,
+        ),
       ],
     ),
   ];

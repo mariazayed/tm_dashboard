@@ -12,4 +12,6 @@ class RouteNames {
   static const goals = 'goals';
   static const capital = 'capital';
   static const decisions = 'decisions';
+  static const expenses = 'expenses';
+  static const expenseReasons = 'expenseReasons';
 }

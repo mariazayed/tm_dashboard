@@ -5,7 +5,6 @@ import '../../enums/decision_category_enum.dart';
 import '../../enums/decision_status_enum.dart';
 import '../../models/decision_model.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/md_editor_field.dart';
 import 'decision_detail_sheet.dart';
 
 class DecisionCard extends StatelessWidget {
@@ -264,6 +263,8 @@ class DecisionCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 2),
                         child: Text(
                           decision.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: colorScheme.onSurface,
                             fontSize: 16,
@@ -274,10 +275,11 @@ class DecisionCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    buildMarkdownPreview(
-                      context,
-                      decision.description,
-                      baseStyle: TextStyle(
+                    Text(
+                      _previewText(decision.description),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
                         fontSize: 13,
                         color: colorScheme.onSurfaceVariant,
                         height: 1.45,
@@ -306,10 +308,11 @@ class DecisionCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 3),
-                            buildMarkdownPreview(
-                              context,
-                              decision.reasoning!,
-                              baseStyle: TextStyle(
+                            Text(
+                              _previewText(decision.reasoning!),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: colorScheme.onSurfaceVariant,
                                 fontStyle: FontStyle.italic,
@@ -355,10 +358,14 @@ class DecisionCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: semantic.warning.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: semantic.warning.withValues(alpha: 0.4)),
+                          border: Border.all(
+                            color: semantic.warning.withValues(alpha: 0.4),
+                          ),
                         ),
                         child: Text(
                           decision.notes!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
                             color: semantic.warning,
@@ -406,6 +413,8 @@ class DecisionCard extends StatelessWidget {
       ),
       child: Text(
         text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
           fontSize: 11,
           color: colorScheme.onSurfaceVariant,
@@ -413,5 +422,12 @@ class DecisionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _previewText(String text) {
+    return text
+        .replaceAll(RegExp(r'[`*_#>-]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 }

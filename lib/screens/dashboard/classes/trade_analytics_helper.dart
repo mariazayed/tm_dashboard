@@ -16,13 +16,24 @@ class TradeAnalyticsHelper {
 
   TradeAnalyticsHelper(this.trades);
 
+  int? _wins;
+  int? _losses;
+  int? _breakeven;
+  double? _grossProfit;
+  double? _grossLoss;
+  double? _totalPnl;
+  int? _currentStreak;
+  List<MapEntry<String, double>>? _pnlByStrategy;
+  List<MapEntry<SessionEnum, double>>? _pnlBySession;
+  List<MapEntry<MistakeTagEnum, int>>? _mistakeTagFrequency;
+
   int get totalTrades => trades.length;
 
-  int get wins => trades.where((t) => t.profit > 0).length;
+  int get wins => _wins ??= trades.where((t) => t.profit > 0).length;
 
-  int get losses => trades.where((t) => t.profit < 0).length;
+  int get losses => _losses ??= trades.where((t) => t.profit < 0).length;
 
-  int get breakeven => trades.where((t) => t.profit == 0).length;
+  int get breakeven => _breakeven ??= trades.where((t) => t.profit == 0).length;
 
   /// Win rate over decided trades (wins + losses) -- a breakeven trade
   /// shouldn't dilute the rate in either direction.
@@ -32,12 +43,28 @@ class TradeAnalyticsHelper {
     return (wins / decided) * 100;
   }
 
-  double get grossProfit =>
-      trades.where((t) => t.profit > 0).fold(0.0, (a, b) => a + b.profit);
+  double get grossProfit {
+    final cached = _grossProfit;
+    if (cached != null) return cached;
+
+    final total = trades
+        .where((t) => t.profit > 0)
+        .fold<double>(0.0, (a, b) => a + b.profit);
+    _grossProfit = total;
+    return total;
+  }
 
   /// Sum of all losing trades' PnL -- negative (or zero if there are none).
-  double get grossLoss =>
-      trades.where((t) => t.profit < 0).fold(0.0, (a, b) => a + b.profit);
+  double get grossLoss {
+    final cached = _grossLoss;
+    if (cached != null) return cached;
+
+    final total = trades
+        .where((t) => t.profit < 0)
+        .fold<double>(0.0, (a, b) => a + b.profit);
+    _grossLoss = total;
+    return total;
+  }
 
   /// Gross profit / |gross loss|. Null (rather than an infinite value) when
   /// there are no losing trades yet in the window.
@@ -52,12 +79,21 @@ class TradeAnalyticsHelper {
   /// next to Avg Win.
   double get avgLoss => losses == 0 ? 0 : grossLoss / losses;
 
-  double get totalPnl => trades.fold(0.0, (a, b) => a + b.profit);
+  double get totalPnl {
+    final cached = _totalPnl;
+    if (cached != null) return cached;
+
+    final total = trades.fold<double>(0.0, (a, b) => a + b.profit);
+    _totalPnl = total;
+    return total;
+  }
 
   /// Current streak counted back from the most recent trade: positive N =
   /// N wins in a row, negative N = N losses in a row, 0 if the most recent
   /// trade was breakeven or there's no history yet.
   int get currentStreak {
+    final cached = _currentStreak;
+    if (cached != null) return cached;
     if (trades.isEmpty) return 0;
 
     final sorted = List<Trade>.from(trades)
@@ -79,12 +115,16 @@ class TradeAnalyticsHelper {
       }
     }
 
-    return isWinStreak ? streak : -streak;
+    _currentStreak = isWinStreak ? streak : -streak;
+    return _currentStreak!;
   }
 
   /// Net PnL per strategy, largest-magnitude first. Trades with no
   /// strategy attached are grouped under "No Strategy".
   List<MapEntry<String, double>> pnlByStrategy() {
+    final cached = _pnlByStrategy;
+    if (cached != null) return cached;
+
     final Map<String, double> byStrategy = {};
 
     for (final t in trades) {
@@ -95,33 +135,37 @@ class TradeAnalyticsHelper {
     final entries = byStrategy.entries.toList()
       ..sort((a, b) => b.value.abs().compareTo(a.value.abs()));
 
+    _pnlByStrategy = entries;
     return entries;
   }
 
   /// Net PnL per trading session. Trades with no session set are omitted
   /// -- there's nothing meaningful to compare them on.
   List<MapEntry<SessionEnum, double>> pnlBySession() {
+    final cached = _pnlBySession;
+    if (cached != null) return cached;
+
     final Map<SessionEnum, double> bySession = {};
 
     for (final t in trades) {
       final session = t.session;
       if (session == null) continue;
-      bySession.update(
-        session,
-        (v) => v + t.profit,
-        ifAbsent: () => t.profit,
-      );
+      bySession.update(session, (v) => v + t.profit, ifAbsent: () => t.profit);
     }
 
     final entries = bySession.entries.toList()
       ..sort((a, b) => a.key.value.compareTo(b.key.value));
 
+    _pnlBySession = entries;
     return entries;
   }
 
   /// How often each mistake tag shows up across reviewed trades, most
   /// frequent first. Only trades that were reviewed and tagged contribute.
   List<MapEntry<MistakeTagEnum, int>> mistakeTagFrequency() {
+    final cached = _mistakeTagFrequency;
+    if (cached != null) return cached;
+
     final Map<MistakeTagEnum, int> counts = {};
 
     for (final t in trades) {
@@ -135,6 +179,7 @@ class TradeAnalyticsHelper {
     final entries = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
+    _mistakeTagFrequency = entries;
     return entries;
   }
 }

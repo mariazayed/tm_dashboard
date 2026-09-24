@@ -8,6 +8,12 @@ class CapitalDashboardHelper {
 
   CapitalDashboardHelper(this.capitals);
 
+  List<MapEntry<DateTime, double>>? _capitalOverTime;
+  List<MapEntry<DateTime, double>>? _weeklyPnl;
+  List<WeeklyBreakdown>? _weeklyBreakdown;
+  double? _totalDeposits;
+  double? _totalWithdraws;
+
   DateTime get today {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
@@ -39,13 +45,27 @@ class CapitalDashboardHelper {
         .fold(0.0, (a, b) => a + b.amount);
   }
 
-  double get totalDeposits => capitals
-      .where((c) => c.reason == CapitalReasonEnum.DEPOSIT)
-      .fold(0.0, (a, b) => a + b.amount);
+  double get totalDeposits {
+    final cached = _totalDeposits;
+    if (cached != null) return cached;
 
-  double get totalWithdraws => capitals
-      .where((c) => c.reason == CapitalReasonEnum.WITHDRAW)
-      .fold(0.0, (a, b) => a + b.amount);
+    final total = capitals
+        .where((c) => c.reason == CapitalReasonEnum.DEPOSIT)
+        .fold<double>(0.0, (a, b) => a + b.amount);
+    _totalDeposits = total;
+    return total;
+  }
+
+  double get totalWithdraws {
+    final cached = _totalWithdraws;
+    if (cached != null) return cached;
+
+    final total = capitals
+        .where((c) => c.reason == CapitalReasonEnum.WITHDRAW)
+        .fold<double>(0.0, (a, b) => a + b.amount);
+    _totalWithdraws = total;
+    return total;
+  }
 
   /// Chronological running balance of the account: every capital record
   /// (deposits, withdrawals, and trade profit/loss) applied in dateTime
@@ -59,6 +79,8 @@ class CapitalDashboardHelper {
   /// WITHDRAW amounts are entered as a positive magnitude (see the
   /// deposit/withdraw dialog on the dashboard), so they're subtracted here.
   List<MapEntry<DateTime, double>> capitalOverTime() {
+    final cached = _capitalOverTime;
+    if (cached != null) return cached;
     if (capitals.isEmpty) return [];
 
     final sorted = List<CapitalModel>.from(capitals)
@@ -68,12 +90,14 @@ class CapitalDashboardHelper {
     final List<MapEntry<DateTime, double>> points = [];
 
     for (final c in sorted) {
-      final signedAmount =
-          c.reason == CapitalReasonEnum.WITHDRAW ? -c.amount : c.amount;
+      final signedAmount = c.reason == CapitalReasonEnum.WITHDRAW
+          ? -c.amount
+          : c.amount;
       running += signedAmount;
       points.add(MapEntry(c.dateTime, running));
     }
 
+    _capitalOverTime = points;
     return points;
   }
 
@@ -85,6 +109,9 @@ class CapitalDashboardHelper {
   }
 
   List<MapEntry<DateTime, double>> weeklyPnl() {
+    final cached = _weeklyPnl;
+    if (cached != null) return cached;
+
     final Map<DateTime, double> weekly = {};
 
     for (final c in capitals) {
@@ -109,10 +136,14 @@ class CapitalDashboardHelper {
     final sorted = weekly.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
 
+    _weeklyPnl = sorted;
     return sorted;
   }
 
   List<WeeklyBreakdown> weeklyBreakdown() {
+    final cached = _weeklyBreakdown;
+    if (cached != null) return cached;
+
     final Map<DateTime, WeeklyBreakdown> weekly = {};
 
     for (final c in capitals) {
@@ -142,6 +173,7 @@ class CapitalDashboardHelper {
     final list = weekly.values.toList()
       ..sort((a, b) => b.weekStart.compareTo(a.weekStart));
 
+    _weeklyBreakdown = list;
     return list;
   }
 }

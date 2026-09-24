@@ -14,13 +14,26 @@ class ExpenseDashboardHelper {
 
   ExpenseDashboardHelper(this.expenses);
 
-  double get totalSpent => expenses.fold(0.0, (a, b) => a + b.amount);
+  double? _totalSpent;
+  List<MapEntry<String, double>>? _totalByReason;
+
+  double get totalSpent {
+    final cached = _totalSpent;
+    if (cached != null) return cached;
+
+    final total = expenses.fold<double>(0.0, (a, b) => a + b.amount);
+    _totalSpent = total;
+    return total;
+  }
 
   int get totalCount => expenses.length;
 
   /// Total amount spent per expense reason, largest first. A reason with no
   /// expenses recorded against it simply doesn't appear.
   List<MapEntry<String, double>> totalByReason() {
+    final cached = _totalByReason;
+    if (cached != null) return cached;
+
     final Map<String, double> byReason = {};
 
     for (final e in expenses) {
@@ -31,6 +44,7 @@ class ExpenseDashboardHelper {
     final entries = byReason.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
+    _totalByReason = entries;
     return entries;
   }
 }

@@ -56,6 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // TradeService.getRecentForAnalytics -- not the full auto-imported
   // history.
   List<Trade> _trades = [];
+  TradeAnalyticsHelper? _analytics;
   bool _isTradesLoading = true;
 
   // Backing the Expenses summary chart. Expenses is a manually-maintained
@@ -63,6 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // full, paged-under-the-hood fetch used for the Capital ledger rather
   // than a bounded/recent one.
   List<ExpenseModel> _expenses = [];
+  ExpenseDashboardHelper? _expenseHelper;
   bool _isExpensesLoading = true;
 
   // Accent colors for the Reminder / Strict Rule cards -- distinct from the
@@ -87,9 +89,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return created;
   }
 
-  TradeAnalyticsHelper get analytics => TradeAnalyticsHelper(_trades);
+  TradeAnalyticsHelper get analytics {
+    final h = _analytics;
+    if (h != null) return h;
 
-  ExpenseDashboardHelper get expenseHelper => ExpenseDashboardHelper(_expenses);
+    final created = TradeAnalyticsHelper(_trades);
+    _analytics = created;
+    return created;
+  }
+
+  ExpenseDashboardHelper get expenseHelper {
+    final h = _expenseHelper;
+    if (h != null) return h;
+
+    final created = ExpenseDashboardHelper(_expenses);
+    _expenseHelper = created;
+    return created;
+  }
 
   @override
   void initState() {
@@ -195,6 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       setState(() {
         _trades = trades;
+        _analytics = null;
         _isTradesLoading = false;
       });
     } catch (e) {
@@ -216,6 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       setState(() {
         _expenses = expenses;
+        _expenseHelper = null;
         _isExpensesLoading = false;
       });
     } catch (e) {
@@ -298,12 +316,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       },
     );
-  }
-
-  double get _totalWithdraws {
-    return _capitals
-        .where((c) => c.reason == CapitalReasonEnum.WITHDRAW)
-        .fold(0.0, (a, b) => a + b.amount);
   }
 
   void _openFilteredCapitalDialog(CapitalReasonEnum reason) {
@@ -463,7 +475,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 20,
-                    color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.05),
                     offset: const Offset(0, 10),
                   ),
                   if (isHovered)
@@ -527,9 +541,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               : Align(
                                   alignment: Alignment.centerLeft,
                                   child: AnimatedSwitcher(
-                                    duration: const Duration(
-                                      milliseconds: 500,
-                                    ),
+                                    duration: const Duration(milliseconds: 500),
                                     transitionBuilder: (child, animation) {
                                       return FadeTransition(
                                         opacity: animation,
@@ -588,7 +600,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildNoteEmptyState(BuildContext context, IconData icon, bool isNotesCard) {
+  Widget _buildNoteEmptyState(
+    BuildContext context,
+    IconData icon,
+    bool isNotesCard,
+  ) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Center(
@@ -658,7 +674,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 4),
           Text(
             subtitle,
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ],
@@ -788,7 +807,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: CapitalStatCard(
                             title: "Total Withdraws",
-                            value: _totalWithdraws,
+                            value: helper.totalWithdraws,
                             color: context.semanticColors.loss,
                             icon: Icons.north_east_rounded,
                             onTap: () => _openFilteredCapitalDialog(

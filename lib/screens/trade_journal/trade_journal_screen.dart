@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tm_dashboard/models/strategy_model.dart';
@@ -72,6 +74,7 @@ class _TradesScreenState extends State<TradesScreen> {
   TradeJournalFilters _filters = const TradeJournalFilters();
   final _searchCtrl = TextEditingController();
   final _scrollController = ScrollController();
+  Timer? _searchDebounce;
 
   TradeGrouping _grouping = TradeGrouping.none;
   int _customDays = 7;
@@ -90,6 +93,7 @@ class _TradesScreenState extends State<TradesScreen> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchDebounce?.cancel();
     _searchCtrl.dispose();
     _customDaysCtrl.dispose();
     super.dispose();
@@ -178,7 +182,16 @@ class _TradesScreenState extends State<TradesScreen> {
     setState(() => _filters = update(_filters));
   }
 
+  void _queueSearchFilter(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      _updateFilters((f) => f.copyWith(searchText: value));
+    });
+  }
+
   void _clearFilters() {
+    _searchDebounce?.cancel();
     _searchCtrl.clear();
     setState(() => _filters = const TradeJournalFilters());
   }
@@ -201,8 +214,14 @@ class _TradesScreenState extends State<TradesScreen> {
       appBar: AppBar(
         title: const Text('Trades'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh_rounded), onPressed: _refresh),
-          IconButton(icon: const Icon(Icons.add_rounded), onPressed: _openAddJournal),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: _refresh,
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_rounded),
+            onPressed: _openAddJournal,
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -225,7 +244,11 @@ class _TradesScreenState extends State<TradesScreen> {
           final filteredTrades = _filters.apply(_trades);
           final grouped = _grouping != TradeGrouping.none;
           final groups = grouped
-              ? TradeGrouper.group(filteredTrades, _grouping, customDays: _customDays)
+              ? TradeGrouper.group(
+                  filteredTrades,
+                  _grouping,
+                  customDays: _customDays,
+                )
               : const <TradeGroup>[];
 
           // An active filter can legitimately match nothing in the pages
@@ -403,7 +426,11 @@ class _TradesScreenState extends State<TradesScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.tune_rounded, size: 17, color: colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.tune_rounded,
+                size: 17,
+                color: colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Filters',
@@ -449,14 +476,11 @@ class _TradesScreenState extends State<TradesScreen> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: colorScheme.primary,
-                  width: 1.5,
-                ),
+                borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            onChanged: (v) => _updateFilters((f) => f.copyWith(searchText: v)),
+            onChanged: _queueSearchFilter,
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -973,7 +997,10 @@ class _TradesScreenState extends State<TradesScreen> {
             _trades.isEmpty
                 ? 'Tap + to log your first trade journal'
                 : 'Try adjusting or clearing your filters',
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.5),
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 12.5,
+            ),
           ),
         ],
       ),

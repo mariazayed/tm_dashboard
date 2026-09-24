@@ -10,6 +10,7 @@ class DayModel {
   final bool weekend;
   final bool noWork;
   final bool ended;
+  final bool isImportant;
   final String notes;
   bool exists;
 
@@ -21,6 +22,7 @@ class DayModel {
     this.weekend = false,
     this.noWork = false,
     this.ended = false,
+    this.isImportant = false,
     this.notes = '',
     this.exists = false,
   });
@@ -29,18 +31,21 @@ class DayModel {
     bool? weekend,
     bool? noWork,
     bool? ended,
+    bool? isImportant,
     String? notes,
     ScoreEnum? psychologyRate,
   }) {
     return DayModel(
       id: id,
       dayOfWeek: dayOfWeek,
-      psychologyRate: psychologyRate,
+      psychologyRate: psychologyRate ?? this.psychologyRate,
       date: date,
       weekend: weekend ?? this.weekend,
       noWork: noWork ?? this.noWork,
       ended: ended ?? this.ended,
+      isImportant: isImportant ?? this.isImportant,
       notes: notes ?? this.notes,
+      exists: exists,
     );
   }
 
@@ -55,6 +60,7 @@ class DayModel {
       weekend: json['weekend'] ?? false,
       noWork: json['noWork'] ?? false,
       ended: json['ended'] ?? false,
+      isImportant: json['isImportant'] ?? false,
       notes: json['notes'] ?? '',
     );
   }
@@ -67,6 +73,7 @@ class DayModel {
       'psychologyRate': psychologyRate,
       'noWork': noWork,
       'ended': ended,
+      'isImportant': isImportant,
       'notes': notes,
     };
   }
@@ -86,6 +93,7 @@ class DayModel {
     'weekend': weekend,
     'noWork': noWork,
     'ended': ended,
+    'isImportant': isImportant,
     'notes': notes,
   };
 }

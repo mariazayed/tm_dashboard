@@ -28,6 +28,11 @@ const List<Color> _kRedRamp = [
   Color(0xFFE57373),
 ];
 
+const Color _kTintTextColor = AppPalette.gray800;
+const Color _kTintMetaTextColor = AppPalette.gray600;
+const Color _kTintProfitTextColor = Color(0xFF15803D);
+const Color _kTintLossTextColor = Color(0xFF991B1B);
+
 /// Interpolates along a light->strong ramp for a 0..1 intensity, so the
 /// heatmap tint is computed rather than picked per-cell.
 Color _heatColor(List<Color> ramp, double t) {
@@ -194,16 +199,22 @@ class _DayCellState extends State<_DayCell> {
 
     Color backgroundColor;
     Color textColor = colorScheme.onSurface;
+    Color metaTextColor = colorScheme.onSurfaceVariant;
     double opacity = 1.0;
+    bool usesLightTint = false;
 
     /// ✅ Psychology background (takes priority over the trades heatmap --
     /// it's a deliberate, user-set rating for the day)
     if (day.psychologyRate != null) {
       backgroundColor =
           _backgroundForScore(day.psychologyRate!.value) ?? colorScheme.surface;
+      textColor = _kTintTextColor;
+      metaTextColor = _kTintMetaTextColor;
+      usesLightTint = true;
     } else if (isToday) {
       backgroundColor = Theme.of(context).colorScheme.primaryContainer;
       textColor = Theme.of(context).colorScheme.onPrimaryContainer;
+      metaTextColor = Theme.of(context).colorScheme.onPrimaryContainer;
     } else if (day.noWork) {
       backgroundColor = colorScheme.surfaceContainerHigh;
       textColor = colorScheme.onSurfaceVariant;
@@ -230,32 +241,30 @@ class _DayCellState extends State<_DayCell> {
       backgroundColor = netPnl > 0
           ? _heatColor(_kGreenRamp, intensity)
           : _heatColor(_kRedRamp, intensity);
+      textColor = _kTintTextColor;
+      metaTextColor = _kTintMetaTextColor;
+      usesLightTint = true;
     } else {
       backgroundColor = colorScheme.surface;
     }
 
     final List<Widget> statusIcons = [
-      if (day.noWork) Icon(Icons.block, size: 14, color: colorScheme.onSurfaceVariant),
+      if (day.isImportant)
+        Icon(Icons.star_rounded, size: 15, color: semantic.warning),
+
+      if (day.noWork)
+        Icon(Icons.block, size: 14, color: colorScheme.onSurfaceVariant),
 
       if (day.ended)
-        Icon(
-          Icons.check_circle_outline,
-          size: 14,
-          color: semantic.profit,
-        ),
+        Icon(Icons.check_circle_outline, size: 14, color: semantic.profit),
 
       if (day.weekend)
-        Icon(
-          Icons.weekend_outlined,
-          size: 14,
-          color: semantic.orange,
-        ),
+        Icon(Icons.weekend_outlined, size: 14, color: semantic.orange),
 
       if (day.notes.isNotEmpty)
         Icon(Icons.note_add, size: 14, color: semantic.info),
 
-      if (day.exists)
-        Icon(Icons.hdr_strong, size: 14, color: semantic.violet),
+      if (day.exists) Icon(Icons.hdr_strong, size: 14, color: semantic.violet),
 
       /// ✅ Psychology Emoji
       if (day.psychologyRate != null)
@@ -266,10 +275,10 @@ class _DayCellState extends State<_DayCell> {
     ];
 
     final pnlColor = netPnl > 0
-        ? semantic.profit
+        ? (usesLightTint ? _kTintProfitTextColor : semantic.profit)
         : netPnl < 0
-        ? semantic.loss
-        : colorScheme.onSurfaceVariant;
+        ? (usesLightTint ? _kTintLossTextColor : semantic.loss)
+        : metaTextColor;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -289,15 +298,19 @@ class _DayCellState extends State<_DayCell> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isToday
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.5)
                     : (_hovering && hasTrades)
-                    ? pnlColor.withOpacity(0.35)
+                    ? pnlColor.withValues(alpha: 0.35)
                     : colorScheme.outlineVariant,
                 width: isToday ? 2 : 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: colorScheme.shadow.withValues(alpha: _hovering ? 0.08 : 0.03),
+                  color: colorScheme.shadow.withValues(
+                    alpha: _hovering ? 0.08 : 0.03,
+                  ),
                   blurRadius: _hovering ? 16 : 10,
                   offset: const Offset(0, 4),
                 ),
@@ -362,7 +375,7 @@ class _DayCellState extends State<_DayCell> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: colorScheme.onSurfaceVariant,
+                                      color: metaTextColor,
                                     ),
                                   ),
                                 ],

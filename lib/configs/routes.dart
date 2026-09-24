@@ -11,9 +11,11 @@ import '../screens/decisions/decisions_screen.dart';
 import '../screens/expense_reasons/expense_reasons_screen.dart';
 import '../screens/expenses/expenses_screen.dart';
 import '../screens/goals/goals_screen.dart';
+import '../screens/questions_answers/questions_answers_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
 import '../screens/trade_journal/trade_journal_screen.dart';
+import '../screens/trading_hours/trading_hours_screen.dart';
 import '../widgets/menu_bar.dart';
 
 final GoRouter routes = GoRouter(
@@ -32,6 +34,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.calendar,
               path: 'calendar',
               builder: (context, state) => CalendarScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.tradingHours,
+              path: 'trading-hours',
+              builder: (context, state) => const TradingHoursScreen(),
             ),
             GoRoute(
               name: RouteNames.riskManagement,
@@ -57,6 +64,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.decisions,
               path: 'decisions',
               builder: (context, state) => DecisionsScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.questionsAnswers,
+              path: 'questions-answers',
+              builder: (context, state) => QuestionsAnswersScreen(),
             ),
             GoRoute(
               name: RouteNames.assets,

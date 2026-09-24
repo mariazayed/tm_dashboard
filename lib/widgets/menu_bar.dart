@@ -120,7 +120,9 @@ class _ModernSidebarState extends State<_ModernSidebar> {
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           border: Border(
-            right: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+            right: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
         ),
         child: Column(
@@ -171,9 +173,18 @@ class _ModernSidebarState extends State<_ModernSidebar> {
     final themeButton = BlocBuilder<ThemeCubit, ThemeMode>(
       builder: (context, mode) {
         final (icon, tooltip) = switch (mode) {
-          ThemeMode.light => (Icons.light_mode_outlined, 'Light theme · tap for dark'),
-          ThemeMode.dark => (Icons.dark_mode_outlined, 'Dark theme · tap to follow system'),
-          ThemeMode.system => (Icons.brightness_auto_outlined, 'Following system theme · tap for light'),
+          ThemeMode.light => (
+            Icons.light_mode_outlined,
+            'Light theme · tap for dark',
+          ),
+          ThemeMode.dark => (
+            Icons.dark_mode_outlined,
+            'Dark theme · tap to follow system',
+          ),
+          ThemeMode.system => (
+            Icons.brightness_auto_outlined,
+            'Following system theme · tap for light',
+          ),
         };
 
         return _HeaderIconButton(
@@ -353,7 +364,9 @@ class _HeaderIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 20,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ),
@@ -486,6 +499,11 @@ List<_MenuItem> _menus(BuildContext context) {
       icon: Icons.calendar_month_outlined,
     ),
     _MenuItem(
+      label: 'Trading Hours',
+      routeName: RouteNames.tradingHours,
+      icon: Icons.event_available_outlined,
+    ),
+    _MenuItem(
       label: 'Trades',
       routeName: RouteNames.trades,
       icon: Icons.show_chart_outlined,
@@ -499,6 +517,11 @@ List<_MenuItem> _menus(BuildContext context) {
       label: 'Decisions',
       routeName: RouteNames.decisions,
       icon: Icons.fact_check_outlined,
+    ),
+    _MenuItem(
+      label: 'Questions & Answers',
+      routeName: RouteNames.questionsAnswers,
+      icon: Icons.quiz_outlined,
     ),
     _MenuItem(
       label: 'Expenses',

@@ -1,6 +1,7 @@
 class RouteNames {
   static const home = 'home';
   static const calendar = 'calendar';
+  static const tradingHours = 'tradingHours';
   static const riskManagement = 'riskManagement';
   // Trade Journal and Trades were merged into a single combined screen
   // (see lib/screens/trade_journal/trade_journal_screen.dart -- TradesScreen).
@@ -12,6 +13,7 @@ class RouteNames {
   static const goals = 'goals';
   static const capital = 'capital';
   static const decisions = 'decisions';
+  static const questionsAnswers = 'questionsAnswers';
   static const expenses = 'expenses';
   static const expenseReasons = 'expenseReasons';
 }

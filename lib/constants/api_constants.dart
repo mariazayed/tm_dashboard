@@ -11,6 +11,8 @@ class ApiConstants {
   static const String strictRulesURL = '$baseURL/strictRules';
   static const String goalURL = '$baseURL/goal';
   static const String decisionURL = '$baseURL/decision';
+  static const String questionCategoriesURL = '$baseURL/questionCategories';
+  static const String questionAnswersURL = '$baseURL/questionAnswers';
   static const String expenseURL = '$baseURL/expense';
   static const String expenseReasonURL = '$baseURL/expenseReason';
 }

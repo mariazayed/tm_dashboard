@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../enums/score_enum.dart';
 import '../../../models/day_model.dart';
 import '../../../services/day_service.dart';
-import '../../theme/app_theme.dart';
 import 'calendar_state.dart';
 
 class DayStatus extends StatefulWidget {
@@ -24,6 +23,7 @@ class _DayStatusState extends State<DayStatus> {
   bool weekend = false;
   bool noWork = false;
   bool ended = false;
+  bool isImportant = false;
 
   String _notes = '';
 
@@ -44,12 +44,12 @@ class _DayStatusState extends State<DayStatus> {
   }
 
   void _syncFromDay() {
-    // Null-safe assignments
-    weekend = widget.day.weekend ?? false;
-    noWork = widget.day.noWork ?? false;
-    ended = widget.day.ended ?? false;
+    weekend = widget.day.weekend;
+    noWork = widget.day.noWork;
+    ended = widget.day.ended;
+    isImportant = widget.day.isImportant;
 
-    _notes = widget.day.notes ?? '';
+    _notes = widget.day.notes;
     _notesController.text = _notes;
 
     _psychologyRate = widget.day.psychologyRate; // no default
@@ -112,6 +112,13 @@ class _DayStatusState extends State<DayStatus> {
               label: const Text("Ended"),
               selected: ended,
               onSelected: (v) => setState(() => ended = v),
+            ),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+              title: const Text("Important"),
+              value: isImportant,
+              onChanged: (v) => setState(() => isImportant = v ?? false),
             ),
           ],
         ),
@@ -206,6 +213,7 @@ class _DayStatusState extends State<DayStatus> {
       psychologyRate: _psychologyRate,
       noWork: noWork,
       ended: ended,
+      isImportant: isImportant,
       notes: _notesController.text.trim(),
     );
 

@@ -381,7 +381,7 @@ class _PresetBar extends StatelessWidget {
   }
 }
 
-class _WeeklyGrid extends StatelessWidget {
+class _WeeklyGrid extends StatefulWidget {
   const _WeeklyGrid({
     required this.weekStart,
     required this.allowedSlots,
@@ -397,11 +397,27 @@ class _WeeklyGrid extends StatelessWidget {
   final void Function(int weekday, int slot) onSlotTap;
 
   @override
+  State<_WeeklyGrid> createState() => _WeeklyGridState();
+}
+
+class _WeeklyGridState extends State<_WeeklyGrid> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scrollbar(
+      controller: _scrollController,
       child: SingleChildScrollView(
+        controller: _scrollController,
+        primary: false,
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         child: Column(
           children: [
@@ -412,7 +428,7 @@ class _WeeklyGrid extends StatelessWidget {
                   Expanded(
                     child: _DayHeader(
                       label: _TradingHoursScreenState._dayLabels[weekday - 1],
-                      date: weekStart.add(Duration(days: weekday - 1)),
+                      date: widget.weekStart.add(Duration(days: weekday - 1)),
                     ),
                   ),
               ],
@@ -428,7 +444,7 @@ class _WeeklyGrid extends StatelessWidget {
                   SizedBox(
                     width: 76,
                     child: Text(
-                      slotLabel(slot),
+                      widget.slotLabel(slot),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -437,8 +453,10 @@ class _WeeklyGrid extends StatelessWidget {
                   for (int weekday = 1; weekday <= 7; weekday++)
                     Expanded(
                       child: _SlotCell(
-                        allowed: allowedSlots.contains(slotKey(weekday, slot)),
-                        onTap: () => onSlotTap(weekday, slot),
+                        allowed: widget.allowedSlots.contains(
+                          widget.slotKey(weekday, slot),
+                        ),
+                        onTap: () => widget.onSlotTap(weekday, slot),
                       ),
                     ),
                 ],

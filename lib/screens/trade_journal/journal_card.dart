@@ -30,9 +30,11 @@ class TradeGroupCard extends StatefulWidget {
 
 class _TradeGroupCardState extends State<TradeGroupCard> {
   static final _money = NumberFormat.currency(symbol: '\$', decimalDigits: 2);
+  static const _batchSize = 20;
 
   bool _isExpanded = false;
   bool _hovering = false;
+  int _visibleTradeCount = _batchSize;
 
   TradeGroup get group => widget.group;
 
@@ -62,7 +64,9 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
             boxShadow: [
               BoxShadow(
                 blurRadius: _hovering ? 24 : 16,
-                color: colorScheme.shadow.withValues(alpha: _hovering ? 0.07 : 0.04),
+                color: colorScheme.shadow.withValues(
+                  alpha: _hovering ? 0.07 : 0.04,
+                ),
                 offset: const Offset(0, 8),
               ),
             ],
@@ -119,7 +123,8 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                                             child: Container(
                                               padding: const EdgeInsets.all(3),
                                               decoration: BoxDecoration(
-                                                color: semantic.orange.withValues(alpha: 0.12),
+                                                color: semantic.orange
+                                                    .withValues(alpha: 0.12),
                                                 shape: BoxShape.circle,
                                               ),
                                               child: Icon(
@@ -164,23 +169,36 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
               ),
 
               /// EXPANDED CONTENT
-              AnimatedCrossFade(
+              AnimatedSize(
                 duration: const Duration(milliseconds: 200),
-                sizeCurve: Curves.easeOut,
-                crossFadeState: _isExpanded
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                firstChild: const SizedBox(width: double.infinity),
-                secondChild: Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-                  child: Column(
-                    children: [
-                      Divider(height: 1, color: colorScheme.outlineVariant),
-                      const SizedBox(height: 14),
-                      ...group.trades.map(_tradeTile),
-                    ],
-                  ),
-                ),
+                curve: Curves.easeOut,
+                child: !_isExpanded
+                    ? const SizedBox(width: double.infinity)
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+                        child: Column(
+                          children: [
+                            Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant,
+                            ),
+                            const SizedBox(height: 14),
+                            ...group.trades
+                                .take(_visibleTradeCount)
+                                .map(_tradeTile),
+                            if (group.trades.length > _visibleTradeCount)
+                              TextButton.icon(
+                                onPressed: () => setState(
+                                  () => _visibleTradeCount += _batchSize,
+                                ),
+                                icon: const Icon(Icons.expand_more_rounded),
+                                label: Text(
+                                  'Show more (${group.trades.length - _visibleTradeCount} remaining)',
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
               ),
             ],
           ),
@@ -303,10 +321,7 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 7,
-                  vertical: 3,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: directionColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -337,11 +352,7 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
                 const SizedBox(width: 6),
                 Tooltip(
                   message: 'Not reviewed yet',
-                  child: Icon(
-                    Icons.schedule,
-                    size: 13,
-                    color: semantic.orange,
-                  ),
+                  child: Icon(Icons.schedule, size: 13, color: semantic.orange),
                 ),
               ],
               const Spacer(),
@@ -358,10 +369,7 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
           if (t.strategy != null) ...[
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 9,
-                vertical: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
               decoration: BoxDecoration(
                 color: colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
@@ -379,13 +387,19 @@ class _TradeGroupCardState extends State<TradeGroupCard> {
           const SizedBox(height: 8),
           Text(
             'Entry ${t.entryPrice} → Exit ${t.exitPrice}',
-            style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 12.5,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           if (t.notes != null && t.notes!.trim().isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
               t.notes!,
-              style: TextStyle(fontSize: 12.5, color: colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12.5,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ],

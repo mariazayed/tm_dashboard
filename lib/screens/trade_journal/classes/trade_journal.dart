@@ -46,17 +46,17 @@ class TradeGroup {
     required this.trades,
   });
 
-  double get totalProfit => trades.fold(0.0, (sum, t) => sum + t.profit);
+  late final double totalProfit = trades.fold(0.0, (sum, t) => sum + t.profit);
 
   int get tradeCount => trades.length;
 
   bool get isProfit => totalProfit >= 0;
 
-  int get winCount => trades.where((t) => t.profit > 0).length;
+  late final int winCount = trades.where((t) => t.profit > 0).length;
 
   double get winRate => trades.isEmpty ? 0 : winCount / trades.length * 100;
 
-  bool get hasUnreviewed => trades.any((t) => !t.isReviewed);
+  late final bool hasUnreviewed = trades.any((t) => !t.isReviewed);
 }
 
 /// Pure grouping logic, kept separate from the screen's widget tree --

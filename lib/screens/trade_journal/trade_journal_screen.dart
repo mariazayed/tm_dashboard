@@ -21,8 +21,7 @@ import 'journal_card.dart';
 /// TradeListScreen (a flat, filterable trade ledger) and TradeJournalScreen
 /// (trades grouped into cards). Filtering and paginated loading are carried
 /// over from TradeListScreen's latest version (TradeService.searchPage(),
-/// infinite scroll via _scrollController, auto-fetch-more when an active
-/// filter empties the currently loaded page); on top of that there's now a
+/// infinite scroll via _scrollController); on top of that there's now a
 /// "Group by" control (None/Daily/Weekly/Monthly/Custom -- see
 /// TradeGrouping in classes/trade_journal.dart) that buckets the filtered,
 /// loaded-so-far trades by entryDateTime instead of the old exact-entry/
@@ -54,13 +53,24 @@ class _TradesScreenState extends State<TradesScreen> {
   List<Trade> _trades = [];
   List<Asset> _assets = [];
   List<Strategy> _strategies = [];
+  List<Trade>? _derivedSource;
+  int _tradesRevision = 0;
+  int _derivedRevision = -1;
+  TradeJournalFilters? _derivedFilters;
+  TradeGrouping? _derivedGrouping;
+  int? _derivedCustomDays;
+  List<Trade> _visibleTrades = [];
+  List<TradeGroup> _visibleGroups = [];
+  double _visibleProfit = 0;
+  int _visibleWins = 0;
+  double _loadedProfit = 0;
+  int _loadedWins = 0;
 
   int _nextPage = 0;
   bool _hasMore = true;
   bool _isLoadingMore = false;
   // Separate from _isLoadingMore so the "Load more" and "Load all" buttons
-  // (and the auto-fetch-more-on-empty-filter callback below) can tell the
-  // two apart and avoid firing a second fetch loop on top of an ongoing one.
+  // can tell the two apart and avoid firing a second fetch loop.
   bool _isLoadingAll = false;
 
   // Exact count of trades matching the search on the server (from the most
@@ -111,35 +121,48 @@ class _TradesScreenState extends State<TradesScreen> {
 
   Future<void> _load() async {
     _trades = [];
+    _tradesRevision++;
+    _loadedProfit = 0;
+    _loadedWins = 0;
     _nextPage = 0;
     _hasMore = true;
     _totalTrades = 0;
 
-    // Sequential awaits (not Future.wait) -- avoids Future.wait's generic
-    // type inference having to find a common type across List<Asset> and
-    // List<Strategy>. Assets/strategies still use the full-list fetches:
-    // the filter dropdowns and AddJournalSheet need the complete set of
-    // choices, and both lists are small/bounded (user-curated, not
-    // auto-imported), so there's no memory concern there like there is
-    // with trades.
-    _assets = await AssetService.fetchAssets();
-    _strategies = await StrategyService.getAll();
-    await _fetchNextPage();
+    await Future.wait<void>([
+      AssetService.fetchAssets().then((assets) {
+        _assets = assets;
+      }),
+      StrategyService.getAll().then((strategies) {
+        _strategies = strategies;
+      }),
+      _fetchNextPage(),
+    ]);
   }
 
-  Future<void> _fetchNextPage() async {
+  Future<void> _fetchNextPage({bool notify = true}) async {
     final result = await TradeService.searchPage(
       page: _nextPage,
       size: _pageSize,
     );
 
     if (!mounted) return;
-    setState(() {
-      _trades = [..._trades, ...result.data];
+    void applyPage() {
+      _trades.addAll(result.data);
+      _tradesRevision++;
+      for (final trade in result.data) {
+        _loadedProfit += trade.profit;
+        if (trade.profit > 0) _loadedWins++;
+      }
       _hasMore = !result.last;
       _nextPage++;
       _totalTrades = result.totalElements;
-    });
+    }
+
+    if (notify) {
+      setState(applyPage);
+    } else {
+      applyPage();
+    }
   }
 
   Future<void> _loadMore() async {
@@ -162,7 +185,7 @@ class _TradesScreenState extends State<TradesScreen> {
     setState(() => _isLoadingAll = true);
     try {
       while (_hasMore && mounted) {
-        await _fetchNextPage();
+        await _fetchNextPage(notify: false);
       }
     } finally {
       if (mounted) setState(() => _isLoadingAll = false);
@@ -194,6 +217,44 @@ class _TradesScreenState extends State<TradesScreen> {
     _searchDebounce?.cancel();
     _searchCtrl.clear();
     setState(() => _filters = const TradeJournalFilters());
+  }
+
+  void _ensureDerivedData() {
+    final tradesChanged =
+        !identical(_derivedSource, _trades) ||
+        _derivedRevision != _tradesRevision;
+    final filtersChanged = !identical(_derivedFilters, _filters);
+    if (tradesChanged || filtersChanged) {
+      _visibleTrades = _filters.isActive ? _filters.apply(_trades) : _trades;
+      if (_filters.isActive) {
+        _visibleProfit = 0;
+        _visibleWins = 0;
+        for (final trade in _visibleTrades) {
+          _visibleProfit += trade.profit;
+          if (trade.profit > 0) _visibleWins++;
+        }
+      } else {
+        _visibleProfit = _loadedProfit;
+        _visibleWins = _loadedWins;
+      }
+      _derivedSource = _trades;
+      _derivedRevision = _tradesRevision;
+      _derivedFilters = _filters;
+    }
+    if (tradesChanged ||
+        filtersChanged ||
+        _derivedGrouping != _grouping ||
+        _derivedCustomDays != _customDays) {
+      _visibleGroups = _grouping == TradeGrouping.none
+          ? const []
+          : TradeGrouper.group(
+              _visibleTrades,
+              _grouping,
+              customDays: _customDays,
+            );
+      _derivedGrouping = _grouping;
+      _derivedCustomDays = _customDays;
+    }
   }
 
   Future<void> _openAddJournal() async {
@@ -241,29 +302,10 @@ class _TradesScreenState extends State<TradesScreen> {
             );
           }
 
-          final filteredTrades = _filters.apply(_trades);
+          _ensureDerivedData();
+          final filteredTrades = _visibleTrades;
           final grouped = _grouping != TradeGrouping.none;
-          final groups = grouped
-              ? TradeGrouper.group(
-                  filteredTrades,
-                  _grouping,
-                  customDays: _customDays,
-                )
-              : const <TradeGroup>[];
-
-          // An active filter can legitimately match nothing in the pages
-          // loaded so far even though older, not-yet-fetched pages contain
-          // matches (e.g. filtering to a rarely-traded asset). Rather than
-          // making the user manually scroll an empty list to trigger the
-          // next page, keep auto-fetching until either a match turns up or
-          // the server confirms there's nothing left.
-          if (filteredTrades.isEmpty &&
-              _filters.isActive &&
-              _hasMore &&
-              !_isLoadingMore &&
-              !_isLoadingAll) {
-            WidgetsBinding.instance.addPostFrameCallback((_) => _loadMore());
-          }
+          final groups = _visibleGroups;
 
           // CustomScrollView + SliverList instead of a ListView.builder
           // wrapping a Column of every row/card: keeps the filter card +
@@ -844,8 +886,8 @@ class _TradesScreenState extends State<TradesScreen> {
   Widget _summaryRow(List<Trade> filteredTrades, List<TradeGroup> groups) {
     final colorScheme = Theme.of(context).colorScheme;
     final semantic = context.semanticColors;
-    final total = filteredTrades.fold(0.0, (a, b) => a + b.profit);
-    final wins = filteredTrades.where((t) => t.profit > 0).length;
+    final total = _visibleProfit;
+    final wins = _visibleWins;
     final winRate = filteredTrades.isEmpty
         ? 0.0
         : wins / filteredTrades.length * 100;
@@ -985,7 +1027,11 @@ class _TradesScreenState extends State<TradesScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            _trades.isEmpty ? 'No trades yet' : 'No trades match your filters',
+            _trades.isEmpty
+                ? 'No trades yet'
+                : _hasMore
+                ? 'No matches in loaded trades'
+                : 'No trades match your filters',
             style: TextStyle(
               color: colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w600,
@@ -996,6 +1042,8 @@ class _TradesScreenState extends State<TradesScreen> {
           Text(
             _trades.isEmpty
                 ? 'Tap + to log your first trade journal'
+                : _hasMore
+                ? 'Load more to check older trades'
                 : 'Try adjusting or clearing your filters',
             style: TextStyle(
               color: colorScheme.onSurfaceVariant,

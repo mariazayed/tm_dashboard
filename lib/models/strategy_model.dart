@@ -26,22 +26,21 @@ class Strategy {
     );
   }
 
-  Map<String, dynamic> toJson() =>
-      {
-        'name': name,
-        'link': link,
-        'tags': tags.map((e) => e.id.value).toList(),
-      };
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'link': link,
+    'tags': tags.map((e) => e.id.value).toList(),
+  };
 
   static Future<List<StrategyTagModel>> getTags(List<int> tags) async {
-    List<StrategyTagModel> strategyTags = [];
-
-    for (var tagId in tags) {
-      StrategyTagModel tagData = await getTagById(tagId);
-      strategyTags.add(tagData);
-    }
-
-    return strategyTags;
+    if (tags.isEmpty) return [];
+    final staticData = await StaticDataService.getAll();
+    return tags.map((tagId) {
+      for (final tag in staticData.strategyTags) {
+        if (tag.id == StrategyTagEnum.fromValue(tagId)) return tag;
+      }
+      throw ArgumentError('Invalid argument in getTagById() (value = $tagId)');
+    }).toList();
   }
 
   static Future<StrategyTagModel> getTagById(int tagId) async {

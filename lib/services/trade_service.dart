@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+
+import 'api_client.dart';
 import 'package:tm_dashboard/models/trade_model.dart';
 
 import '../constants/api_constants.dart';
@@ -8,7 +10,7 @@ import '../models/paginated_response.dart';
 
 class TradeService {
   static Future<void> create(List<dynamic> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.tradeURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -20,7 +22,7 @@ class TradeService {
   }
 
   static Future<List<Trade>> getAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.tradeURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.tradeURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch trades');
@@ -138,7 +140,7 @@ class TradeService {
   /// explicitly (including an empty list for mistakeTags when the user
   /// picked none, so it actually gets cleared rather than left untouched).
   static Future<Trade> review(int id, Map<String, dynamic> payload) async {
-    final response = await http.patch(
+    final response = await ApiClient.shared.patch(
       Uri.parse('${ApiConstants.tradeURL}/$id/review'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(payload),
@@ -156,7 +158,7 @@ class TradeService {
   /// (already reviewed / AI disabled / LLM failure) rather than a generic
   /// one, so the review screen can show the user why it failed.
   static Future<Trade> suggest(int id) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse('${ApiConstants.tradeURL}/$id/suggest'),
     );
 

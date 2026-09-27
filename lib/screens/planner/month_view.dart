@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../enums/plan_item_status_enum.dart';
 import '../../models/planner_models.dart';
+import '../../services/api_client.dart';
 import '../../services/planner_service.dart';
 import '../../theme/app_theme.dart';
 import 'planner_style.dart';
@@ -208,7 +209,7 @@ class _MonthViewState extends State<MonthView> {
         SizedBox(height: 3, child: _loading && plan != null ? const LinearProgressIndicator() : null),
         Expanded(
           child: RefreshIndicator(
-            onRefresh: _load,
+            onRefresh: () => ApiClient.shared.refresh(_load),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
               children: [

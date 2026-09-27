@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/decision_model.dart';
@@ -8,7 +8,7 @@ import '../models/paginated_response.dart';
 
 class DecisionService {
   static Future<List<DecisionModel>> getAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.decisionURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.decisionURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch decisions');
@@ -19,7 +19,7 @@ class DecisionService {
   }
 
   static Future<void> create(List<Map<String, dynamic>> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.decisionURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -31,7 +31,7 @@ class DecisionService {
   }
 
   static Future<DecisionModel> update(int id, Map<String, dynamic> data) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.decisionURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -45,7 +45,7 @@ class DecisionService {
   }
 
   static Future<void> delete(int id) async {
-    final response = await http.delete(
+    final response = await ApiClient.shared.delete(
       Uri.parse('${ApiConstants.decisionURL}/$id'),
     );
 

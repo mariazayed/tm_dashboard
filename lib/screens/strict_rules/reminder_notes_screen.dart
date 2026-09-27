@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tm_dashboard/models/strict_rule_model.dart';
 import 'package:tm_dashboard/services/strict_rules_service.dart';
 
+import '../../services/api_client.dart';
 import '../../theme/app_theme.dart';
 
 class StrictRulesScreen extends StatefulWidget {
@@ -214,7 +215,7 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _fetchRules,
+              onRefresh: () => ApiClient.shared.refresh(_fetchRules),
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [

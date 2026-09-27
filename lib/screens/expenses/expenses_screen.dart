@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/expense_model.dart';
+import '../../services/api_client.dart';
 import '../../services/expense_service.dart';
 import '../../theme/app_theme.dart';
 import 'add_expense_sheet.dart';
@@ -158,7 +159,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
           final total = filtered.fold<double>(0, (sum, e) => sum + e.amount);
 
           return RefreshIndicator(
-            onRefresh: _load,
+            onRefresh: () => ApiClient.shared.refresh(_load),
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [

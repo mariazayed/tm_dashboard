@@ -16,6 +16,7 @@ import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
 import '../../models/strategy_model.dart';
 import '../../models/trade_model.dart';
+import '../../services/api_client.dart';
 import '../../services/asset_service.dart';
 import '../../services/strategy_service.dart';
 import '../../services/trade_service.dart';
@@ -150,7 +151,7 @@ class _TradeListScreenState extends State<TradeListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _refresh,
+            onPressed: () => ApiClient.shared.refresh(_refresh),
           ),
         ],
       ),

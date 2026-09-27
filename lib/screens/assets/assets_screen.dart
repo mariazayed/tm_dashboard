@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/asset_model.dart';
+import '../../services/api_client.dart';
 import '../../services/asset_service.dart';
 import '../../theme/app_theme.dart';
 import 'add_asset_sheet.dart';
@@ -31,10 +32,15 @@ class _AssetScreenState extends State<AssetScreen> {
     _future = AssetService.fetchAssetsPaged();
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
       _future = AssetService.fetchAssetsPaged();
     });
+    try {
+      await _future;
+    } catch (_) {
+      // The FutureBuilder displays the load error.
+    }
   }
 
   Future<void> _openAddAsset({Asset? existing}) async {
@@ -128,7 +134,7 @@ class _AssetScreenState extends State<AssetScreen> {
                 }).toList();
 
           return RefreshIndicator(
-            onRefresh: () async => _refresh(),
+            onRefresh: () => ApiClient.shared.refresh(_refresh),
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [

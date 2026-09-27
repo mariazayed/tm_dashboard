@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/goal_model.dart';
@@ -8,7 +8,7 @@ import '../models/paginated_response.dart';
 
 class GoalService {
   static Future<List<GoalModel>> getAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.goalURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.goalURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch goals');
@@ -19,7 +19,7 @@ class GoalService {
   }
 
   static Future<void> create(List<Map<String, dynamic>> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.goalURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -31,7 +31,7 @@ class GoalService {
   }
 
   static Future<GoalModel> update(int id, Map<String, dynamic> data) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.goalURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -45,7 +45,7 @@ class GoalService {
   }
 
   static Future<void> delete(int id) async {
-    final response = await http.delete(
+    final response = await ApiClient.shared.delete(
       Uri.parse('${ApiConstants.goalURL}/$id'),
     );
 

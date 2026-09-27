@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/paginated_response.dart';
@@ -8,7 +8,7 @@ import '../models/question_category_model.dart';
 
 class QuestionCategoryService {
   static Future<List<QuestionCategoryModel>> getAll() async {
-    final response = await http.get(
+    final response = await ApiClient.shared.get(
       Uri.parse(ApiConstants.questionCategoriesURL),
     );
 
@@ -21,7 +21,7 @@ class QuestionCategoryService {
   }
 
   static Future<QuestionCategoryModel> create(Map<String, dynamic> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.questionCategoriesURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -38,7 +38,7 @@ class QuestionCategoryService {
     int id,
     Map<String, dynamic> data,
   ) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.questionCategoriesURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -52,7 +52,7 @@ class QuestionCategoryService {
   }
 
   static Future<void> delete(int id) async {
-    final response = await http.delete(
+    final response = await ApiClient.shared.delete(
       Uri.parse('${ApiConstants.questionCategoriesURL}/$id'),
     );
 

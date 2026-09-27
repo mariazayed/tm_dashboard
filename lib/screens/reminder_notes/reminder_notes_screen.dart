@@ -3,6 +3,7 @@ import 'package:tm_dashboard/models/reminder_note_model.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../../services/api_client.dart';
 import '../../services/reminder_notes_service.dart';
 import '../../theme/app_theme.dart';
 
@@ -210,7 +211,7 @@ class _ReminderNotesScreenState extends State<ReminderNotesScreen>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-        onRefresh: _fetchNotes,
+        onRefresh: () => ApiClient.shared.refresh(_fetchNotes),
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [

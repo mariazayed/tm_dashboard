@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../enums/goal_category_enum.dart';
 import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
+import '../../services/api_client.dart';
 import '../../services/goal_service.dart';
 import '../../theme/app_theme.dart';
 import 'add_goal_sheet.dart';
@@ -33,12 +34,17 @@ class _GoalsScreenState extends State<GoalsScreen> {
     future = GoalService.getAllPaged();
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
       // Paged transport under the hood (GoalService.getAllPaged ->
     // .../goal/search) instead of one unbounded GET.
     future = GoalService.getAllPaged();
     });
+    try {
+      await future;
+    } catch (_) {
+      // The FutureBuilder displays the load error.
+    }
   }
 
   Future<void> _openAddGoal({GoalModel? existing}) async {
@@ -143,7 +149,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               : active.where((g) => g.category == categoryFilter).toList();
 
           return RefreshIndicator(
-            onRefresh: () async => _refresh(),
+            onRefresh: () => ApiClient.shared.refresh(_refresh),
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [

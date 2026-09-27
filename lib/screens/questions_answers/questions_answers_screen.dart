@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/question_category_model.dart';
 import '../../models/question_answer_model.dart';
+import '../../services/api_client.dart';
 import '../../services/question_category_service.dart';
 import '../../services/question_answer_service.dart';
 import 'add_question_answer_sheet.dart';
@@ -47,10 +48,15 @@ class _QuestionsAnswersScreenState extends State<QuestionsAnswersScreen> {
     );
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
       future = _loadData();
     });
+    try {
+      await future;
+    } catch (_) {
+      // The FutureBuilder displays the load error.
+    }
   }
 
   Future<void> _openEditor(
@@ -171,7 +177,7 @@ class _QuestionsAnswersScreenState extends State<QuestionsAnswersScreen> {
                   : 28.0;
 
               return RefreshIndicator(
-                onRefresh: () async => _refresh(),
+                onRefresh: () => ApiClient.shared.refresh(_refresh),
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,

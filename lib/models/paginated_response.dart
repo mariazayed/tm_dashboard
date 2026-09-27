@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import '../services/api_client.dart';
 
 /// Client-side mirror of the backend's `SearchResponse<T>` wrapper (see
 /// `trademind.tm_server.base.SearchResponse` in tm-server) returned by every
@@ -41,10 +41,9 @@ Future<PaginatedResponse<T>> parsePaginatedResponse<T>(
   }
 
   final List raw = json['data'] ?? [];
-  final items = <T>[];
-  for (final e in raw) {
-    items.add(await fromJsonT(e as Map<String, dynamic>));
-  }
+  final items = await Future.wait<T>(
+    raw.map((e) async => fromJsonT(e as Map<String, dynamic>)),
+  );
 
   return PaginatedResponse<T>(
     data: items,
@@ -74,7 +73,7 @@ Future<PaginatedResponse<T>> fetchSearchPage<T>(
   // through every PROFIT/LOSS row booked per trade to find them.
   Map<String, dynamic>? extra,
 }) async {
-  final response = await http.post(
+  final response = await ApiClient.shared.search(
     Uri.parse(searchUrl),
     headers: {'Content-Type': 'application/json'},
     body: jsonEncode({

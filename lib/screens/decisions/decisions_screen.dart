@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../enums/decision_category_enum.dart';
 import '../../enums/decision_status_enum.dart';
 import '../../models/decision_model.dart';
+import '../../services/api_client.dart';
 import '../../services/decision_service.dart';
 import '../../theme/app_theme.dart';
 import 'add_decision_sheet.dart';
@@ -28,10 +29,15 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
     future = DecisionService.getAllPaged();
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
       future = DecisionService.getAllPaged();
     });
+    try {
+      await future;
+    } catch (_) {
+      // The FutureBuilder displays the load error.
+    }
   }
 
   Future<void> _openAddDecision(
@@ -151,7 +157,7 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
                   : 28.0;
 
               return RefreshIndicator(
-                onRefresh: () async => _refresh(),
+                onRefresh: () => ApiClient.shared.refresh(_refresh),
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,

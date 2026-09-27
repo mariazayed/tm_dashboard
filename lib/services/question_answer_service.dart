@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/paginated_response.dart';
@@ -8,7 +8,7 @@ import '../models/question_answer_model.dart';
 
 class QuestionAnswerService {
   static Future<List<QuestionAnswerModel>> getAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.questionAnswersURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.questionAnswersURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch questions and answers');
@@ -19,7 +19,7 @@ class QuestionAnswerService {
   }
 
   static Future<void> create(List<Map<String, dynamic>> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.questionAnswersURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -34,7 +34,7 @@ class QuestionAnswerService {
     int id,
     Map<String, dynamic> data,
   ) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.questionAnswersURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -48,7 +48,7 @@ class QuestionAnswerService {
   }
 
   static Future<void> delete(int id) async {
-    final response = await http.delete(
+    final response = await ApiClient.shared.delete(
       Uri.parse('${ApiConstants.questionAnswersURL}/$id'),
     );
 

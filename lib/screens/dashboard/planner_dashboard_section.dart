@@ -7,6 +7,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../constants/route_names.dart';
 import '../../enums/plan_item_status_enum.dart';
 import '../../models/planner_models.dart';
+import '../../services/api_client.dart';
 import '../../services/planner_service.dart';
 import '../../theme/app_theme.dart';
 import '../planner/planner_style.dart';
@@ -92,7 +93,7 @@ class _PlannerDashboardSectionState extends State<PlannerDashboardSection> {
             ],
           ),
         ),
-        IconButton(tooltip: 'Refresh', onPressed: _loading ? null : _load, icon: const Icon(Icons.refresh, size: 20)),
+        IconButton(tooltip: 'Refresh', onPressed: _loading ? null : () => ApiClient.shared.refresh(_load), icon: const Icon(Icons.refresh, size: 20)),
         FilledButton.tonalIcon(
           onPressed: _openPlanner,
           icon: const Icon(Icons.checklist_rtl_outlined, size: 18),

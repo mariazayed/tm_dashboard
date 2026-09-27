@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/expense_model.dart';
@@ -8,7 +8,7 @@ import '../models/paginated_response.dart';
 
 class ExpenseService {
   static Future<ExpenseModel> create(Map<String, dynamic> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.expenseURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -22,7 +22,7 @@ class ExpenseService {
   }
 
   static Future<ExpenseModel> update(int id, Map<String, dynamic> data) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.expenseURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -38,7 +38,7 @@ class ExpenseService {
   /// Soft-deletes an expense (backend sets deletedAt rather than removing
   /// the row).
   static Future<void> delete(int id) async {
-    final response = await http.delete(
+    final response = await ApiClient.shared.delete(
       Uri.parse('${ApiConstants.expenseURL}/$id'),
     );
 
@@ -48,7 +48,7 @@ class ExpenseService {
   }
 
   static Future<List<ExpenseModel>> fetchAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.expenseURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.expenseURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch expenses');

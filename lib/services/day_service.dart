@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/day_model.dart';
 
 class DayService {
   Future<List<DayModel>> getAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.dayURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.dayURL));
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
@@ -18,7 +18,7 @@ class DayService {
   }
 
   Future<DayModel> create(Object object) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.dayURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(object),
@@ -32,7 +32,7 @@ class DayService {
   }
 
   Future<DayModel> update(int id, Object requestObj) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.dayURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(requestObj),

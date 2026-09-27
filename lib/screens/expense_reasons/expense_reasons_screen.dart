@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/expense_reason_model.dart';
+import '../../services/api_client.dart';
 import '../../services/expense_reason_service.dart';
 import '../../theme/app_theme.dart';
 import 'add_expense_reason_sheet.dart';
@@ -29,10 +30,15 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
     _future = ExpenseReasonService.fetchAllPaged();
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
       _future = ExpenseReasonService.fetchAllPaged();
     });
+    try {
+      await _future;
+    } catch (_) {
+      // The FutureBuilder displays the load error.
+    }
   }
 
   Future<void> _openAdd({ExpenseReasonModel? existing}) async {
@@ -118,7 +124,7 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
                   .toList();
 
           return RefreshIndicator(
-            onRefresh: () async => _refresh(),
+            onRefresh: () => ApiClient.shared.refresh(_refresh),
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [

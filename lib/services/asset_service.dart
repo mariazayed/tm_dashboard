@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 import 'package:tm_dashboard/constants/api_constants.dart';
 
 import '../models/asset_model.dart';
@@ -13,7 +13,7 @@ class AssetService {
     double? contractSize,
     double? pipSize,
   }) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.assetURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
@@ -33,7 +33,7 @@ class AssetService {
   /// only touches fields that are non-null in [data], so a partial map is
   /// fine, but the edit sheet always sends the full set anyway.
   static Future<Asset> updateAsset(String id, Map<String, dynamic> data) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.assetURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -49,7 +49,7 @@ class AssetService {
   /// Soft-deletes an asset (AssetController.deleteAsset -> AssetService.delete
   /// on the backend sets deletedAt rather than removing the row).
   static Future<void> deleteAsset(String id) async {
-    final response = await http.delete(
+    final response = await ApiClient.shared.delete(
       Uri.parse('${ApiConstants.assetURL}/$id'),
     );
 
@@ -60,7 +60,7 @@ class AssetService {
 
   /// Fetch all assets
   static Future<List<Asset>> fetchAssets() async {
-    final response = await http.get(Uri.parse(ApiConstants.assetURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.assetURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch assets');

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 import 'package:tm_dashboard/models/capital_model.dart';
 import 'package:tm_dashboard/models/trade_model.dart';
 
@@ -10,7 +10,7 @@ import '../models/paginated_response.dart';
 
 class CapitalService {
   static Future<void> create(List<dynamic> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.capitalURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -22,7 +22,7 @@ class CapitalService {
   }
 
   static Future<List<CapitalModel>> getAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.capitalURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.capitalURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch capitals');

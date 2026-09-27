@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/paginated_response.dart';
@@ -8,7 +8,7 @@ import '../models/strategy_model.dart';
 
 class StrategyService {
   static Future<void> create(List<dynamic> data) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.strategyURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(data),
@@ -20,7 +20,7 @@ class StrategyService {
   }
 
   static Future<List<Strategy>> getAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.strategyURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.strategyURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch strategies');

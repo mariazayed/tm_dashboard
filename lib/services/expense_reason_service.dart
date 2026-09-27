@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:http/http.dart' as http;
+import 'api_client.dart';
 
 import '../constants/api_constants.dart';
 import '../models/expense_reason_model.dart';
@@ -8,7 +8,7 @@ import '../models/paginated_response.dart';
 
 class ExpenseReasonService {
   static Future<ExpenseReasonModel> create(String name) async {
-    final response = await http.post(
+    final response = await ApiClient.shared.post(
       Uri.parse(ApiConstants.expenseReasonURL),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'name': name}),
@@ -22,7 +22,7 @@ class ExpenseReasonService {
   }
 
   static Future<ExpenseReasonModel> update(int id, String name) async {
-    final response = await http.put(
+    final response = await ApiClient.shared.put(
       Uri.parse('${ApiConstants.expenseReasonURL}/$id'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'name': name}),
@@ -38,7 +38,7 @@ class ExpenseReasonService {
   /// Soft-deletes a reason. Existing expenses keep showing it -- it just
   /// drops out of the picker for new/edited expenses.
   static Future<void> delete(int id) async {
-    final response = await http.delete(
+    final response = await ApiClient.shared.delete(
       Uri.parse('${ApiConstants.expenseReasonURL}/$id'),
     );
 
@@ -48,7 +48,7 @@ class ExpenseReasonService {
   }
 
   static Future<List<ExpenseReasonModel>> fetchAll() async {
-    final response = await http.get(Uri.parse(ApiConstants.expenseReasonURL));
+    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.expenseReasonURL));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch expense reasons');

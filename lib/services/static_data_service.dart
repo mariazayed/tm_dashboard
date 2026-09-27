@@ -4,30 +4,24 @@ import 'package:http/http.dart' as http;
 
 import '../constants/api_constants.dart';
 import '../models/static_data.dart';
+import 'api_client.dart';
 
 class StaticDataService {
+  static http.Response? _response;
   static StaticDataResponse? _data;
-  static Future<StaticDataResponse>? _pending;
 
-  static Future<StaticDataResponse> getAll() {
-    if (_data != null) return Future.value(_data!);
-    return _pending ??= _fetch();
-  }
-
-  static Future<StaticDataResponse> _fetch() async {
-    try {
-      final response = await http.get(Uri.parse(ApiConstants.staticDataURL));
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to fetch static data');
-      }
-
-      final data = jsonDecode(response.body);
-      _data = StaticDataResponse.fromJson(data);
-
-      return _data!;
-    } finally {
-      _pending = null;
+  static Future<StaticDataResponse> getAll() async {
+    final response = await ApiClient.shared.get(
+      Uri.parse(ApiConstants.staticDataURL),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch static data');
     }
+    // Reuse parsed lookup models only while the transport entry is current.
+    if (!identical(response, _response)) {
+      _data = StaticDataResponse.fromJson(jsonDecode(response.body));
+      _response = response;
+    }
+    return _data!;
   }
 }

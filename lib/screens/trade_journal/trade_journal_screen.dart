@@ -8,6 +8,7 @@ import 'package:tm_dashboard/services/strategy_service.dart';
 import '../../enums/trade_direction_enum.dart';
 import '../../models/asset_model.dart';
 import '../../models/trade_model.dart';
+import '../../services/api_client.dart';
 import '../../services/asset_service.dart';
 import '../../services/trade_service.dart';
 import '../../theme/app_theme.dart';
@@ -277,7 +278,7 @@ class _TradesScreenState extends State<TradesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            onPressed: _refresh,
+            onPressed: () => ApiClient.shared.refresh(_refresh),
           ),
           IconButton(
             icon: const Icon(Icons.add_rounded),

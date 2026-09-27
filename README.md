@@ -14,3 +14,37 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+
+## Frontend data cache
+
+All API-backed pages use `ApiClient.shared` through their existing services,
+including paginated searches and planner views. Local-only screens (risk
+calculations and saved trading hours) do not make backend requests.
+
+- GET and explicit read-only search requests share a session-memory cache.
+  Keys include method, full URL/query, headers, and search body (including
+  page, sorting, and filters). Identical in-flight reads share one request.
+- Data expires after 30 seconds; static lookup data expires after 30 minutes.
+  Expiration is checked on the next read, without background polling.
+- LRU eviction bounds retained response bodies to 8 MiB and 128 entries.
+  Oversized responses are delivered without caching. Nothing is persisted
+  to disk, and cache hits are parsed into fresh mutable domain models except
+  shared static lookup data.
+- Successful writes invalidate all resources, including dependent summaries.
+  Failed writes preserve cached reads. Failed/malformed read responses and
+  search error envelopes are not cached. Pre-invalidation requests cannot
+  repopulate the cache or capture new readers.
+- Existing refresh controls clear the cache before loading and pull-to-refresh
+  waits for the load to finish. Cached data is not used as an offline fallback.
+- New services should use `ApiClient.shared.get/search/post/put/patch/delete`.
+  Only read-only searches may use `search`; writes must use mutation methods.
+  Call `clear()` when adding account switching or changing API environments.
+- A reusable HTTP client reduces connection setup; page model parsing runs
+  concurrently while preserving result order. Existing pagination stays intact.
+
+Cache regression tests:
+
+```sh
+flutter test test/api_client_test.dart test/service_cache_test.dart
+```

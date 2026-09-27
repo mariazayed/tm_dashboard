@@ -6,17 +6,17 @@ import '../../../theme/app_theme.dart';
 import '../planner_style.dart';
 import '../widgets/planner_widgets.dart';
 
-/// Manages a week's extra working hours. Each entry is either general time
-/// (raises total capacity, so every Focus Area's budget grows by its max %)
-/// or dedicated to one Focus Area (added straight to that area's budget).
-/// Changes save immediately; [onChanged] hands the refreshed week back so
-/// the Week view updates live behind the sheet.
+/// Add or edit extra working hours for a week. They're saved as an "extra"
+/// task in the chosen Focus Area's list: planned work you can evaluate and
+/// log time on, whose hours are also added to the week's capacity and to
+/// that area's budget -- so the time left for your other tasks doesn't
+/// change.
 class ExtraHoursSheet extends StatefulWidget {
   final String weekLabel;
   final DateTime weekStart;
   final WeekPlanModel plan;
   final List<FocusAreaModel> areas;
-  final ValueChanged<WeekPlanModel> onChanged;
+  final WeeklyTaskModel? existing;
 
   const ExtraHoursSheet({
     super.key,
@@ -24,7 +24,7 @@ class ExtraHoursSheet extends StatefulWidget {
     required this.weekStart,
     required this.plan,
     required this.areas,
-    required this.onChanged,
+    this.existing,
   });
 
   @override
@@ -32,96 +32,80 @@ class ExtraHoursSheet extends StatefulWidget {
 }
 
 class _ExtraHoursSheetState extends State<ExtraHoursSheet> {
-  late WeekPlanModel _plan;
-  final _hours = TextEditingController();
-  final _note = TextEditingController();
-  int? _areaId; // null = general
-  WeekExtraModel? _editing;
+  late final TextEditingController _hours;
+  late final TextEditingController _title;
+  int? _areaId;
   bool _saving = false;
-  final Set<int> _busy = {};
   String? _error;
+
+  bool get _isEdit => widget.existing != null;
 
   @override
   void initState() {
     super.initState();
-    _plan = widget.plan;
+    final e = widget.existing;
+    final h = e?.estimatedHours;
+    _hours = TextEditingController(text: h == null ? '' : (h == h.roundToDouble() ? h.toInt().toString() : h.toString()));
+    _title = TextEditingController(text: e?.title ?? '');
+    _areaId = e?.focusArea.id ?? _pickableAreas.firstOrNull?.id;
   }
 
   @override
   void dispose() {
     _hours.dispose();
-    _note.dispose();
+    _title.dispose();
     super.dispose();
+  }
+
+  List<FocusAreaModel> get _pickableAreas {
+    final list = widget.areas.where((a) => !a.archived).toList();
+    final current = widget.existing?.focusArea;
+    if (current != null && !list.any((a) => a.id == current.id)) list.add(current);
+    return list;
   }
 
   double get _value => double.tryParse(_hours.text.trim().replaceAll(',', '.')) ?? 0;
 
-  List<FocusAreaModel> get _pickableAreas {
-    final list = widget.areas.where((a) => !a.archived).toList();
-    final editingArea = _editing?.focusArea;
-    if (editingArea != null && !list.any((a) => a.id == editingArea.id)) list.add(editingArea);
-    return list;
-  }
-
-  void _apply(WeekPlanModel plan) {
-    setState(() => _plan = plan);
-    widget.onChanged(plan);
-  }
-
-  void _startEdit(WeekExtraModel e) {
-    setState(() {
-      _editing = e;
-      _hours.text = e.hours == e.hours.roundToDouble() ? e.hours.toInt().toString() : e.hours.toString();
-      _note.text = e.note ?? '';
-      _areaId = e.focusArea?.id;
-      _error = null;
-    });
-  }
-
-  void _resetForm() {
-    setState(() {
-      _editing = null;
-      _hours.clear();
-      _note.clear();
-      _areaId = null;
-      _error = null;
-    });
-  }
-
   Future<void> _save() async {
+    final areaId = _areaId;
     if (_value <= 0) {
       setState(() => _error = 'Enter how many extra hours');
       return;
     }
+    if (areaId == null) {
+      setState(() => _error = 'Pick the Focus Area these hours are for');
+      return;
+    }
+    final title = _title.text.trim().isEmpty ? 'Extra hours' : _title.text.trim();
     setState(() {
       _saving = true;
       _error = null;
     });
     try {
-      final plan = _editing == null
-          ? await PlannerService.addExtra(widget.weekStart, hours: _value, focusAreaId: _areaId, note: _note.text.trim())
-          : await PlannerService.updateExtra(_editing!.id, hours: _value, focusAreaId: _areaId, note: _note.text.trim());
-      if (!mounted) return;
-      _apply(plan);
-      _resetForm();
+      if (_isEdit) {
+        await PlannerService.updateTask(widget.existing!.id, {
+          'title': title,
+          'focusAreaId': areaId,
+          'estimatedHours': _value,
+        });
+      } else {
+        await PlannerService.createTask({
+          'weekStart': plannerDateFormat.format(widget.weekStart),
+          'title': title,
+          'focusAreaId': areaId,
+          'estimatedHours': _value,
+          'notes': '',
+          'extra': true,
+        });
+      }
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  Future<void> _delete(WeekExtraModel e) async {
-    setState(() => _busy.add(e.id));
-    try {
-      final plan = await PlannerService.deleteExtra(e.id);
-      if (!mounted) return;
-      _apply(plan);
-      if (_editing?.id == e.id) _resetForm();
-    } catch (err) {
-      if (mounted) setState(() => _error = err.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _busy.remove(e.id));
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
     }
   }
 
@@ -129,276 +113,126 @@ class _ExtraHoursSheetState extends State<ExtraHoursSheet> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final semantic = context.semanticColors;
-    final selectedArea = _pickableAreas.where((a) => a.id == _areaId).firstOrNull;
+    final plan = widget.plan;
+    final area = _pickableAreas.where((a) => a.id == _areaId).firstOrNull;
+
+    // Before/after preview. When editing, take this item's current hours out
+    // of the "before" numbers first.
+    final double prev = widget.existing?.estimatedHours ?? 0.0;
+    final prevAreaId = widget.existing?.focusArea.id;
+    final capBefore = plan.capacityHours - prev;
+    final capAfter = capBefore + _value;
+    final alloc = area == null ? null : plan.areas.where((a) => a.focusArea.id == area.id).firstOrNull;
+    final budgetBefore = area == null
+        ? 0.0
+        : (alloc?.allowedHours ?? plan.baseHours * area.maxPercent / 100) - (prevAreaId == area.id ? prev : 0.0);
+    final budgetAfter = budgetBefore + _value;
 
     return PlannerSheet(
       children: [
-        SheetHeader(title: 'Extra working hours', subtitle: widget.weekLabel),
-
-        // ---- capacity summary
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [semantic.info.withValues(alpha: 0.12), cs.primary.withValues(alpha: 0.06)],
-            ),
-            borderRadius: BorderRadius.circular(16),
+        SheetHeader(title: _isEdit ? 'Edit extra hours' : 'Add extra hours', subtitle: widget.weekLabel),
+        Text('Focus Area', style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurfaceVariant)),
+        const SizedBox(height: 10),
+        if (_pickableAreas.isEmpty)
+          Text('Create a Focus Area in Setup first — extra hours belong to one, just like tasks.',
+              style: TextStyle(color: cs.onSurfaceVariant))
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _pickableAreas.map((a) {
+              final selected = a.id == _areaId;
+              final color = PlannerStyle.colorFromHex(a.color);
+              return ChoiceChip(
+                selected: selected,
+                showCheckmark: false,
+                avatar: Icon(PlannerStyle.iconFor(a.icon), size: 16, color: selected ? Colors.white : color),
+                label: Text(a.name),
+                labelStyle: TextStyle(color: selected ? Colors.white : null, fontWeight: FontWeight.w600),
+                selectedColor: color,
+                side: BorderSide(color: color.withValues(alpha: 0.4)),
+                onSelected: (_) => setState(() => _areaId = a.id),
+              );
+            }).toList(),
           ),
-          child: Row(
-            children: [
-              _SumCell(label: 'Regular', value: PlannerStyle.hours(_plan.baseHours)),
-              _op('+'),
-              _SumCell(label: 'Extra', value: PlannerStyle.hours(_plan.extraHours), color: semantic.info),
-              _op('='),
-              _SumCell(label: 'This week', value: PlannerStyle.hours(_plan.capacityHours), bold: true),
-            ],
-          ),
+        const SizedBox(height: 20),
+        HoursInput(
+          controller: _hours,
+          label: 'Extra hours',
+          presets: const [1, 2, 4, 6, 8],
+          onChanged: () => setState(() {}),
+        ),
+        const SizedBox(height: 16),
+        PlannerTextArea(
+          controller: _title,
+          label: 'What for? (optional)',
+          hint: 'e.g. Weekend backtesting session on GBPUSD',
+          minLines: 2,
+          maxLines: 6,
         ),
         const SizedBox(height: 20),
-
-        // ---- existing entries
-        if (_plan.extras.isNotEmpty) ...[
-          Text('This week', style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurfaceVariant)),
-          const SizedBox(height: 10),
-          ..._plan.extras.map((e) => _ExtraTile(
-                extra: e,
-                selected: _editing?.id == e.id,
-                busy: _busy.contains(e.id),
-                onEdit: () => _startEdit(e),
-                onDelete: () => _delete(e),
-              )),
-          const SizedBox(height: 16),
-        ],
-
-        // ---- add / edit form
-        PlannerPanel(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(_editing == null ? Icons.add_circle_outline : Icons.edit_outlined, size: 18, color: cs.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    _editing == null ? 'Add extra hours' : 'Edit entry',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              HoursInput(
-                controller: _hours,
-                label: 'Hours',
-                presets: const [1, 2, 4, 6, 8],
-                onChanged: () => setState(() {}),
-              ),
-              const SizedBox(height: 18),
-              Text('Where do these hours go?', style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurfaceVariant)),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  ChoiceChip(
-                    selected: _areaId == null,
-                    showCheckmark: false,
-                    avatar: Icon(Icons.all_inclusive, size: 16, color: _areaId == null ? cs.onPrimary : cs.primary),
-                    label: const Text('General'),
-                    labelStyle: TextStyle(color: _areaId == null ? cs.onPrimary : null, fontWeight: FontWeight.w600),
-                    selectedColor: cs.primary,
-                    onSelected: (_) => setState(() => _areaId = null),
-                  ),
-                  ..._pickableAreas.map((a) {
-                    final selected = a.id == _areaId;
-                    final color = PlannerStyle.colorFromHex(a.color);
-                    return ChoiceChip(
-                      selected: selected,
-                      showCheckmark: false,
-                      avatar: Icon(PlannerStyle.iconFor(a.icon), size: 16, color: selected ? Colors.white : color),
-                      label: Text(a.name),
-                      labelStyle: TextStyle(color: selected ? Colors.white : null, fontWeight: FontWeight.w600),
-                      selectedColor: color,
-                      side: BorderSide(color: color.withValues(alpha: 0.4)),
-                      onSelected: (_) => setState(() => _areaId = a.id),
-                    );
-                  }),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: cs.onSurfaceVariant),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      selectedArea == null
-                          ? 'General time raises the whole week, so every Focus Area\'s budget grows by its max %.'
-                          : 'Adds ${PlannerStyle.hours(_value)} straight to ${selectedArea.name}\'s budget, on top of its ${PlannerStyle.pct(selectedArea.maxPercent)} share.',
-                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              PlannerTextArea(
-                controller: _note,
-                label: 'Why? (optional)',
-                hint: 'e.g. Weekend backtesting session on GBPUSD',
-                minLines: 2,
-                maxLines: 6,
-              ),
-              if (_error != null) ...[
+        if (area != null)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: semantic.info.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _BeforeAfter(label: 'Week capacity', before: capBefore, after: capAfter),
+                const SizedBox(height: 6),
+                _BeforeAfter(label: '${area.name} budget', before: budgetBefore, after: budgetAfter),
                 const SizedBox(height: 8),
-                Text(_error!, style: TextStyle(color: semantic.loss)),
+                Text(
+                  'Shows in ${area.name}\'s task list as planned work — evaluate it and log time like any task. '
+                  'Other areas\' budgets and your free time stay the same.',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
               ],
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  if (_editing != null)
-                    TextButton(onPressed: _saving ? null : _resetForm, child: const Text('Cancel edit')),
-                  const Spacer(),
-                  FilledButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: _saving
-                        ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: cs.onPrimary))
-                        : Icon(_editing == null ? Icons.add : Icons.check, size: 18),
-                    label: Text(_editing == null ? 'Add' : 'Save'),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(onPressed: () => Navigator.pop(context), child: const Text('Done')),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(_error!, style: TextStyle(color: semantic.loss)),
+        ],
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: _saving || _pickableAreas.isEmpty ? null : _save,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: _saving
+                ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: cs.onPrimary))
+                : Text(_isEdit ? 'Save changes' : 'Add extra hours'),
+          ),
         ),
       ],
     );
   }
-
-  Widget _op(String s) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Text(s, style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-      );
 }
 
-class _SumCell extends StatelessWidget {
+class _BeforeAfter extends StatelessWidget {
   final String label;
-  final String value;
-  final Color? color;
-  final bool bold;
+  final double before;
+  final double after;
 
-  const _SumCell({required this.label, required this.value, this.color, this.bold = false});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(fontSize: bold ? 22 : 18, fontWeight: FontWeight.w800, color: color),
-          ),
-          Text(label, style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ExtraTile extends StatelessWidget {
-  final WeekExtraModel extra;
-  final bool selected;
-  final bool busy;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const _ExtraTile({
-    required this.extra,
-    required this.selected,
-    required this.busy,
-    required this.onEdit,
-    required this.onDelete,
-  });
+  const _BeforeAfter({required this.label, required this.before, required this.after});
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final semantic = context.semanticColors;
-    final area = extra.focusArea;
-    final color = area != null ? PlannerStyle.colorFromHex(area.color) : semantic.info;
-
-    return Opacity(
-      opacity: busy ? 0.5 : 1,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
-        decoration: BoxDecoration(
-          color: selected ? color.withValues(alpha: 0.08) : null,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? color : cs.outlineVariant),
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+        Text(PlannerStyle.hours(before), style: TextStyle(color: cs.onSurfaceVariant)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Icon(Icons.arrow_forward, size: 14, color: cs.onSurfaceVariant),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            area != null
-                ? AreaIconBadge(area: area, size: 36)
-                : Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: semantic.info.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.all_inclusive, size: 18, color: semantic.info),
-                  ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        '+${PlannerStyle.hours(extra.hours)}',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          area?.name ?? 'General',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if ((extra.note ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(extra.note!, style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
-                  ],
-                ],
-              ),
-            ),
-            IconButton(
-              tooltip: 'Edit',
-              visualDensity: VisualDensity.compact,
-              onPressed: busy ? null : onEdit,
-              icon: const Icon(Icons.edit_outlined, size: 18),
-            ),
-            IconButton(
-              tooltip: 'Remove',
-              visualDensity: VisualDensity.compact,
-              onPressed: busy ? null : onDelete,
-              icon: const Icon(Icons.delete_outline, size: 18),
-            ),
-          ],
-        ),
-      ),
+        Text(PlannerStyle.hours(after), style: TextStyle(fontWeight: FontWeight.w800, color: semantic.info)),
+      ],
     );
   }
 }

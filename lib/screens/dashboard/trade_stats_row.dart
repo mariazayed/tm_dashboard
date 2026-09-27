@@ -68,7 +68,9 @@ class TradeStatsRow extends StatelessWidget {
       TradeStatTile(
         title: "Current Streak",
         icon: Icons.local_fire_department,
-        color: streak > 0 ? semantic.profit : (streak < 0 ? semantic.loss : neutral),
+        color: streak > 0
+            ? semantic.profit
+            : (streak < 0 ? semantic.loss : neutral),
         numericValue: streak.toDouble(),
         formatter: (v) {
           final rounded = v.round();
@@ -79,20 +81,44 @@ class TradeStatsRow extends StatelessWidget {
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = _columnsFor(constraints.maxWidth);
-        const spacing = 16.0;
-        final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = _columnsFor(constraints.maxWidth);
+          const spacing = 8.0;
+          final width =
+              (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final tile in tiles) SizedBox(width: width, child: tile),
-          ],
-        );
-      },
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: [
+              for (var i = 0; i < tiles.length; i++)
+                SizedBox(
+                  width: width,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(
+                          color: i % columns == 0
+                              ? Colors.transparent
+                              : Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
+                    ),
+                    child: tiles[i],
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -106,8 +132,9 @@ class TradeStatsRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = _columnsFor(constraints.maxWidth);
-        const spacing = 16.0;
-        final width = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+        const spacing = 8.0;
+        final width =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
         final semantic = context.semanticColors;
 
@@ -121,7 +148,7 @@ class TradeStatsRow extends StatelessWidget {
               for (int i = 0; i < 5; i++)
                 Container(
                   width: width,
-                  height: 130,
+                  height: 90,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     color: Theme.of(context).colorScheme.surface,

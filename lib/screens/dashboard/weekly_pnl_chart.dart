@@ -82,13 +82,7 @@ class _WeeklyPnlChartState extends State<WeeklyPnlChart>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            color: colorScheme.shadow.withValues(alpha: 0.05),
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         children: [

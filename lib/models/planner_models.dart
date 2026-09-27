@@ -98,6 +98,9 @@ class WeeklyTaskModel {
   final int? score;
   final double? actualHours;
   final String? evaluationNotes;
+  /// Extra working hours: planned work like any task, whose hours are also
+  /// added to the week's capacity and its Focus Area's budget.
+  final bool isExtra;
 
   const WeeklyTaskModel({
     required this.id,
@@ -112,6 +115,7 @@ class WeeklyTaskModel {
     this.score,
     this.actualHours,
     this.evaluationNotes,
+    this.isExtra = false,
   });
 
   factory WeeklyTaskModel.fromJson(Map<String, dynamic> json) => WeeklyTaskModel(
@@ -127,6 +131,7 @@ class WeeklyTaskModel {
         score: json['score'],
         actualHours: _dn(json['actualHours']),
         evaluationNotes: json['evaluationNotes'],
+        isExtra: json['extra'] ?? false,
       );
 }
 
@@ -205,6 +210,9 @@ class AreaAllocationModel {
   final double allowedHours;
   final bool overLimit;
 
+  /// Share of this area's own budget that's planned (100% = at its max).
+  double get budgetUsedPct => allowedHours > 0 ? plannedHours / allowedHours * 100 : (plannedHours > 0 ? 100 : 0);
+
   const AreaAllocationModel({
     required this.focusArea,
     required this.itemCount,
@@ -272,33 +280,6 @@ class EvaluationSummaryModel {
   }
 }
 
-/// One block of extra working hours in a week. [focusArea] null = general
-/// time (raises every area's budget by its max %); set = hours dedicated to
-/// that area (added straight to its budget).
-class WeekExtraModel {
-  final int id;
-  final DateTime weekStart;
-  final double hours;
-  final FocusAreaModel? focusArea;
-  final String? note;
-
-  const WeekExtraModel({
-    required this.id,
-    required this.weekStart,
-    required this.hours,
-    this.focusArea,
-    this.note,
-  });
-
-  factory WeekExtraModel.fromJson(Map<String, dynamic> json) => WeekExtraModel(
-        id: json['id'],
-        weekStart: DateTime.parse(json['weekStart']),
-        hours: _d(json['hours']),
-        focusArea: json['focusArea'] != null ? FocusAreaModel.fromJson(json['focusArea']) : null,
-        note: json['note'],
-      );
-}
-
 /// Capacity fields shared by the week and month views.
 abstract class PlanPeriodModel {
   int get workingDays;
@@ -321,7 +302,6 @@ class WeekPlanModel implements PlanPeriodModel {
   final double baseHours;
   @override
   final double extraHours;
-  final List<WeekExtraModel> extras;
   final String? notes;
   @override
   final double capacityHours;
@@ -344,7 +324,6 @@ class WeekPlanModel implements PlanPeriodModel {
     required this.workingDays,
     required this.baseHours,
     required this.extraHours,
-    this.extras = const [],
     this.notes,
     required this.capacityHours,
     required this.plannedHours,
@@ -362,9 +341,6 @@ class WeekPlanModel implements PlanPeriodModel {
         workingDays: json['workingDays'] ?? 0,
         baseHours: _d(json['baseHours']),
         extraHours: _d(json['extraHours']),
-        extras: ((json['extras'] ?? []) as List)
-            .map((e) => WeekExtraModel.fromJson(e))
-            .toList(),
         notes: json['notes'],
         capacityHours: _d(json['capacityHours']),
         plannedHours: _d(json['plannedHours']),

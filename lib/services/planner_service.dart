@@ -76,51 +76,6 @@ class PlannerService {
     return WeekPlanModel.fromJson(_decode(r, 'load week plan'));
   }
 
-  // Extra hours: each call returns the refreshed week.
-
-  static Future<WeekPlanModel> addExtra(
-    DateTime weekStart, {
-    required double hours,
-    int? focusAreaId,
-    String? note,
-  }) async {
-    final r = await http.post(
-      Uri.parse('$_base/week/extras'),
-      headers: _json,
-      body: jsonEncode({
-        'weekStart': plannerDateFormat.format(weekStart),
-        'hours': hours,
-        'focusAreaId': focusAreaId,
-        'note': note ?? '',
-      }),
-    );
-    return WeekPlanModel.fromJson(_decode(r, 'add extra hours'));
-  }
-
-  static Future<WeekPlanModel> updateExtra(
-    int id, {
-    required double hours,
-    int? focusAreaId,
-    String? note,
-  }) async {
-    final r = await http.put(
-      Uri.parse('$_base/week/extras/$id'),
-      headers: _json,
-      body: jsonEncode({
-        'hours': hours,
-        'focusAreaId': focusAreaId,
-        'clearFocusArea': focusAreaId == null,
-        'note': note ?? '',
-      }),
-    );
-    return WeekPlanModel.fromJson(_decode(r, 'update extra hours'));
-  }
-
-  static Future<WeekPlanModel> deleteExtra(int id) async {
-    final r = await http.delete(Uri.parse('$_base/week/extras/$id'));
-    return WeekPlanModel.fromJson(_decode(r, 'remove extra hours'));
-  }
-
   static Future<WeekPlanModel> carryOver(DateTime weekStart) async {
     final r = await http.post(Uri.parse(
         '$_base/week/carryOver?weekStart=${plannerDateFormat.format(weekStart)}'));

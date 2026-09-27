@@ -93,20 +93,16 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
     final values = widget.data.map((e) => e.value).toList();
     final minY = values.reduce((a, b) => a < b ? a : b);
     final maxY = values.reduce((a, b) => a > b ? a : b);
-    final double padding = ((maxY - minY).abs() * 0.1).clamp(1.0, double.infinity).toDouble();
+    final double padding = ((maxY - minY).abs() * 0.1)
+        .clamp(1.0, double.infinity)
+        .toDouble();
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            color: colorScheme.shadow.withValues(alpha: 0.05),
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -176,8 +172,10 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
                 final spots = <FlSpot>[];
 
                 for (int i = 0; i < widget.data.length; i++) {
-                  final animatedValue = startingCapital +
-                      (widget.data[i].value - startingCapital) * _animation.value;
+                  final animatedValue =
+                      startingCapital +
+                      (widget.data[i].value - startingCapital) *
+                          _animation.value;
 
                   spots.add(FlSpot(i.toDouble(), animatedValue));
                 }

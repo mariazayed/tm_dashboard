@@ -17,15 +17,6 @@ class SummaryCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [pnlColor.withValues(alpha: 0.15), Colors.transparent],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: pnlColor.withValues(alpha: 0.4)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -48,15 +39,20 @@ class SummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
 
           /// Breakdown
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
             children: [
               CapitalStat(
                 label: 'Profit',
                 value: data.profits,
                 color: semantic.profit,
               ),
-              const SizedBox(width: 16),
-              CapitalStat(label: 'Loss', value: data.losses, color: semantic.loss),
+              CapitalStat(
+                label: 'Loss',
+                value: data.losses,
+                color: semantic.loss,
+              ),
             ],
           ),
         ],

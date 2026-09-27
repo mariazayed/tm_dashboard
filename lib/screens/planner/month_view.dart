@@ -271,7 +271,7 @@ class _MonthViewState extends State<MonthView> {
         style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
-    final allocation = AllocationPanel(areas: plan.areas, showActual: evaluating);
+    final allocation = AllocationPanel(areas: plan.areas, showActual: evaluating, regularHours: plan.baseHours);
     final summary = EvaluationSummaryCard(summary: plan.evaluation, title: 'Month evaluation');
     final weeks = _WeeksStrip(weeks: plan.weeks, onOpenWeek: widget.onOpenWeek);
     final objectives = _buildObjectives(plan);

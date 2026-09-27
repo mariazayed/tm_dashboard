@@ -12,6 +12,9 @@ class PlanItemDraft {
   final double estimatedHours;
   final String notes;
   final int? monthlyObjectiveId;
+  /// Weekly tasks only: total time actually spent (may exceed the
+  /// estimate); null = none logged.
+  final double? actualHours;
 
   const PlanItemDraft({
     required this.title,
@@ -19,6 +22,7 @@ class PlanItemDraft {
     required this.estimatedHours,
     required this.notes,
     this.monthlyObjectiveId,
+    this.actualHours,
   });
 }
 
@@ -41,6 +45,10 @@ class PlanItemSheet extends StatefulWidget {
   final String? initialNotes;
   final int? initialObjectiveId;
 
+  /// Show the "Actual time spent" field (weekly tasks).
+  final bool showActualHours;
+  final double? initialActualHours;
+
   final Future<void> Function(PlanItemDraft draft) onSubmit;
 
   const PlanItemSheet({
@@ -56,6 +64,8 @@ class PlanItemSheet extends StatefulWidget {
     this.initialHours,
     this.initialNotes,
     this.initialObjectiveId,
+    this.showActualHours = false,
+    this.initialActualHours,
     required this.onSubmit,
   });
 
@@ -67,6 +77,7 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
   late final TextEditingController _title;
   late final TextEditingController _hours;
   late final TextEditingController _notes;
+  late final TextEditingController _actual;
   int? _areaId;
   int? _objectiveId;
   bool _saving = false;
@@ -84,6 +95,10 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
       text: h == null ? '' : (h == h.roundToDouble() ? h.toInt().toString() : h.toString()),
     );
     _notes = TextEditingController(text: widget.initialNotes ?? '');
+    final a = widget.initialActualHours;
+    _actual = TextEditingController(
+      text: a == null ? '' : (a == a.roundToDouble() ? a.toInt().toString() : a.toString()),
+    );
     _areaId = widget.initialAreaId ?? (widget.areas.isNotEmpty ? widget.areas.first.id : null);
     _objectiveId = widget.initialObjectiveId;
   }
@@ -93,7 +108,13 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
     _title.dispose();
     _hours.dispose();
     _notes.dispose();
+    _actual.dispose();
     super.dispose();
+  }
+
+  double? get _enteredActual {
+    final t = _actual.text.trim().replaceAll(',', '.');
+    return t.isEmpty ? null : double.tryParse(t);
   }
 
   double get _enteredHours => double.tryParse(_hours.text.trim().replaceAll(',', '.')) ?? 0;
@@ -132,6 +153,7 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
         estimatedHours: _enteredHours,
         notes: _notes.text.trim(),
         monthlyObjectiveId: _objectiveId,
+        actualHours: widget.showActualHours ? _enteredActual : null,
       ));
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -214,6 +236,33 @@ class _PlanItemSheetState extends State<PlanItemSheet> {
           presets: widget.isMonthly ? const [4, 8, 12, 20, 30] : const [0.5, 1, 2, 4, 6],
           onChanged: () => setState(() {}),
         ),
+        if (widget.showActualHours) ...[
+          const SizedBox(height: 16),
+          HoursInput(
+            controller: _actual,
+            label: 'Actual time spent (optional)',
+            presets: const [0.5, 1, 2, 4, 6],
+            onChanged: () => setState(() {}),
+          ),
+          if (_enteredActual != null) ...[
+            const SizedBox(height: 10),
+            TimeTrackBar(estimated: _enteredHours, actual: _enteredActual!, height: 8),
+            const SizedBox(height: 6),
+            Builder(builder: (context) {
+              final diff = _enteredActual! - _enteredHours;
+              final over = diff > 1e-9;
+              return Text(
+                over
+                    ? '${PlannerStyle.hours(diff)} over the estimate — that\'s fine, it\'s tracked as is.'
+                    : '${PlannerStyle.hours(-diff)} left of the estimate.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: over ? context.semanticColors.warning : Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              );
+            }),
+          ],
+        ],
         const SizedBox(height: 16),
         _BudgetPreview(
           period: widget.period,

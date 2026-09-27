@@ -71,17 +71,12 @@ class SummarySection extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
         child: Ink(
-          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             color: Theme.of(context).colorScheme.surface,
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 20,
-                color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
-                offset: const Offset(0, 10),
-              ),
-            ],
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
           child: SummaryCard(title: title, data: data),
         ),

@@ -657,7 +657,7 @@ class _MixLegendRow extends StatelessWidget {
               const SizedBox(width: 4),
             ],
             Text(
-              '${PlannerStyle.pct(a.plannedPct)} / ${PlannerStyle.pct(a.maxPercent)}',
+              '${PlannerStyle.pct(a.budgetUsedPct)} of budget',
               style: TextStyle(fontSize: 12, color: a.overLimit ? semantic.loss : cs.onSurfaceVariant, fontWeight: FontWeight.w600),
             ),
             const SizedBox(width: 10),

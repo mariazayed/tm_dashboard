@@ -288,6 +288,12 @@ class CapacityCard extends StatelessWidget {
           icon: remaining >= 0 ? Icons.hourglass_empty_outlined : Icons.warning_amber_rounded,
           color: remaining >= 0 ? semantic.profit : semantic.loss,
         ),
+        StatTile(
+          label: 'Logged',
+          value: PlannerStyle.hours(period.evaluation.actualHours),
+          icon: Icons.timer_outlined,
+          color: period.evaluation.actualHours > period.plannedHours + 1e-9 ? semantic.warning : null,
+        ),
         StatTile(label: 'Working days', value: '${period.workingDays}', icon: Icons.work_history_outlined),
         StatTile(
           label: 'Extra hours',
@@ -436,12 +442,15 @@ class AllocationPanel extends StatelessWidget {
   final List<AreaAllocationModel> areas;
   final bool showActual;
   final String title;
+  /// Regular (weekday) hours of the period -- what each max % applies to.
+  final double? regularHours;
 
   const AllocationPanel({
     super.key,
     required this.areas,
     this.showActual = false,
     this.title = 'Focus Area budget',
+    this.regularHours,
   });
 
   @override
@@ -476,7 +485,7 @@ class AllocationPanel extends StatelessWidget {
           else
             ...areas.map((a) => Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: AllocationRow(allocation: a, showActual: showActual),
+                  child: AllocationRow(allocation: a, showActual: showActual, regularHours: regularHours),
                 )),
         ],
       ),
@@ -487,8 +496,9 @@ class AllocationPanel extends StatelessWidget {
 class AllocationRow extends StatelessWidget {
   final AreaAllocationModel allocation;
   final bool showActual;
+  final double? regularHours;
 
-  const AllocationRow({super.key, required this.allocation, this.showActual = false});
+  const AllocationRow({super.key, required this.allocation, this.showActual = false, this.regularHours});
 
   @override
   Widget build(BuildContext context) {
@@ -553,10 +563,13 @@ class AllocationRow extends StatelessWidget {
         ],
         const SizedBox(height: 4),
         Text(
-          showActual
-              ? '${PlannerStyle.pct(a.plannedPct)} planned · ${PlannerStyle.hours(a.actualHours)} actual · max ${PlannerStyle.pct(a.maxPercent)}'
-              : '${PlannerStyle.pct(a.plannedPct)} of capacity · max ${PlannerStyle.pct(a.maxPercent)}'
-                  '${a.overLimit ? ' · over by ${PlannerStyle.hours(a.plannedHours - a.allowedHours)}' : ''}',
+          // Percentages are of the area's own budget, and the budget is spelled
+          // out, so extra hours can't make max % look inconsistent.
+          '${PlannerStyle.pct(a.budgetUsedPct)} of budget'
+          '${showActual ? ' · ${PlannerStyle.hours(a.actualHours)} actual' : ''}'
+          ' · ${PlannerStyle.pct(a.maxPercent)}${regularHours != null ? ' of ${PlannerStyle.hours(regularHours!)}' : ''}'
+          '${a.extraHours > 0 ? ' + ${PlannerStyle.hours(a.extraHours)} extra' : ''}'
+          '${a.overLimit ? ' · over by ${PlannerStyle.hours(a.plannedHours - a.allowedHours)}' : ''}',
           style: TextStyle(fontSize: 12, color: a.overLimit ? semantic.loss : cs.onSurfaceVariant),
         ),
       ],
@@ -1093,6 +1106,84 @@ class PlannerTextArea extends StatelessWidget {
           borderSide: BorderSide(color: cs.primary, width: 1.6),
         ),
       ),
+    );
+  }
+}
+
+/// Actual time vs estimate. The estimate is the 100% mark: below it the bar
+/// fills toward the estimate; past it the bar rescales so the overrun beyond
+/// the estimate marker shows in the warning color -- going over is allowed
+/// and made visible, never capped. Built from flex children (no
+/// LayoutBuilder) so it can live inside IntrinsicHeight cards.
+class TimeTrackBar extends StatelessWidget {
+  final double estimated;
+  final double actual;
+  final double height;
+
+  const TimeTrackBar({super.key, required this.estimated, required this.actual, this.height = 6});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final semantic = context.semanticColors;
+    final over = actual > estimated + 1e-9;
+    final scale = over ? actual : (estimated > 0 ? estimated : 1.0);
+    final estFrac = estimated > 0 ? (estimated / scale).clamp(0, 1).toDouble() : 0.0;
+    final actFrac = (actual / scale).clamp(0, 1).toDouble();
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (context, t, _) {
+        final within = (over ? estFrac : actFrac) * t;
+        final overrun = over ? (actFrac - estFrac) * t : 0.0;
+        final rest = (1 - within - overrun).clamp(0, 1).toDouble();
+        int f(double v) => (v * 1000).round();
+
+        return SizedBox(
+          height: height,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(height),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(height),
+                  child: Row(
+                    children: [
+                      if (f(within) > 0)
+                        Expanded(
+                          flex: f(within),
+                          child: ColoredBox(color: over || actFrac >= 1 ? semantic.profit : cs.primary),
+                        ),
+                      if (f(overrun) > 0)
+                        Expanded(flex: f(overrun), child: ColoredBox(color: semantic.warning)),
+                      if (f(rest) > 0) Expanded(flex: f(rest), child: const SizedBox()),
+                    ],
+                  ),
+                ),
+              ),
+              if (over && estimated > 0)
+                Positioned.fill(
+                  top: -2,
+                  bottom: -2,
+                  child: Align(
+                    alignment: Alignment(estFrac * 2 - 1, 0),
+                    child: Container(width: 2, color: cs.onSurface),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

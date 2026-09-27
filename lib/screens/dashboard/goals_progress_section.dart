@@ -82,9 +82,7 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withOpacity(0.1),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 ),
                 child: Icon(
                   Icons.flag_outlined,
@@ -93,14 +91,16 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                'Goals Progress',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  'Goals Progress',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const Spacer(),
+
               TextButton(
                 onPressed: () => context.goNamed(RouteNames.goals),
                 child: const Text('View all'),
@@ -251,7 +251,10 @@ class _GoalsProgressSectionState extends State<GoalsProgressSection> {
                 const SizedBox(height: 4),
                 Text(
                   _timeLabel(goal),
-                  style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),

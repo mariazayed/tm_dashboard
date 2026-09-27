@@ -37,13 +37,7 @@ class ExpenseSummaryChart extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         color: colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            color: colorScheme.shadow.withValues(alpha: 0.05),
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,11 +70,7 @@ class ExpenseSummaryChart extends StatelessWidget {
             shape: BoxShape.circle,
             color: violet.withValues(alpha: 0.12),
           ),
-          child: Icon(
-            Icons.receipt_long_outlined,
-            size: 18,
-            color: violet,
-          ),
+          child: Icon(Icons.receipt_long_outlined, size: 18, color: violet),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -124,7 +114,10 @@ class ExpenseSummaryChart extends StatelessWidget {
           padding: const EdgeInsets.only(top: 8),
           child: Text(
             "+$remaining more reason${remaining == 1 ? '' : 's'}",
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
     ];

@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import 'planner_style.dart';
 import 'sheets/evaluation_sheet.dart';
 import 'sheets/extra_hours_sheet.dart';
+import 'sheets/log_time_sheet.dart';
 import 'sheets/plan_item_sheet.dart';
 import 'widgets/planner_widgets.dart';
 
@@ -94,6 +95,7 @@ class _WeekViewState extends State<WeekView> {
   // ------------------------------------------------------------------ actions
 
   Future<void> _openTaskSheet({WeeklyTaskModel? task}) async {
+    if (task != null && task.isExtra) return _openExtraHours(existing: task);
     final plan = _plan!;
     final areas = _activeAreas;
     // Keep an archived area selectable when editing a task that uses it.
@@ -114,6 +116,8 @@ class _WeekViewState extends State<WeekView> {
         initialHours: task?.estimatedHours,
         initialNotes: task?.notes,
         initialObjectiveId: task?.monthlyObjectiveId,
+        showActualHours: true,
+        initialActualHours: task?.actualHours,
         onSubmit: (d) {
           final data = <String, dynamic>{
             'weekStart': plannerDateFormat.format(widget.weekStart),
@@ -122,8 +126,10 @@ class _WeekViewState extends State<WeekView> {
             'estimatedHours': d.estimatedHours,
             'notes': d.notes,
             'monthlyObjectiveId': d.monthlyObjectiveId,
+            if (d.actualHours != null) 'actualHours': d.actualHours,
           };
           if (task == null) return PlannerService.createTask(data);
+          if (d.actualHours == null && task.actualHours != null) data['clearActualHours'] = true;
           if (d.monthlyObjectiveId == null) data['unlinkObjective'] = true;
           return PlannerService.updateTask(task.id, data);
         },
@@ -144,6 +150,20 @@ class _WeekViewState extends State<WeekView> {
         actualHours: task.actualHours,
         evaluationNotes: task.evaluationNotes,
         onSubmit: (e) => PlannerService.evaluateTask(task.id, e),
+      ),
+    );
+    if (saved == true) _load();
+  }
+
+  Future<void> _openLogTime(WeeklyTaskModel task) async {
+    final saved = await showPlannerSheet<bool>(
+      context,
+      LogTimeSheet(
+        task: task,
+        onSubmit: (hours) => PlannerService.updateTask(
+          task.id,
+          hours == null ? {'clearActualHours': true} : {'actualHours': hours},
+        ),
       ),
     );
     if (saved == true) _load();
@@ -187,8 +207,10 @@ class _WeekViewState extends State<WeekView> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete task'),
-        content: Text('Delete "${task.title}"?'),
+        title: Text(task.isExtra ? 'Remove extra hours' : 'Delete task'),
+        content: Text(task.isExtra
+            ? 'Remove "${task.title}" (+${PlannerStyle.hours(task.estimatedHours)})? The week\'s capacity drops by the same amount.'
+            : 'Delete "${task.title}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
@@ -207,19 +229,20 @@ class _WeekViewState extends State<WeekView> {
     }
   }
 
-  Future<void> _openExtraHours() async {
-    await showPlannerSheet<void>(
+  /// Add (or edit) extra working hours -- saved as an extra task in the
+  /// chosen Focus Area's list.
+  Future<void> _openExtraHours({WeeklyTaskModel? existing}) async {
+    final saved = await showPlannerSheet<bool>(
       context,
       ExtraHoursSheet(
         weekLabel: _weekLabel,
         weekStart: widget.weekStart,
         plan: _plan!,
         areas: _areas,
-        onChanged: (plan) {
-          if (mounted) setState(() => _plan = plan);
-        },
+        existing: existing,
       ),
     );
+    if (saved == true) _load();
   }
 
   Future<void> _carryOver() async {
@@ -306,12 +329,18 @@ class _WeekViewState extends State<WeekView> {
             icon: const Icon(Icons.redo_rounded, size: 18),
             label: const Text('Carry over unfinished'),
           ),
-          if (_activeAreas.isNotEmpty)
+          if (_activeAreas.isNotEmpty) ...[
+            OutlinedButton.icon(
+              onPressed: () => _openExtraHours(),
+              icon: const Icon(Icons.more_time_outlined, size: 18),
+              label: const Text('Add extra hours'),
+            ),
             FilledButton.icon(
               onPressed: () => _openTaskSheet(),
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Add task'),
             ),
+          ],
         ],
       ],
     );
@@ -319,39 +348,27 @@ class _WeekViewState extends State<WeekView> {
     final capacity = CapacityCard(
       period: plan,
       capacityLabel: 'Capacity',
-      action: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      action: Row(
         children: [
-          if (plan.extras.isNotEmpty) ...[
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: plan.extras.map((e) => _ExtraChip(extra: e)).toList(),
+          Expanded(
+            child: Text(
+              plan.extraHours > 0
+                  ? '${PlannerStyle.hours(plan.baseHours)} regular + ${PlannerStyle.hours(plan.extraHours)} extra (in the task list)'
+                  : '${PlannerStyle.hours(plan.baseHours)} from your working hours',
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 8),
-          ],
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  plan.extraHours > 0
-                      ? '${PlannerStyle.hours(plan.baseHours)} regular + ${PlannerStyle.hours(plan.extraHours)} extra'
-                      : '${PlannerStyle.hours(plan.baseHours)} from your working hours',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-              ),
-              TextButton.icon(
-                onPressed: _openExtraHours,
-                icon: const Icon(Icons.more_time_outlined, size: 18),
-                label: Text(plan.extraHours > 0 ? 'Manage extra hours' : 'Add extra hours'),
-              ),
-            ],
           ),
+          if (_activeAreas.isNotEmpty)
+            TextButton.icon(
+              onPressed: () => _openExtraHours(),
+              icon: const Icon(Icons.more_time_outlined, size: 18),
+              label: const Text('Add extra hours'),
+            ),
         ],
       ),
     );
 
-    final allocation = AllocationPanel(areas: plan.areas, showActual: evaluating);
+    final allocation = AllocationPanel(areas: plan.areas, showActual: evaluating, regularHours: plan.baseHours);
     final summary = EvaluationSummaryCard(summary: plan.evaluation, title: 'Week evaluation');
     final tasks = _buildTasks(plan);
 
@@ -459,6 +476,7 @@ class _WeekViewState extends State<WeekView> {
                       onEvaluate: () => _openEvaluation(t),
                       onDelete: () => _deleteTask(t),
                       onMoveNext: () => _moveToNextWeek(t),
+                      onLogTime: () => _openLogTime(t),
                       onQuickStatus: (s) => _quickStatus(t, s),
                     ))
                 .toList(),
@@ -505,7 +523,7 @@ class _AreaGroup extends StatelessWidget {
                   const SizedBox(width: 4),
                 ],
                 Text(
-                  '${PlannerStyle.hours(a.plannedHours)} of ${PlannerStyle.hours(a.allowedHours)} max',
+                  '${PlannerStyle.hours(a.plannedHours)} of ${PlannerStyle.hours(a.allowedHours)} budget',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -531,6 +549,7 @@ class _TaskCard extends StatelessWidget {
   final VoidCallback onEvaluate;
   final VoidCallback onDelete;
   final VoidCallback onMoveNext;
+  final VoidCallback onLogTime;
   final ValueChanged<PlanItemStatusEnum> onQuickStatus;
 
   const _TaskCard({
@@ -542,6 +561,7 @@ class _TaskCard extends StatelessWidget {
     required this.onEvaluate,
     required this.onDelete,
     required this.onMoveNext,
+    required this.onLogTime,
     required this.onQuickStatus,
   });
 
@@ -555,7 +575,9 @@ class _TaskCard extends StatelessWidget {
     return Opacity(
       opacity: busy ? 0.55 : 1,
       child: Material(
-        color: cs.surface,
+        // Extra-hours items get a faint tint of their area's color so they
+        // read as "extra time" at a glance, while living in the same list.
+        color: task.isExtra ? Color.alphaBlend(color.withValues(alpha: 0.06), cs.surface) : cs.surface,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -563,7 +585,7 @@ class _TaskCard extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cs.outlineVariant),
+              border: Border.all(color: task.isExtra ? color.withValues(alpha: 0.45) : cs.outlineVariant),
             ),
             child: IntrinsicHeight(
               child: Row(
@@ -597,15 +619,17 @@ class _TaskCard extends StatelessWidget {
                             runSpacing: 6,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              _MetaChip(icon: Icons.schedule_outlined, label: PlannerStyle.hours(task.estimatedHours)),
-                              if (task.actualHours != null)
-                                _MetaChip(icon: Icons.timer_outlined, label: '${PlannerStyle.hours(task.actualHours!)} actual'),
+                              if (task.isExtra) _ExtraBadge(hours: task.estimatedHours, color: color),
+                              if (!task.isExtra)
+                                _MetaChip(icon: Icons.schedule_outlined, label: '${PlannerStyle.hours(task.estimatedHours)} est.'),
                               if (task.monthlyObjectiveTitle != null)
                                 _MetaChip(icon: Icons.track_changes_outlined, label: task.monthlyObjectiveTitle!),
                               if (task.status.isEvaluated) StatusPill(status: task.status),
                               if (task.score != null) ScoreStars(score: task.score, size: 14),
                             ],
                           ),
+                          const SizedBox(height: 10),
+                          _TimeRow(task: task, onLog: busy ? null : onLogTime),
                           if ((task.notes ?? '').isNotEmpty) ...[
                             const SizedBox(height: 8),
                             Text(
@@ -640,6 +664,8 @@ class _TaskCard extends StatelessWidget {
                                 switch (v) {
                                   case 'edit':
                                     onEdit();
+                                  case 'time':
+                                    onLogTime();
                                   case 'evaluate':
                                     onEvaluate();
                                   case 'next':
@@ -650,6 +676,7 @@ class _TaskCard extends StatelessWidget {
                               },
                               itemBuilder: (_) => const [
                                 PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit_outlined), title: Text('Edit'))),
+                                PopupMenuItem(value: 'time', child: ListTile(leading: Icon(Icons.timer_outlined), title: Text('Log time'))),
                                 PopupMenuItem(value: 'evaluate', child: ListTile(leading: Icon(Icons.rate_review_outlined), title: Text('Evaluate'))),
                                 PopupMenuItem(value: 'next', child: ListTile(leading: Icon(Icons.redo_rounded), title: Text('Move to next week'))),
                                 PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete_outline), title: Text('Delete'))),
@@ -702,36 +729,90 @@ class _MetaChip extends StatelessWidget {
   }
 }
 
-/// Compact "+4h Backtesting" chip for an extra-hours entry.
-class _ExtraChip extends StatelessWidget {
-  final WeekExtraModel extra;
+/// Actual vs estimated time on a task card, with a one-tap "Log" button.
+class _TimeRow extends StatelessWidget {
+  final WeeklyTaskModel task;
+  final VoidCallback? onLog;
 
-  const _ExtraChip({required this.extra});
+  const _TimeRow({required this.task, required this.onLog});
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final semantic = context.semanticColors;
-    final area = extra.focusArea;
-    final color = area != null ? PlannerStyle.colorFromHex(area.color) : semantic.info;
-    final chip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(area != null ? PlannerStyle.iconFor(area.icon) : Icons.all_inclusive, size: 13, color: color),
-          const SizedBox(width: 4),
-          Text(
-            '+${PlannerStyle.hours(extra.hours)} ${area?.name ?? 'General'}',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+    final actual = task.actualHours;
+    final est = task.estimatedHours;
+    final over = actual != null && actual > est + 1e-9;
+
+    return Row(
+      children: [
+        Icon(Icons.timer_outlined, size: 15, color: over ? semantic.warning : cs.onSurfaceVariant),
+        const SizedBox(width: 6),
+        Text(
+          actual == null ? 'No time logged' : '${PlannerStyle.hours(actual)} / ${PlannerStyle.hours(est)}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: actual == null ? FontWeight.w500 : FontWeight.w700,
+            color: actual == null ? cs.onSurfaceVariant : (over ? semantic.warning : null),
           ),
-        ],
+        ),
+        if (actual != null) ...[
+          const SizedBox(width: 10),
+          Expanded(child: TimeTrackBar(estimated: est, actual: actual, height: 6)),
+          if (over) ...[
+            const SizedBox(width: 8),
+            Text(
+              '+${PlannerStyle.hours(actual - est)} over',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: semantic.warning),
+            ),
+          ],
+        ] else
+          const Spacer(),
+        const SizedBox(width: 4),
+        TextButton.icon(
+          onPressed: onLog,
+          style: TextButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+          icon: const Icon(Icons.add_alarm_outlined, size: 16),
+          label: const Text('Log'),
+        ),
+      ],
+    );
+  }
+}
+
+/// "+4h extra hours" badge on extra-hours items.
+class _ExtraBadge extends StatelessWidget {
+  final double hours;
+  final Color color;
+
+  const _ExtraBadge({required this.hours, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Extra working hours: counted as planned work and added to the week\'s capacity and this area\'s budget',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.more_time_outlined, size: 13, color: color),
+            const SizedBox(width: 4),
+            Text(
+              '+${PlannerStyle.hours(hours)} extra hours',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+            ),
+          ],
+        ),
       ),
     );
-    final note = extra.note ?? '';
-    return note.isEmpty ? chip : Tooltip(message: note, child: chip);
   }
 }

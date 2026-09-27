@@ -1,8 +1,6 @@
-import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
@@ -18,7 +16,7 @@ import '../../services/trade_service.dart';
 import '../../theme/app_theme.dart';
 import 'capital_growth_chart.dart';
 import 'capital_list.dart';
-import 'capital_stat_card.dart';
+import 'dashboard_note_strip.dart';
 import 'classes/capital_dashboard_helper.dart';
 import 'classes/expense_dashboard_helper.dart';
 import 'classes/trade_analytics_helper.dart';
@@ -49,8 +47,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _isRulesLoading = true;
   int _currentNoteIndex = 0;
   int _currentRuleIndex = 0;
-  Timer? _notesTimer;
-  Timer? _rulesTimer;
+  final _sectionKeys = List.generate(5, (_) => GlobalKey());
+  bool _showAllWeeks = false;
 
   // Recent-trade history backing the Trade Performance section (stat row +
   // PnL-by-strategy/session + mistake frequency). Bounded fetch -- see
@@ -118,19 +116,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _fetchExpenses();
   }
 
-  @override
-  void dispose() {
-    _notesTimer?.cancel();
-    _rulesTimer?.cancel();
-    super.dispose();
-  }
-
   Future<void> _fetchNotes() async {
     setState(() => _isNotesLoading = true);
 
     try {
       // Paged transport under the hood instead of one unbounded GET.
       final response = await ReminderNotesService.getAllPaged();
+      if (!mounted) return;
       if (response.isNotEmpty) {
         final notes = List.of(response)..shuffle(Random());
 
@@ -139,19 +131,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _currentNoteIndex = 0;
           _isNotesLoading = false;
         });
-
-        if (_notes.isNotEmpty) {
-          _notesTimer?.cancel();
-          _notesTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-            setState(() {
-              _currentNoteIndex = (_currentNoteIndex + 1) % _notes.length;
-            });
-          });
-        }
       } else {
         setState(() => _isNotesLoading = false);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isNotesLoading = false);
       debugPrint('Error fetching notes: $e');
     }
@@ -163,6 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       // Paged transport under the hood instead of one unbounded GET.
       final response = await StrictRulesService.getAllPaged();
+      if (!mounted) return;
       if (response.isNotEmpty) {
         final rules = List.of(response)..shuffle(Random());
 
@@ -171,19 +156,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _currentRuleIndex = 0;
           _isRulesLoading = false;
         });
-
-        if (_rules.isNotEmpty) {
-          _rulesTimer?.cancel();
-          _rulesTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-            setState(() {
-              _currentRuleIndex = (_currentRuleIndex + 1) % _rules.length;
-            });
-          });
-        }
       } else {
         setState(() => _isRulesLoading = false);
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isRulesLoading = false);
       debugPrint('Error fetching rules: $e');
     }
@@ -395,267 +372,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _openPnlBottomSheet(title: title, data: data);
   }
 
-  Widget _buildDashboardNoteCard({
-    required String title,
-    required IconData icon,
-    required Color accentColor,
-    required bool loading,
-    required bool isEmpty,
-    required String text,
-    required int index,
-    required int total,
-    required bool isNotesCard,
-  }) {
-    bool isHovered = false;
-
-    return StatefulBuilder(
-      builder: (context, setLocalState) {
-        return MouseRegion(
-          onEnter: (_) {
-            setLocalState(() => isHovered = true);
-
-            if (isNotesCard) {
-              _notesTimer?.cancel();
-            } else {
-              _rulesTimer?.cancel();
-            }
-          },
-          onExit: (_) {
-            setLocalState(() => isHovered = false);
-
-            // Cancel any existing timer first -- onExit can fire more than
-            // once without a matching onEnter in between (these animated
-            // hover regions can re-layout under the pointer), and without
-            // this guard each spurious exit stacked another live
-            // Timer.periodic on top of the old one. Every stacked timer
-            // kept firing setState -> rebuilding this card, so hovering it
-            // repeatedly made the dashboard progressively heavier (more
-            // concurrent timers) the longer it stayed open.
-            if (isNotesCard && _notes.isNotEmpty) {
-              _notesTimer?.cancel();
-              _notesTimer = Timer.periodic(
-                const Duration(seconds: 6),
-                (_) => setState(() {
-                  _currentNoteIndex = (_currentNoteIndex + 1) % _notes.length;
-                }),
-              );
-            }
-
-            if (!isNotesCard && _rules.isNotEmpty) {
-              _rulesTimer?.cancel();
-              _rulesTimer = Timer.periodic(
-                const Duration(seconds: 6),
-                (_) => setState(() {
-                  _currentRuleIndex = (_currentRuleIndex + 1) % _rules.length;
-                }),
-              );
-            }
-          },
-          child: AnimatedScale(
-            scale: isHovered ? 1.015 : 1.0,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut,
-              height: 200, // <-- FIXED HEIGHT (keeps both cards aligned)
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                // Solid surface + shadow, matching every other card on this
-                // page -- the previous frosted/blurred glass look had
-                // nothing colorful behind it to blur, so it just read as a
-                // flat gray box with no depth or identity.
-                color: Theme.of(context).colorScheme.surface,
-                border: Border.all(
-                  color: isHovered
-                      ? accentColor.withOpacity(0.35)
-                      : Theme.of(context).colorScheme.outlineVariant,
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    blurRadius: 20,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.shadow.withValues(alpha: 0.05),
-                    offset: const Offset(0, 10),
-                  ),
-                  if (isHovered)
-                    BoxShadow(
-                      blurRadius: 32,
-                      spreadRadius: 1,
-                      color: accentColor.withOpacity(0.18),
-                    ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Stack(
-                  children: [
-                    // Large faint watermark icon for texture -- purely
-                    // decorative, clipped to the card's rounded corners.
-                    Positioned(
-                      right: -14,
-                      bottom: -14,
-                      child: Icon(
-                        icon,
-                        size: 96,
-                        color: accentColor.withOpacity(0.06),
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// Header
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: accentColor.withOpacity(0.12),
-                              ),
-                              child: Icon(icon, size: 18, color: accentColor),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (total > 1)
-                              _buildNoteDots(total, index, accentColor),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        Expanded(
-                          child: loading
-                              ? _buildNoteShimmer(context)
-                              : isEmpty
-                              ? _buildNoteEmptyState(context, icon, isNotesCard)
-                              : Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 500),
-                                    transitionBuilder: (child, animation) {
-                                      return FadeTransition(
-                                        opacity: animation,
-                                        child: SlideTransition(
-                                          position: Tween<Offset>(
-                                            begin: const Offset(0.08, 0),
-                                            end: Offset.zero,
-                                          ).animate(animation),
-                                          child: child,
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      text,
-                                      key: ValueKey(text),
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        height: 1.6,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Small pill-dot pagination indicator -- replaces the old plain "1/3"
-  /// text with something that reads at a glance and matches the rest of
-  /// this dashboard's visual language (accent-colored, not just gray text).
-  Widget _buildNoteDots(int total, int index, Color accentColor) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (int i = 0; i < total; i++)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            margin: const EdgeInsets.only(left: 4),
-            width: i == index ? 14 : 6,
-            height: 6,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(3),
-              color: i == index ? accentColor : accentColor.withOpacity(0.25),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildNoteEmptyState(
-    BuildContext context,
-    IconData icon,
-    bool isNotesCard,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 32, color: colorScheme.outline),
-          const SizedBox(height: 8),
-          Text(
-            isNotesCard ? "No reminders yet" : "No strict rules yet",
-            style: TextStyle(color: colorScheme.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoteShimmer(BuildContext context) {
-    final semantic = context.semanticColors;
-    final surface = Theme.of(context).colorScheme.surface;
-
-    return Shimmer.fromColors(
-      baseColor: semantic.shimmerBase,
-      highlightColor: semantic.shimmerHighlight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            height: 16,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            height: 16,
-            width: 220,
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSectionHeader(
     BuildContext context, {
     required String title,
@@ -685,262 +401,261 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _pair(bool wide, Widget first, Widget second) {
+    if (!wide) {
+      return Column(children: [first, const SizedBox(height: 20), second]);
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: first),
+        const SizedBox(width: 20),
+        Expanded(child: second),
+      ],
+    );
+  }
+
+  Widget _section(
+    int index,
+    String title,
+    List<Widget> children, {
+    String? subtitle,
+  }) {
+    return Padding(
+      key: _sectionKeys[index],
+      padding: const EdgeInsets.only(bottom: 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildSectionHeader(context, title: title, subtitle: subtitle),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _capitalTotal(String title, double value, CapitalReasonEnum reason) {
+    return TextButton.icon(
+      onPressed: () => _openFilteredCapitalDialog(reason),
+      icon: Icon(
+        reason == CapitalReasonEnum.DEPOSIT
+            ? Icons.south_west_rounded
+            : Icons.north_east_rounded,
+        size: 16,
+      ),
+      label: Text('$title  ${value.toStringAsFixed(2)}'),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final weeks = helper.weeklyBreakdown();
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth > 900;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                child: Column(
-                  children: [
-                    isWide
-                        ? Row(
-                            children: [
-                              Expanded(
-                                child: _buildDashboardNoteCard(
-                                  title: "Reminder",
-                                  icon: Icons.lightbulb_outline,
-                                  accentColor: _reminderAccent(context),
-                                  loading: _isNotesLoading,
-                                  isEmpty: _notes.isEmpty,
-                                  text: _notes.isNotEmpty
-                                      ? _notes[_currentNoteIndex].text
-                                      : "",
-                                  index: _currentNoteIndex,
-                                  total: _notes.length,
-                                  isNotesCard: true,
-                                ),
+      body: Column(
+        children: [
+          Material(
+            color: colors.surface,
+            child: SizedBox(
+              height: 52,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                scrollDirection: Axis.horizontal,
+                itemCount: 5,
+                separatorBuilder: (_, index) => const SizedBox(width: 8),
+                itemBuilder: (context, index) => TextButton(
+                  onPressed: () {
+                    final target = _sectionKeys[index].currentContext;
+                    if (target != null) {
+                      Scrollable.ensureVisible(
+                        target,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeOutCubic,
+                      );
+                    }
+                  },
+                  child: Text(
+                    const [
+                      'Overview',
+                      'Capital',
+                      'Trading',
+                      'Planning',
+                      'Expenses & History',
+                    ][index],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Keep paired plots wide enough for axes and legends.
+                final wide = constraints.maxWidth >= 1100;
+                return SingleChildScrollView(
+                  padding: EdgeInsets.all(constraints.maxWidth < 600 ? 16 : 24),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1440),
+                      child: Column(
+                        children: [
+                          _section(0, 'Overview', [
+                            SummarySection(
+                              daily: helper.summaryFrom(helper.today),
+                              weekly: helper.summaryFrom(helper.weekStart),
+                              monthly: helper.summaryFrom(helper.monthStart),
+                              wide: constraints.maxWidth >= 900,
+                              onDailyTap: () =>
+                                  _openPeriodDetails('Today PnL', helper.today),
+                              onWeeklyTap: () => _openPeriodDetails(
+                                'This Week PnL',
+                                helper.weekStart,
                               ),
-                              const SizedBox(width: 24),
-                              Expanded(
-                                child: _buildDashboardNoteCard(
-                                  title: "Strict Rule",
-                                  icon: Icons.rule_folder_outlined,
-                                  accentColor: _ruleAccent(context),
-                                  loading: _isRulesLoading,
-                                  isEmpty: _rules.isEmpty,
-                                  text: _rules.isNotEmpty
-                                      ? _rules[_currentRuleIndex].text
-                                      : "",
-                                  index: _currentRuleIndex,
-                                  total: _rules.length,
-                                  isNotesCard: false,
-                                ),
+                              onMonthlyTap: () => _openPeriodDetails(
+                                'This Month PnL',
+                                helper.monthStart,
                               ),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              _buildDashboardNoteCard(
-                                title: "Reminder",
-                                icon: Icons.lightbulb_outline,
-                                accentColor: _reminderAccent(context),
-                                loading: _isNotesLoading,
-                                isEmpty: _notes.isEmpty,
-                                text: _notes.isNotEmpty
-                                    ? _notes[_currentNoteIndex].text
-                                    : "",
-                                index: _currentNoteIndex,
-                                total: _notes.length,
-                                isNotesCard: true,
-                              ),
-                              const SizedBox(height: 24),
-                              _buildDashboardNoteCard(
-                                title: "Strict Rule",
-                                icon: Icons.rule_folder_outlined,
-                                accentColor: _ruleAccent(context),
-                                loading: _isRulesLoading,
-                                isEmpty: _rules.isEmpty,
-                                text: _rules.isNotEmpty
-                                    ? _rules[_currentRuleIndex].text
-                                    : "",
-                                index: _currentRuleIndex,
-                                total: _rules.length,
-                                isNotesCard: false,
-                              ),
-                            ],
-                          ),
-
-                    const SizedBox(height: 24),
-
-                    // Previously built but never wired into this screen.
-                    const GoalsProgressSection(),
-
-                    const SizedBox(height: 24),
-
-                    // --- Planner: this week's pulse, focus mix, 8-week
-                    // rhythm and month objectives (self-fetching, one call
-                    // to GET /planner/overview). ---
-                    PlannerDashboardSection(wide: isWide),
-
-                    SummarySection(
-                      daily: helper.summaryFrom(helper.today),
-                      weekly: helper.summaryFrom(helper.weekStart),
-                      monthly: helper.summaryFrom(helper.monthStart),
-                      wide: isWide,
-                      onDailyTap: () =>
-                          _openPeriodDetails("Today PnL", helper.today),
-                      onWeeklyTap: () =>
-                          _openPeriodDetails("This Week PnL", helper.weekStart),
-                      onMonthlyTap: () => _openPeriodDetails(
-                        "This Month PnL",
-                        helper.monthStart,
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: CapitalStatCard(
-                            title: "Total Deposits",
-                            value: helper.totalDeposits,
-                            color: context.semanticColors.profit,
-                            icon: Icons.south_west_rounded,
-                            onTap: () => _openFilteredCapitalDialog(
-                              CapitalReasonEnum.DEPOSIT,
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: CapitalStatCard(
-                            title: "Total Withdraws",
-                            value: helper.totalWithdraws,
-                            color: context.semanticColors.loss,
-                            icon: Icons.north_east_rounded,
-                            onTap: () => _openFilteredCapitalDialog(
-                              CapitalReasonEnum.WITHDRAW,
+                          ]),
+                          _section(1, 'Capital & returns', [
+                            Wrap(
+                              spacing: 16,
+                              runSpacing: 8,
+                              children: [
+                                _capitalTotal(
+                                  'Total deposits',
+                                  helper.totalDeposits,
+                                  CapitalReasonEnum.DEPOSIT,
+                                ),
+                                _capitalTotal(
+                                  'Total withdrawals',
+                                  helper.totalWithdraws,
+                                  CapitalReasonEnum.WITHDRAW,
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    CapitalGrowthChart(data: helper.capitalOverTime()),
-
-                    const SizedBox(height: 24),
-
-                    WeeklyPnlChart(weeklyData: helper.weeklyPnl()),
-
-                    const SizedBox(height: 24),
-
-                    // --- Expenses: the standalone expense log (see the
-                    // Expenses feature writeup) is never netted against
-                    // Capital/PnL above -- this is a pure display summary. ---
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: _buildSectionHeader(
-                        context,
-                        title: "Expenses",
-                        subtitle: _isExpensesLoading || _expenses.isEmpty
-                            ? null
-                            : "${_expenses.length} expense${_expenses.length == 1 ? '' : 's'} logged",
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    ExpenseSummaryChart(
-                      data: expenseHelper.totalByReason(),
-                      total: expenseHelper.totalSpent,
-                      loading: _isExpensesLoading,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // --- Trade Performance: computed from actual Trade
-                    // history (TradeAnalyticsHelper), as opposed to
-                    // everything above this line, which is derived from the
-                    // capital ledger only. ---
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: _buildSectionHeader(
-                        context,
-                        title: "Trade Performance",
-                        subtitle: _isTradesLoading || _trades.isEmpty
-                            ? null
-                            : "Based on the last ${_trades.length} trade${_trades.length == 1 ? '' : 's'}",
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TradeStatsRow(
-                      analytics: analytics,
-                      loading: _isTradesLoading,
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    isWide
-                        ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Expanded(
-                              //   child: StrategyPerformanceChart(
-                              //     data: analytics.pnlByStrategy(),
-                              //     loading: _isTradesLoading,
-                              //   ),
-                              // ),
-                              // const SizedBox(width: 24),
-                              Expanded(
-                                child: SessionPerformanceChart(
+                            const SizedBox(height: 16),
+                            _pair(
+                              wide,
+                              CapitalGrowthChart(
+                                data: helper.capitalOverTime(),
+                              ),
+                              WeeklyPnlChart(weeklyData: helper.weeklyPnl()),
+                            ),
+                          ]),
+                          _section(
+                            2,
+                            'Trading performance',
+                            [
+                              TradeStatsRow(
+                                analytics: analytics,
+                                loading: _isTradesLoading,
+                              ),
+                              const SizedBox(height: 20),
+                              _pair(
+                                wide,
+                                StrategyPerformanceChart(
+                                  data: analytics.pnlByStrategy(),
+                                  loading: _isTradesLoading,
+                                ),
+                                SessionPerformanceChart(
                                   data: analytics.pnlBySession(),
                                   loading: _isTradesLoading,
                                 ),
                               ),
                             ],
-                          )
-                        : Column(
-                            children: [
-                              StrategyPerformanceChart(
-                                data: analytics.pnlByStrategy(),
-                                loading: _isTradesLoading,
-                              ),
-                              const SizedBox(height: 24),
-                              SessionPerformanceChart(
-                                data: analytics.pnlBySession(),
-                                loading: _isTradesLoading,
-                              ),
-                            ],
+                            subtitle: _isTradesLoading || _trades.isEmpty
+                                ? null
+                                : 'Based on the last ${_trades.length} trades',
                           ),
-
-                    const SizedBox(height: 24),
-
-                    // MistakeTagChart(
-                    //   data: analytics.mistakeTagFrequency(),
-                    //   loading: _isTradesLoading,
-                    // ),
-
-                    // const SizedBox(height: 24),
-
-                    // WeeklyPnlTable(
-                    //   profit: _weeklyProfit,
-                    //   loss: _weeklyLoss,
-                    // ),
-                    WeeklyHistoryTable(weeks: helper.weeklyBreakdown()),
-
-                    const SizedBox(height: 24),
-
-                    // Expanded(child: CapitalList(capitals: _capitals)),
-                  ],
-                ),
-              ),
+                          _section(3, 'Planning & discipline', [
+                            _pair(
+                              wide,
+                              DashboardNoteStrip(
+                                title: 'Reminder',
+                                icon: Icons.lightbulb_outline,
+                                accent: _reminderAccent(context),
+                                loading: _isNotesLoading,
+                                text: _notes.isEmpty
+                                    ? 'No reminders yet'
+                                    : _notes[_currentNoteIndex].text,
+                                index: _currentNoteIndex,
+                                count: _notes.length,
+                                onNavigate: (delta) => setState(
+                                  () => _currentNoteIndex =
+                                      (_currentNoteIndex + delta) %
+                                      _notes.length,
+                                ),
+                              ),
+                              DashboardNoteStrip(
+                                title: 'Strict rule',
+                                icon: Icons.rule_folder_outlined,
+                                accent: _ruleAccent(context),
+                                loading: _isRulesLoading,
+                                text: _rules.isEmpty
+                                    ? 'No strict rules yet'
+                                    : _rules[_currentRuleIndex].text,
+                                index: _currentRuleIndex,
+                                count: _rules.length,
+                                onNavigate: (delta) => setState(
+                                  () => _currentRuleIndex =
+                                      (_currentRuleIndex + delta) %
+                                      _rules.length,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            const GoalsProgressSection(),
+                            const SizedBox(height: 20),
+                            PlannerDashboardSection(wide: wide),
+                          ]),
+                          _section(
+                            4,
+                            'Expenses & history',
+                            [
+                              ExpenseSummaryChart(
+                                data: expenseHelper.totalByReason(),
+                                total: expenseHelper.totalSpent,
+                                loading: _isExpensesLoading,
+                              ),
+                              const SizedBox(height: 20),
+                              WeeklyHistoryTable(
+                                weeks: _showAllWeeks
+                                    ? weeks
+                                    : weeks.take(6).toList(),
+                              ),
+                              if (weeks.length > 6)
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    onPressed: () => setState(
+                                      () => _showAllWeeks = !_showAllWeeks,
+                                    ),
+                                    child: Text(
+                                      _showAllWeeks
+                                          ? 'Show recent 6 weeks'
+                                          : 'View all ${weeks.length} weeks',
+                                    ),
+                                  ),
+                                ),
+                            ],
+                            subtitle:
+                                'Expenses are tracked separately from capital and P&L',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

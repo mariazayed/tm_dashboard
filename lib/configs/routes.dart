@@ -11,6 +11,7 @@ import '../screens/decisions/decisions_screen.dart';
 import '../screens/expense_reasons/expense_reasons_screen.dart';
 import '../screens/expenses/expenses_screen.dart';
 import '../screens/goals/goals_screen.dart';
+import '../screens/planner/planner_screen.dart';
 import '../screens/questions_answers/questions_answers_screen.dart';
 import '../screens/reminder_notes/reminder_notes_screen.dart';
 import '../screens/risk_management/risk_management_screen.dart';
@@ -54,6 +55,11 @@ final GoRouter routes = GoRouter(
               name: RouteNames.goals,
               path: 'goals',
               builder: (context, state) => GoalsScreen(),
+            ),
+            GoRoute(
+              name: RouteNames.planner,
+              path: 'planner',
+              builder: (context, state) => const PlannerScreen(),
             ),
             GoRoute(
               name: RouteNames.capital,

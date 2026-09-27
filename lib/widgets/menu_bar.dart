@@ -514,6 +514,11 @@ List<_MenuItem> _menus(BuildContext context) {
       icon: Icons.flag_outlined,
     ),
     _MenuItem(
+      label: 'Planner',
+      routeName: RouteNames.planner,
+      icon: Icons.checklist_rtl_outlined,
+    ),
+    _MenuItem(
       label: 'Decisions',
       routeName: RouteNames.decisions,
       icon: Icons.fact_check_outlined,

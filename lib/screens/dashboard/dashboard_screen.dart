@@ -24,6 +24,7 @@ import 'classes/expense_dashboard_helper.dart';
 import 'classes/trade_analytics_helper.dart';
 import 'expense_summary_chart.dart';
 import 'goals_progress_section.dart';
+import 'planner_dashboard_section.dart';
 import 'session_performance_chart.dart';
 import 'strategy_performance_chart.dart';
 import 'summary_section.dart';
@@ -772,6 +773,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     // Previously built but never wired into this screen.
                     const GoalsProgressSection(),
+
+                    const SizedBox(height: 24),
+
+                    // --- Planner: this week's pulse, focus mix, 8-week
+                    // rhythm and month objectives (self-fetching, one call
+                    // to GET /planner/overview). ---
+                    PlannerDashboardSection(wide: isWide),
 
                     SummarySection(
                       daily: helper.summaryFrom(helper.today),

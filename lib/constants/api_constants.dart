@@ -15,4 +15,5 @@ class ApiConstants {
   static const String questionAnswersURL = '$baseURL/questionAnswers';
   static const String expenseURL = '$baseURL/expense';
   static const String expenseReasonURL = '$baseURL/expenseReason';
+  static const String plannerURL = '$baseURL/planner';
 }

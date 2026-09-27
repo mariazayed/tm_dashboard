@@ -16,4 +16,5 @@ class RouteNames {
   static const questionsAnswers = 'questionsAnswers';
   static const expenses = 'expenses';
   static const expenseReasons = 'expenseReasons';
+  static const planner = 'planner';
 }

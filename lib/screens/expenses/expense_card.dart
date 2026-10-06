@@ -1,3 +1,4 @@
+import '../../widgets/responsive_row.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -66,14 +67,16 @@ class ExpenseCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: ResponsiveRow(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

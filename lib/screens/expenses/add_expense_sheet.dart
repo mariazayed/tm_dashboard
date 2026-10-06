@@ -151,11 +151,12 @@ class _AddExpenseSheetState extends State<AddExpenseSheet> {
           children: [
             Row(
               children: [
-                Text(
+                Expanded(
+                  child: Text(
                   _isEdit ? 'Edit Expense' : 'New Expense',
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),

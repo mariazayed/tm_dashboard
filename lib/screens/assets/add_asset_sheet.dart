@@ -111,11 +111,12 @@ class _AddAssetSheetState extends State<AddAssetSheet> {
           children: [
             Row(
               children: [
-                Text(
+                Expanded(
+                  child: Text(
                   _isEdit ? 'Edit Asset' : 'New Asset',
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),

@@ -83,7 +83,7 @@ class MainMenu extends StatelessWidget {
               Expanded(
                 child: Container(
                   color: Theme.of(context).colorScheme.surface,
-                  child: child,
+                  child: SafeArea(top: false, child: child),
                 ),
               ),
             ],

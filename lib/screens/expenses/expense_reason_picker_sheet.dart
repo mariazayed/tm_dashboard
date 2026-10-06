@@ -165,11 +165,12 @@ class _ExpenseReasonPickerSheetState extends State<ExpenseReasonPickerSheet> {
             children: [
               Row(
                 children: [
-                  const Text(
+                  Expanded(
+                    child: const Text(
                     'Select Reason',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),

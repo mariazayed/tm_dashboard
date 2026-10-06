@@ -40,7 +40,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
       canPop: false,
       child: Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Container(
           width: 1000,
           height: 800,
@@ -52,7 +52,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(32, 24, 24, 16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
                 child: Row(
                   children: [
                     Column(
@@ -80,7 +80,7 @@ class _DayEditDialogState extends State<DayEditDialog> {
 
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

@@ -81,11 +81,12 @@ class _AddExpenseReasonSheetState extends State<AddExpenseReasonSheet> {
           children: [
             Row(
               children: [
-                Text(
+                Expanded(
+                  child: Text(
                   _isEdit ? 'Edit Expense Reason' : 'New Expense Reason',
                   style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
                 ),
-                const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),

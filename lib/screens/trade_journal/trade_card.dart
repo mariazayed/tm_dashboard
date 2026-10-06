@@ -1,3 +1,4 @@
+import '../../widgets/responsive_row.dart';
 import 'package:flutter/material.dart';
 import 'package:tm_dashboard/models/strategy_model.dart';
 
@@ -68,7 +69,7 @@ class _TradeCardState extends State<TradeCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Direction + Asset (unchanged)
-            Row(
+            ResponsiveRow(
               children: [
                 DropdownButton<TradeDirectionEnum>(
                   value: d.signal,
@@ -90,7 +91,8 @@ class _TradeCardState extends State<TradeCard> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: DropdownButtonFormField<Asset>(
-                    value: widget.assets.contains(d.asset) ? d.asset : null,
+                    isExpanded: true,
+value: widget.assets.contains(d.asset) ? d.asset : null,
                     items: widget.assets
                         .map(
                           (a) => DropdownMenuItem(
@@ -120,7 +122,8 @@ class _TradeCardState extends State<TradeCard> {
 
             // IMPORTANT: don't use Expanded here; TradeCard is typically inside a ListView
             DropdownButtonFormField<Strategy>(
-              value: widget.strategies.contains(d.strategy) ? d.strategy : null,
+              isExpanded: true,
+value: widget.strategies.contains(d.strategy) ? d.strategy : null,
               items: widget.strategies
                   .map((a) => DropdownMenuItem(value: a, child: Text(a.name)))
                   .toList(),
@@ -158,7 +161,7 @@ class _TradeCardState extends State<TradeCard> {
 
             const SizedBox(height: 24),
 
-            Row(
+            ResponsiveRow(
               children: [
                 Expanded(child: Text('Pips: ${d.pips.toStringAsFixed(1)}')),
                 Expanded(

@@ -40,13 +40,16 @@ class _MdEditorFieldState extends State<MdEditorField> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 widget.label,
                 style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
               ),
-              const Spacer(),
+
               _ToggleButton(
                 label: 'Write',
                 selected: !_preview,

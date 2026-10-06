@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../theme/app_theme.dart';
 import 'calendar_state.dart';
 
-
 class Header extends StatelessWidget {
   const Header({super.key});
   @override
@@ -17,15 +16,18 @@ class Header extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                DateFormat.yMMMM().format(state.currentMonth),
-                style: Theme.of(context).textTheme.headlineMedium,
+              Expanded(
+                child: Text(
+                  DateFormat.yMMMM().format(state.currentMonth),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
               ),
               Row(
                 children: [
                   _HeaderButton(
                     icon: Icons.chevron_left,
-                    onPressed: () => context.read<CalendarCubit>().previousMonth(),
+                    onPressed: () =>
+                        context.read<CalendarCubit>().previousMonth(),
                   ),
                   const SizedBox(width: 8),
                   _HeaderButton(

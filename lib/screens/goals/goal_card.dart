@@ -194,7 +194,7 @@ class GoalCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
-          const Spacer(),
+          const SizedBox(height: 16),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(

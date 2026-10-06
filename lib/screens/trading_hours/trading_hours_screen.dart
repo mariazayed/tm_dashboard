@@ -300,7 +300,10 @@ class _Toolbar extends StatelessWidget {
               icon: const Icon(Icons.chevron_left),
             ),
             SizedBox(
-              width: 190,
+              width: (MediaQuery.sizeOf(context).width - 144).clamp(
+                100.0,
+                190.0,
+              ),
               child: Text(
                 title,
                 textAlign: TextAlign.center,
@@ -413,57 +416,70 @@ class _WeeklyGridState extends State<_WeeklyGrid> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scrollbar(
-      controller: _scrollController,
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        primary: false,
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                const SizedBox(width: 76),
-                for (int weekday = 1; weekday <= 7; weekday++)
-                  Expanded(
-                    child: _DayHeader(
-                      label: _TradingHoursScreenState._dayLabels[weekday - 1],
-                      date: widget.weekStart.add(Duration(days: weekday - 1)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: constraints.maxWidth < 760 ? 760 : constraints.maxWidth,
+            child: Scrollbar(
+              controller: _scrollController,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                primary: false,
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const SizedBox(width: 76),
+                        for (int weekday = 1; weekday <= 7; weekday++)
+                          Expanded(
+                            child: _DayHeader(
+                              label: _TradingHoursScreenState
+                                  ._dayLabels[weekday - 1],
+                              date: widget.weekStart.add(
+                                Duration(days: weekday - 1),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            for (
-              int slot = 0;
-              slot < _TradingHoursScreenState._slotsPerDay;
-              slot++
-            )
-              Row(
-                children: [
-                  SizedBox(
-                    width: 76,
-                    child: Text(
-                      widget.slotLabel(slot),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 8),
+                    for (
+                      int slot = 0;
+                      slot < _TradingHoursScreenState._slotsPerDay;
+                      slot++
+                    )
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 76,
+                            child: Text(
+                              widget.slotLabel(slot),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          for (int weekday = 1; weekday <= 7; weekday++)
+                            Expanded(
+                              child: _SlotCell(
+                                allowed: widget.allowedSlots.contains(
+                                  widget.slotKey(weekday, slot),
+                                ),
+                                onTap: () => widget.onSlotTap(weekday, slot),
+                              ),
+                            ),
+                        ],
                       ),
-                    ),
-                  ),
-                  for (int weekday = 1; weekday <= 7; weekday++)
-                    Expanded(
-                      child: _SlotCell(
-                        allowed: widget.allowedSlots.contains(
-                          widget.slotKey(weekday, slot),
-                        ),
-                        onTap: () => widget.onSlotTap(weekday, slot),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
-          ],
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -607,7 +623,7 @@ class _SlotCell extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             onTap: onTap,
             child: Container(
-              height: 30,
+              height: 44,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(

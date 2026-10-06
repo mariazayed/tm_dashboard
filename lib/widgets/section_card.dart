@@ -31,7 +31,7 @@ class SectionCard extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(MediaQuery.sizeOf(context).width < 600 ? 16 : 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -51,13 +51,13 @@ class SectionCard extends StatelessWidget {
                         size: 20, color: Theme.of(context).colorScheme.primary),
                   ),
                 if (icon != null) const SizedBox(width: 16),
-                Text(
+                Expanded(child: Text(
                   title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                   ),
-                ),
+                )),
               ],
             ),
             const Padding(

@@ -280,138 +280,198 @@ class _DayCellState extends State<_DayCell> {
         ? (usesLightTint ? _kTintLossTextColor : semantic.loss)
         : metaTextColor;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        onTap: widget.onOpen,
-        child: Opacity(
-          opacity: opacity,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
-            margin: const EdgeInsets.all(6),
-            transform: Matrix4.translationValues(0, _hovering ? -2 : 0, 0),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isToday
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.5)
-                    : (_hovering && hasTrades)
-                    ? pnlColor.withValues(alpha: 0.35)
-                    : colorScheme.outlineVariant,
-                width: isToday ? 2 : 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withValues(
-                    alpha: _hovering ? 0.08 : 0.03,
-                  ),
-                  blurRadius: _hovering ? 16 : 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 150) {
+          final description =
+              '${day.date.day}: ${trades.length} trades, net ${netPnl.toStringAsFixed(2)}';
+          return Semantics(
+            button: true,
+            label: description,
+            child: Tooltip(
+              message: description,
+              child: Padding(
+                padding: const EdgeInsets.all(2),
+                child: Material(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: widget.onOpen,
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 68),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 6,
+                        horizontal: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isToday
+                              ? colorScheme.primary
+                              : colorScheme.outlineVariant,
+                        ),
+                      ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            day.date.day.toString(),
+                            '${day.date.day}',
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
                               color: textColor,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-
-                          /// ✅ Trades overview: net P&L for the day, always
-                          /// drawn in the fixed profit/loss color (never
-                          /// just the background tint) so it stays legible
-                          /// and readable without relying on color alone.
-                          /// The trade count sits directly under the P&L
-                          /// figure it describes -- not as a separate badge
-                          /// up next to the date -- so related numbers are
-                          /// grouped together instead of competing for
-                          /// attention from opposite corners of the cell.
                           if (hasTrades)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      "${netPnl >= 0 ? '+' : ''}${netPnl.toStringAsFixed(2)}",
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.2,
-                                        color: pnlColor,
-                                      ),
-                                    ),
-                                  ),
-                                  Text(
-                                    trades.length == 1
-                                        ? "1 trade"
-                                        : "${trades.length} trades",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: metaTextColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                          const Spacer(),
-                          if (statusIcons.isNotEmpty)
-                            SizedBox(
-                              height: 16,
-                              child: Wrap(
-                                spacing: 4,
-                                runSpacing: 2,
-                                children: statusIcons,
-                              ),
-                            ),
+                            Icon(Icons.circle, size: 8, color: pnlColor)
+                          else if (statusIcons.isNotEmpty)
+                            statusIcons.first
+                          else
+                            const SizedBox(height: 14),
                         ],
                       ),
                     ),
                   ),
-
-                  /// ✅ Accent bar: a crisp, always-solid-color strip so the
-                  /// win/loss signal reads at a glance even before the
-                  /// tinted background is consciously noticed.
-                  if (hasTrades)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      height: _hovering ? 5 : 3,
-                      color: pnlColor,
+                ),
+              ),
+            ),
+          );
+        }
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          child: GestureDetector(
+            onTap: widget.onOpen,
+            child: Opacity(
+              opacity: opacity,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                margin: const EdgeInsets.all(6),
+                transform: Matrix4.translationValues(0, _hovering ? -2 : 0, 0),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isToday
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.5)
+                        : (_hovering && hasTrades)
+                        ? pnlColor.withValues(alpha: 0.35)
+                        : colorScheme.outlineVariant,
+                    width: isToday ? 2 : 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.shadow.withValues(
+                        alpha: _hovering ? 0.08 : 0.03,
+                      ),
+                      blurRadius: _hovering ? 16 : 10,
+                      offset: const Offset(0, 4),
                     ),
-                ],
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                day.date.day.toString(),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: textColor,
+                                ),
+                              ),
+
+                              /// ✅ Trades overview: net P&L for the day, always
+                              /// drawn in the fixed profit/loss color (never
+                              /// just the background tint) so it stays legible
+                              /// and readable without relying on color alone.
+                              /// The trade count sits directly under the P&L
+                              /// figure it describes -- not as a separate badge
+                              /// up next to the date -- so related numbers are
+                              /// grouped together instead of competing for
+                              /// attention from opposite corners of the cell.
+                              if (hasTrades)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          "${netPnl >= 0 ? '+' : ''}${netPnl.toStringAsFixed(2)}",
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w800,
+                                            letterSpacing: -0.2,
+                                            color: pnlColor,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        trades.length == 1
+                                            ? "1 trade"
+                                            : "${trades.length} trades",
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: metaTextColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                              const Spacer(),
+                              if (statusIcons.isNotEmpty)
+                                SizedBox(
+                                  height: 16,
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 2,
+                                    children: statusIcons,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      /// ✅ Accent bar: a crisp, always-solid-color strip so the
+                      /// win/loss signal reads at a glance even before the
+                      /// tinted background is consciously noticed.
+                      if (hasTrades)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          height: _hovering ? 5 : 3,
+                          color: pnlColor,
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

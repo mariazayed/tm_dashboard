@@ -1,3 +1,4 @@
+import '../../widgets/responsive_row.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tm_dashboard/models/strategy_model.dart';
@@ -131,7 +132,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      padding: EdgeInsets.fromLTRB(16, 24, 16, 24 + MediaQuery.viewInsetsOf(context).bottom),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -141,11 +142,12 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
           // Header
           Row(
             children: [
-              const Text(
+              Expanded(
+                child: const Text(
                 'New Trade Journal',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
               ),
-              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
@@ -156,7 +158,7 @@ class _AddJournalSheetState extends State<AddJournalSheet> {
           const SizedBox(height: 32),
 
           // Date pickers
-          Row(
+          ResponsiveRow(
             children: [
               Expanded(
                 child: OutlinedButton(

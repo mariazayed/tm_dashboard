@@ -52,7 +52,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
         body = MonthView(
           key: const ValueKey('month'),
           month: _month,
-          onMonthChanged: (m) => setState(() => _month = DateTime(m.year, m.month)),
+          onMonthChanged: (m) =>
+              setState(() => _month = DateTime(m.year, m.month)),
           onOpenWeek: _openWeek,
           onGoToSetup: _goToSetup,
         );
@@ -69,19 +70,36 @@ class _PlannerScreenState extends State<PlannerScreen> {
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: SegmentedButton<PlannerTab>(
-                showSelectedIcon: false,
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.standard,
-                  side: WidgetStatePropertyAll(BorderSide(color: cs.outlineVariant)),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<PlannerTab>(
+                  showSelectedIcon: false,
+                  style: ButtonStyle(
+                    visualDensity: VisualDensity.standard,
+                    side: WidgetStatePropertyAll(
+                      BorderSide(color: cs.outlineVariant),
+                    ),
+                  ),
+                  segments: const [
+                    ButtonSegment(
+                      value: PlannerTab.week,
+                      icon: Icon(Icons.view_week_outlined, size: 18),
+                      label: Text('Week'),
+                    ),
+                    ButtonSegment(
+                      value: PlannerTab.month,
+                      icon: Icon(Icons.calendar_view_month_outlined, size: 18),
+                      label: Text('Month'),
+                    ),
+                    ButtonSegment(
+                      value: PlannerTab.setup,
+                      icon: Icon(Icons.tune_outlined, size: 18),
+                      label: Text('Setup'),
+                    ),
+                  ],
+                  selected: {_tab},
+                  onSelectionChanged: (s) => setState(() => _tab = s.first),
                 ),
-                segments: const [
-                  ButtonSegment(value: PlannerTab.week, icon: Icon(Icons.view_week_outlined, size: 18), label: Text('Week')),
-                  ButtonSegment(value: PlannerTab.month, icon: Icon(Icons.calendar_view_month_outlined, size: 18), label: Text('Month')),
-                  ButtonSegment(value: PlannerTab.setup, icon: Icon(Icons.tune_outlined, size: 18), label: Text('Setup')),
-                ],
-                selected: {_tab},
-                onSelectionChanged: (s) => setState(() => _tab = s.first),
               ),
             ),
           ),

@@ -117,29 +117,23 @@ class _QuestionsAnswersScreenState extends State<QuestionsAnswersScreen> {
         surfaceTintColor: Colors.transparent,
         title: const Text('Questions & Answers'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: FilledButton.icon(
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('New'),
-              onPressed: () async {
-                final data = await future;
-                if (!mounted) return;
-                if (data.categories.isEmpty) {
-                  await _openCategories();
-                  return;
-                }
+          IconButton(
+            tooltip: 'New question',
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+              final data = await future;
+              if (!mounted) return;
+              if (data.categories.isEmpty) {
+                await _openCategories();
+              } else {
                 _openEditor(data.categories);
-              },
-            ),
+              }
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: OutlinedButton.icon(
-              icon: const Icon(Icons.category_outlined, size: 18),
-              label: const Text('Categories'),
-              onPressed: _openCategories,
-            ),
+          IconButton(
+            tooltip: 'Manage categories',
+            icon: const Icon(Icons.category_outlined),
+            onPressed: _openCategories,
           ),
         ],
       ),

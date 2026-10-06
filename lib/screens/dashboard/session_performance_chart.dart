@@ -76,13 +76,13 @@ class SessionPerformanceChart extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Text(
+        Expanded(child: Text(
           "PnL by Session",
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
-        ),
+        )),
       ],
     );
   }

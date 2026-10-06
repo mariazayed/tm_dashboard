@@ -231,7 +231,8 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
         final child = Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(e.key),
+            Expanded(child: Text(e.key)),
+            const SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [

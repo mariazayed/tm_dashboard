@@ -125,7 +125,8 @@ class _AddQuestionAnswerSheetState extends State<AddQuestionAnswerSheet> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
-                  initialValue: _selectedCategory?.id,
+                  isExpanded: true,
+initialValue: _selectedCategory?.id,
                   decoration: const InputDecoration(
                     labelText: 'Category',
                     border: OutlineInputBorder(),

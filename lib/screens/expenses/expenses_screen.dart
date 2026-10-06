@@ -172,7 +172,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
+                      Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -185,6 +185,7 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                           ),
                         ],
+                      ),
                       ),
                       Icon(Icons.receipt_long, color: colorScheme.primary, size: 32),
                     ],

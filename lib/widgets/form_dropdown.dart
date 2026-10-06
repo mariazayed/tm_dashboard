@@ -21,13 +21,14 @@ class FormDropdown<T> extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<T>(
+        isExpanded: true,
         initialValue: value,
         decoration: InputDecoration(labelText: label),
         items: items
             .map(
               (e) =>
-              DropdownMenuItem<T>(value: e, child: Text(labelBuilder(e))),
-        )
+                  DropdownMenuItem<T>(value: e, child: Text(labelBuilder(e))),
+            )
             .toList(),
         onChanged: onChanged,
       ),

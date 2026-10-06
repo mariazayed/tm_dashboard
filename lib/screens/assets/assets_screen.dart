@@ -187,13 +187,19 @@ class _AssetScreenState extends State<AssetScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = (constraints.maxWidth / 320).floor().clamp(1, 3).toInt();
+        if (columns == 1) {
+          return Column(children: [
+            for (var i = 0; i < assets.length; i++)
+              Padding(padding: const EdgeInsets.only(bottom: 16), child: AssetCard(asset: assets[i], busy: _pendingAssetIds.contains(assets[i].id), onEdit: () => _openAddAsset(existing: assets[i]), onDelete: () => _confirmDelete(assets[i]))),
+          ]);
+        }
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: assets.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisExtent: 132,
+            mainAxisExtent: 160 * MediaQuery.textScalerOf(context).scale(1),
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),

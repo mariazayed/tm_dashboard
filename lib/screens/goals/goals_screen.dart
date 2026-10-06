@@ -231,13 +231,19 @@ class _GoalsScreenState extends State<GoalsScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = (constraints.maxWidth / 340).floor().clamp(1, 3).toInt();
+        if (columns == 1) {
+          return Column(children: [
+            for (var i = 0; i < goals.length; i++)
+              Padding(padding: const EdgeInsets.only(bottom: 16), child: GoalCard(goal: goals[i], busy: _pendingGoalIds.contains(goals[i].id), onEdit: () => _openAddGoal(existing: goals[i]), onDelete: () => _confirmDelete(goals[i]), onSetStatus: (status) => _setStatus(goals[i], status))),
+          ]);
+        }
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: goals.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
-            mainAxisExtent: 190,
+            mainAxisExtent: 250 * MediaQuery.textScalerOf(context).scale(1),
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),

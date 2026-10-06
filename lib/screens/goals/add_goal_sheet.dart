@@ -165,11 +165,12 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
         children: [
           Row(
             children: [
-              Text(
+              Expanded(
+                child: Text(
                 _isEdit ? 'Edit Goal' : 'New Goal',
                 style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
               ),
-              const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),

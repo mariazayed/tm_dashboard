@@ -1,3 +1,4 @@
+import '../../widgets/responsive_row.dart';
 import 'package:flutter/material.dart';
 
 import '../../enums/capital_reason_enum.dart';
@@ -241,7 +242,7 @@ class _CapitalScreenState extends State<CapitalScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Row(
+                  child: ResponsiveRow(
                     children: [
                       Expanded(
                         child: CapitalStatCard(

@@ -16,6 +16,6 @@ jobs:
       # scoped to the invest/auth code and the tests that pass today. Widen as those are cleaned up.
       - run: >
           flutter analyze lib/services/auth_service.dart lib/services/api_client.dart
-          lib/screens/auth lib/screens/invest lib/models/invest lib/services/contribution_service.dart lib/services/journal_service.dart
-          lib/configs/routes.dart lib/main.dart test/auth_test.dart test/invest_contributions_test.dart test/invest_performance_test.dart test/invest_dashboard_test.dart test/invest_journal_test.dart
+          lib/screens/auth lib/screens/invest lib/models/invest lib/services/contribution_service.dart lib/services/journal_service.dart lib/services/learning_service.dart
+          lib/configs/routes.dart lib/main.dart test/auth_test.dart test/invest_contributions_test.dart test/invest_performance_test.dart test/invest_dashboard_test.dart test/invest_journal_test.dart test/invest_learning_test.dart
       - run: flutter test $(ls test/*_test.dart test/*/*_test.dart | grep -v widget_test.dart)

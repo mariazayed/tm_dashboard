@@ -138,6 +138,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                     ),
                     OutlinedButton(
                       onPressed: () =>
+                          context.goNamed(RouteNames.investLearning),
+                      child: const Text('Learning'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () =>
                           context.goNamed(RouteNames.investJournal),
                       child: const Text('Journal'),
                     ),

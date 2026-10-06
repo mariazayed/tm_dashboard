@@ -83,5 +83,13 @@ only protected part of the app; the trade-journal screens remain open as before.
     status, your streak and four prompts, linked to this month's buy and tagged `check-in`.
   - The timeline can be filtered by type and tag and searched by text (a case-insensitive substring
     match, with a short pause after typing), and loads 30 entries at a time.
+- **Learning** (`/invest/learning`): three tabs.
+  - *Reading list*: books, videos, articles and podcasts, grouped In progress / To do / Done. Tap one
+    to open its link (http or https only). The menu changes status, edits or deletes.
+  - *Notes*: markdown notes with an optional source and tags, searchable by title or text and
+    filterable by source and tag. The card icon on a note makes a flashcard linked to it.
+  - *Review*: today's flashcards. Read the question, tap *Show answer*, then grade yourself Again,
+    Hard, Good or Easy; the server schedules the next review with SM-2 and the screen says when it
+    comes back. *Manage all cards* lists, edits and deletes cards.
 - Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
   distributing builds to other devices.

@@ -13,6 +13,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/invest/contributions_screen.dart';
 import '../screens/invest/invest_home_screen.dart';
 import '../screens/invest/journal_screen.dart';
+import '../screens/invest/learning_screen.dart';
 import '../screens/calendar/calendar_screen.dart';
 import '../screens/capital/capital_screen.dart';
 import '../screens/dashboard/dashboard_screen.dart';
@@ -67,6 +68,11 @@ final GoRouter routes = GoRouter(
               path: 'invest',
               builder: (context, state) => const InvestHomeScreen(),
               routes: [
+                GoRoute(
+                  name: RouteNames.investLearning,
+                  path: 'learning',
+                  builder: (context, state) => const LearningScreen(),
+                ),
                 GoRoute(
                   name: RouteNames.investJournal,
                   path: 'journal',

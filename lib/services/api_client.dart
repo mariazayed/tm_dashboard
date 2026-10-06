@@ -18,6 +18,10 @@ class ApiClient {
   }) : _client = client ?? http.Client(),
        _now = now ?? DateTime.now;
 
+  /// Supplies the current bearer token (null when signed out). Set by
+  /// AuthService; sent on every request so protected routes just work.
+  String? Function()? tokenProvider;
+
   final http.Client _client;
   final DateTime Function() _now;
   final Duration ttl;
@@ -163,6 +167,10 @@ class ApiClient {
   }) async {
     final request = http.Request(method, url);
     if (headers != null) request.headers.addAll(headers);
+    final token = tokenProvider?.call();
+    if (token != null && !request.headers.containsKey('Authorization')) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
     if (body is String) {
       request.body = body;
     } else if (body is List<int>) {

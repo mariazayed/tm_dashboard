@@ -48,3 +48,16 @@ Cache regression tests:
 ```sh
 flutter test test/api_client_test.dart test/service_cache_test.dart
 ```
+
+## Invest tracker (auth)
+
+The **Invest** menu entry opens a personal investing tracker (plan: $300/month into VT). It is the
+only protected part of the app; the trade-journal screens remain open as before.
+
+- Sign in with the single-user password configured on `tm-server` (see its
+  `docs/INVESTMENT_TRACKER.md`). The bearer token is kept in `shared_preferences` and re-checked
+  with `GET /api/v1/auth/me` on startup.
+- `ApiClient` attaches `Authorization: Bearer <token>` automatically once signed in.
+- Routes under `/invest` redirect to `/login` when signed out (`lib/screens/auth/auth_guard.dart`).
+- Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
+  distributing builds to other devices.

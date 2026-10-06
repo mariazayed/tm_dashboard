@@ -64,5 +64,9 @@ only protected part of the app; the trade-journal screens remain open as before.
   N days, overdue), the streak and a chip per month.
 - **CSV:** *Copy CSV* puts the export on the clipboard; *Import CSV* takes pasted text. Import is
   all-or-nothing and lists every bad row; re-importing the same data skips duplicates.
+- **Performance:** the Invest home page shows invested, value, gain and average cost, and says
+  which day the price is from (it warns when it is out of date). *Refresh prices* asks the server
+  to fetch new closes; if the price source is down you keep seeing the last saved prices. Charts
+  come in the next phase.
 - Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
   distributing builds to other devices.

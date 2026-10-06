@@ -4,6 +4,7 @@ import '../constants/api_constants.dart';
 import '../models/invest/contribution_model.dart';
 import '../models/invest/contribution_status_model.dart';
 import '../models/invest/invest_settings_model.dart';
+import '../models/invest/performance_model.dart';
 import 'api_client.dart';
 
 /// A failed call to the invest API. [statusCode] 401 means the login expired.
@@ -36,6 +37,23 @@ class ContributionService {
     );
     _check(response.statusCode, response.body, expected: {200});
     return InvestSettingsModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// [range] only trims the chart series: 3M, 6M, 1Y or ALL.
+  Future<PerformanceModel> getPerformance({String range = 'ALL'}) async {
+    final response = await _api.get(
+      Uri.parse('${ApiConstants.investURL}/performance?range=$range'),
+    );
+    _check(response.statusCode, response.body, expected: {200});
+    return PerformanceModel.fromJson(jsonDecode(response.body));
+  }
+
+  Future<PriceRefreshResult> refreshPrices() async {
+    final response = await _api.post(
+      Uri.parse('${ApiConstants.investURL}/prices/refresh'),
+    );
+    _check(response.statusCode, response.body, expected: {200});
+    return PriceRefreshResult.fromJson(jsonDecode(response.body));
   }
 
   Future<List<ContributionModel>> getAll() async {

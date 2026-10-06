@@ -7,16 +7,21 @@ import '../../models/invest/money.dart';
 import '../../services/contribution_service.dart';
 import '../auth/auth_cubit.dart';
 import 'add_contribution_sheet.dart';
+import 'invest_ui.dart';
 
 class ContributionsScreen extends StatefulWidget {
-  const ContributionsScreen({super.key});
+  const ContributionsScreen({super.key, ContributionService? service})
+    : _service = service;
+
+  final ContributionService? _service;
 
   @override
   State<ContributionsScreen> createState() => _ContributionsScreenState();
 }
 
 class _ContributionsScreenState extends State<ContributionsScreen> {
-  final _service = ContributionService.shared;
+  ContributionService get _service =>
+      widget._service ?? ContributionService.shared;
   late Future<(InvestSettingsModel, List<ContributionModel>)> _future;
 
   @override
@@ -41,7 +46,12 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
     }
   }
 
-  void _reload() => setState(() => _future = _load());
+  void _reload() {
+    // A block body: setState must not be handed a callback that returns a Future.
+    setState(() {
+      _future = _load();
+    });
+  }
 
   Future<void> _openSheet(
     InvestSettingsModel settings, {
@@ -97,37 +107,16 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
   }
 
   Future<void> _importCsv() async {
-    final controller = TextEditingController();
-    final csv = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Import CSV'),
-        content: SizedBox(
-          width: 480,
-          child: TextField(
-            key: const Key('csv-input'),
-            controller: controller,
-            minLines: 6,
-            maxLines: 12,
-            decoration: const InputDecoration(
-              hintText:
-                  'date,amount,shares,price,fee,notes\n2026-09-01,300,2.55,117.64',
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Import'),
-          ),
-        ],
-      ),
+    final csv = await askForText(
+      context,
+      title: 'Import CSV',
+      confirmLabel: 'Import',
+      minLines: 6,
+      maxLines: 12,
+      width: 480,
+      hint: 'date,amount,shares,price,fee,notes\n2026-09-01,300,2.55,117.64',
+      fieldKey: const Key('csv-input'),
     );
-    controller.dispose();
     if (csv == null || csv.trim().isEmpty) return;
     try {
       final result = await _service.importCsv(csv);

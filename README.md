@@ -91,5 +91,12 @@ only protected part of the app; the trade-journal screens remain open as before.
   - *Review*: today's flashcards. Read the question, tap *Show answer*, then grade yourself Again,
     Hard, Good or Easy; the server schedules the next review with SM-2 and the screen says when it
     comes back. *Manage all cards* lists, edits and deletes cards.
+- **Rules and settings:**
+  - The *My rules* card sits at the top of the Invest page (open by default). *Edit rules* opens a
+    list where you add, edit (tap), delete and drag to reorder; up to 20 rules.
+  - *Settings* edits the plan: monthly amount, currency, ticker, buy day (1-28), start date and
+    timezone, plus buy-day email reminders (an address, and how many days later to nudge again).
+    *Send a test email* checks the channel; the page warns if the server has no email settings.
+  - Reminders arrive by email only. There is no push channel.
 - Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
   distributing builds to other devices.

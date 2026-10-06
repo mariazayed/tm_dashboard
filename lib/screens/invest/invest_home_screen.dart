@@ -6,11 +6,13 @@ import '../../models/invest/contribution_status_model.dart';
 import '../../models/invest/invest_settings_model.dart';
 import '../../models/invest/money.dart';
 import '../../models/invest/performance_model.dart';
+import '../../services/plan_service.dart';
 import '../../services/contribution_service.dart';
 import '../auth/auth_cubit.dart';
 import 'contribution_status_card.dart';
 import 'performance_card.dart';
 import 'projection_panel.dart';
+import 'rules_card.dart';
 import 'value_chart_card.dart';
 
 /// Landing page of the investing tracker: the plan, this month's status and
@@ -23,7 +25,14 @@ class InvestHomeScreen extends StatefulWidget {
 }
 
 class _InvestHomeScreenState extends State<InvestHomeScreen> {
-  late Future<(InvestSettingsModel, ContributionStatusModel, PerformanceModel)>
+  late Future<
+    (
+      InvestSettingsModel,
+      ContributionStatusModel,
+      PerformanceModel,
+      List<String>,
+    )
+  >
   _future;
   bool _refreshing = false;
 
@@ -33,7 +42,14 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
     _future = _load();
   }
 
-  Future<(InvestSettingsModel, ContributionStatusModel, PerformanceModel)>
+  Future<
+    (
+      InvestSettingsModel,
+      ContributionStatusModel,
+      PerformanceModel,
+      List<String>,
+    )
+  >
   _load() async {
     final service = ContributionService.shared;
     try {
@@ -41,11 +57,17 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
         service.getSettings(),
         service.getStatus(),
         service.getPerformance(),
+        // Rules are a nicety here: if they fail to load, the dashboard still shows.
+        PlanService.shared
+            .rules()
+            .then<List<String>>((r) => r.map((e) => e.text).toList())
+            .catchError((_) => <String>[]),
       ]);
       return (
         results[0] as InvestSettingsModel,
         results[1] as ContributionStatusModel,
         results[2] as PerformanceModel,
+        results[3] as List<String>,
       );
     } on InvestApiException catch (e) {
       // Token expired or revoked: drop to the login screen.
@@ -62,7 +84,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
       message = result.ok
           ? 'Prices updated'
           : 'Could not fetch prices (${result.error}). Showing the last saved prices.';
-      if (mounted) setState(() => _future = _load());
+      if (mounted) {
+        setState(() {
+          _future = _load();
+        });
+      }
     } on InvestApiException catch (e) {
       if (e.unauthorized) await authCubit.logout();
       message = e.message;
@@ -90,7 +116,7 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final (settings, status, performance) = snapshot.data!;
+        final (settings, status, performance, rules) = snapshot.data!;
         return Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
@@ -104,6 +130,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                   'Plan: ${Money.format(settings.monthlyAmountCents, settings.currency)}'
                   ' / month into ${settings.ticker}, on day ${settings.buyDay}.',
                   style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                RulesCard(
+                  rules: rules,
+                  onEdit: () => context.goNamed(RouteNames.investRules),
                 ),
                 const SizedBox(height: 16),
                 PerformanceCard(
@@ -145,6 +176,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                       onPressed: () =>
                           context.goNamed(RouteNames.investJournal),
                       child: const Text('Journal'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () =>
+                          context.goNamed(RouteNames.investSettings),
+                      child: const Text('Settings'),
                     ),
                     OutlinedButton(
                       onPressed: authCubit.logout,

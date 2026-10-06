@@ -5,6 +5,10 @@ class InvestSettingsModel {
     required this.buyDay,
     required this.ticker,
     required this.startDate,
+    this.timezone = 'UTC',
+    this.remindersEnabled = false,
+    this.reminderEmail,
+    this.reminderFollowupDays = 3,
   });
 
   final int monthlyAmountCents;
@@ -12,6 +16,10 @@ class InvestSettingsModel {
   final int buyDay;
   final String ticker;
   final DateTime startDate;
+  final String timezone;
+  final bool remindersEnabled;
+  final String? reminderEmail;
+  final int reminderFollowupDays;
 
   factory InvestSettingsModel.fromJson(Map<String, dynamic> json) =>
       InvestSettingsModel(
@@ -20,5 +28,9 @@ class InvestSettingsModel {
         buyDay: json['buyDay'] as int,
         ticker: json['ticker'] as String,
         startDate: DateTime.parse(json['startDate'] as String),
+        timezone: json['timezone'] as String? ?? 'UTC',
+        remindersEnabled: json['remindersEnabled'] as bool? ?? false,
+        reminderEmail: json['reminderEmail'] as String?,
+        reminderFollowupDays: json['reminderFollowupDays'] as int? ?? 3,
       );
 }

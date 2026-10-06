@@ -10,6 +10,7 @@ import 'package:tm_dashboard/models/invest/invest_settings_model.dart';
 import 'package:tm_dashboard/models/invest/money.dart';
 import 'package:tm_dashboard/screens/invest/add_contribution_sheet.dart';
 import 'package:tm_dashboard/screens/invest/contribution_status_card.dart';
+import 'package:tm_dashboard/screens/invest/contributions_screen.dart';
 import 'package:tm_dashboard/services/api_client.dart';
 import 'package:tm_dashboard/services/contribution_service.dart';
 import 'package:tm_dashboard/theme/app_theme.dart';
@@ -347,6 +348,100 @@ void main() {
       expect(body['shares'], 2.5);
       expect(body['feeCents'], 0);
       expect(find.text('Shares do not match amount / price'), findsOneWidget);
+    });
+  });
+
+  group('ContributionsScreen CSV import', () {
+    testWidgets('pasting CSV posts it and the dialog closes cleanly', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      http.Request? imported;
+      final service = serviceWith((req) async {
+        if (req.method == 'POST' && req.url.path.endsWith('/import')) {
+          imported = req;
+          return http.Response(
+            jsonEncode({'imported': 2, 'skipped': 0, 'errors': []}),
+            200,
+          );
+        }
+        if (req.url.path.endsWith('/settings')) {
+          return http.Response(
+            jsonEncode({
+              'monthlyAmountCents': 30000,
+              'currency': 'USD',
+              'buyDay': 1,
+              'ticker': 'VT',
+              'startDate': '2026-08-01',
+            }),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(body: ContributionsScreen(service: service)),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Import CSV'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('csv-input')),
+        'date,amount,shares,price\n2026-09-01,300,2.55,117.64',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Import'));
+      await tester.pumpAndSettle();
+
+      expect(imported, isNotNull);
+      expect(imported!.headers['Content-Type'], contains('text/csv'));
+      expect(imported!.body, startsWith('date,amount,shares,price'));
+      expect(find.byKey(const Key('csv-input')), findsNothing); // dialog gone
+      expect(
+        tester.takeException(),
+        isNull,
+      ); // no "controller used after dispose"
+    });
+
+    testWidgets('cancelling imports nothing', (tester) async {
+      tester.view.physicalSize = const Size(900, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      var posts = 0;
+      final service = serviceWith((req) async {
+        if (req.method == 'POST') posts++;
+        if (req.url.path.endsWith('/settings')) {
+          return http.Response(
+            jsonEncode({
+              'monthlyAmountCents': 30000,
+              'currency': 'USD',
+              'buyDay': 1,
+              'ticker': 'VT',
+              'startDate': '2026-08-01',
+            }),
+            200,
+          );
+        }
+        return http.Response('[]', 200);
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Scaffold(body: ContributionsScreen(service: service)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Import CSV'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(posts, 0);
+      expect(tester.takeException(), isNull);
     });
   });
 }

@@ -19,4 +19,5 @@ class RouteNames {
   static const planner = 'planner';
   static const login = 'login';
   static const invest = 'invest';
+  static const investContributions = 'investContributions';
 }

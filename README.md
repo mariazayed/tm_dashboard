@@ -59,5 +59,10 @@ only protected part of the app; the trade-journal screens remain open as before.
   with `GET /api/v1/auth/me` on startup.
 - `ApiClient` attaches `Authorization: Bearer <token>` automatically once signed in.
 - Routes under `/invest` redirect to `/login` when signed out (`lib/screens/auth/auth_guard.dart`).
+- **Contributions** (`/invest/contributions`): add, edit and delete monthly buys. Shares and price
+  fill each other in from the amount. The Invest home page shows this month's status (done, due in
+  N days, overdue), the streak and a chip per month.
+- **CSV:** *Copy CSV* puts the export on the clipboard; *Import CSV* takes pasted text. Import is
+  all-or-nothing and lists every bad row; re-importing the same data skips duplicates.
 - Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
   distributing builds to other devices.

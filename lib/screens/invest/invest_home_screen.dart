@@ -1,13 +1,16 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../constants/api_constants.dart';
-import '../../services/api_client.dart';
+import '../../constants/route_names.dart';
+import '../../models/invest/contribution_status_model.dart';
+import '../../models/invest/invest_settings_model.dart';
+import '../../models/invest/money.dart';
+import '../../services/contribution_service.dart';
 import '../auth/auth_cubit.dart';
+import 'contribution_status_card.dart';
 
-/// Landing page of the investing tracker. Contributions, journal and
-/// learning notes will hang off this route in later phases.
+/// Landing page of the investing tracker: the plan, this month's status and
+/// a way into the contribution log.
 class InvestHomeScreen extends StatefulWidget {
   const InvestHomeScreen({super.key});
 
@@ -16,61 +19,75 @@ class InvestHomeScreen extends StatefulWidget {
 }
 
 class _InvestHomeScreenState extends State<InvestHomeScreen> {
-  late Future<bool> _serverOk;
+  late Future<(InvestSettingsModel, ContributionStatusModel)> _future;
 
   @override
   void initState() {
     super.initState();
-    _serverOk = _ping();
+    _future = _load();
   }
 
-  Future<bool> _ping() async {
-    final response = await ApiClient.shared.get(
-      Uri.parse('${ApiConstants.investURL}/ping'),
-    );
-    if (response.statusCode == 401) {
+  Future<(InvestSettingsModel, ContributionStatusModel)> _load() async {
+    final service = ContributionService.shared;
+    try {
+      final results = await Future.wait([
+        service.getSettings(),
+        service.getStatus(),
+      ]);
+      return (
+        results[0] as InvestSettingsModel,
+        results[1] as ContributionStatusModel,
+      );
+    } on InvestApiException catch (e) {
       // Token expired or revoked: drop to the login screen.
-      await authCubit.logout();
-      return false;
+      if (e.unauthorized) await authCubit.logout();
+      rethrow;
     }
-    return response.statusCode == 200 &&
-        (jsonDecode(response.body) as Map)['status'] == 'ok';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Invest', style: theme.textTheme.headlineSmall),
-          const SizedBox(height: 8),
-          Text(
-            r'Plan: $300 / month into VT. Contributions, journal and learning '
-            'notes are coming next.',
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          FutureBuilder<bool>(
-            future: _serverOk,
-            builder: (context, snapshot) {
-              final text = snapshot.connectionState != ConnectionState.done
-                  ? 'Checking server…'
-                  : (snapshot.data == true
-                        ? 'Server connected'
-                        : 'Server unreachable');
-              return Text(text, style: theme.textTheme.bodySmall);
-            },
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: authCubit.logout,
-            child: const Text('Log out'),
-          ),
-        ],
-      ),
+    return FutureBuilder(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('${snapshot.error}'));
+        }
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final (settings, status) = snapshot.data!;
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text('Invest', style: theme.textTheme.headlineSmall),
+            const SizedBox(height: 4),
+            Text(
+              'Plan: ${Money.format(settings.monthlyAmountCents, settings.currency)}'
+              ' / month into ${settings.ticker}, on day ${settings.buyDay}.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            ContributionStatusCard(status: status),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [
+                FilledButton(
+                  onPressed: () =>
+                      context.goNamed(RouteNames.investContributions),
+                  child: const Text('Contributions'),
+                ),
+                OutlinedButton(
+                  onPressed: authCubit.logout,
+                  child: const Text('Log out'),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }

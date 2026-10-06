@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'screens/auth/auth_cubit.dart';
 import 'screens/calendar/calendar_state.dart';
 import 'configs/routes.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Resolve any stored session before the router's first redirect runs.
+  await authCubit.restore();
   runApp(const MyApp());
 }
 
@@ -16,6 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider.value(value: authCubit),
         BlocProvider(create: (_) => CalendarCubit()),
         BlocProvider(create: (_) => ThemeCubit()),
       ],

@@ -1,12 +1,12 @@
 {
-    "name": "tm_dashboard",
-    "short_name": "tm_dashboard",
+    "name": "TM Dashboard",
+    "short_name": "TM",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#0F172A",
+    "theme_color": "#818CF8",
+    "description": "Trade journal and personal investing tracker.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
@@ -31,5 +31,7 @@
             "type": "image/png",
             "purpose": "maskable"
         }
-    ]
+    ],
+    "scope": ".",
+    "id": "."
 }

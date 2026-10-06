@@ -494,6 +494,11 @@ List<_MenuItem> _menus(BuildContext context) {
       icon: Icons.space_dashboard_outlined,
     ),
     _MenuItem(
+      label: 'Invest',
+      routeName: RouteNames.invest,
+      icon: Icons.savings_outlined,
+    ),
+    _MenuItem(
       label: 'Calendar',
       routeName: RouteNames.calendar,
       icon: Icons.calendar_month_outlined,

@@ -75,5 +75,13 @@ only protected part of the app; the trade-journal screens remain open as before.
   - The projection starts from your current value, adds the monthly amount you type, and shows 5%,
     7% and 9% a year over 1-40 years (effective annual rate, compounded monthly). They are
     illustrations, not predictions.
+- **Journal** (`/invest/journal`): a timeline of quick notes, monthly check-ins and decisions.
+  - *Quick note* opens a short form: type, optional mood 1-5, a markdown note with preview, and tags.
+  - Tags autocomplete from the ones you already use; Enter or a comma adds one (`a, b` adds two).
+    They are stored lower-case with no leading `#`, so `#Emotion` and `emotion` are the same tag.
+  - *Monthly check-in* opens the same form pre-filled by the server with this month's contribution
+    status, your streak and four prompts, linked to this month's buy and tagged `check-in`.
+  - The timeline can be filtered by type and tag and searched by text (a case-insensitive substring
+    match, with a short pause after typing), and loads 30 entries at a time.
 - Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
   distributing builds to other devices.

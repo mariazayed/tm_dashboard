@@ -117,10 +117,10 @@ class ContributionService {
 
   void _check(int status, String body, {required Set<int> expected}) {
     if (expected.contains(status)) return;
-    throw InvestApiException(_messageFrom(status, body), statusCode: status);
+    throw InvestApiException(messageFrom(status, body), statusCode: status);
   }
 
-  static String _messageFrom(int status, String body) {
+  static String messageFrom(int status, String body) {
     if (status == 401) return 'Your session expired. Please sign in again.';
     try {
       final json = jsonDecode(body);

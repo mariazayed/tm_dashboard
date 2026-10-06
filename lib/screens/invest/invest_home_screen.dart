@@ -137,6 +137,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                       child: const Text('Contributions'),
                     ),
                     OutlinedButton(
+                      onPressed: () =>
+                          context.goNamed(RouteNames.investJournal),
+                      child: const Text('Journal'),
+                    ),
+                    OutlinedButton(
                       onPressed: authCubit.logout,
                       child: const Text('Log out'),
                     ),

@@ -82,6 +82,29 @@ class PlanService {
     return ReminderTestResult.fromJson(jsonDecode(response.body));
   }
 
+  Future<AiStatusModel> aiStatus() async {
+    final response = await _api.get(Uri.parse('$_base/ai/status'));
+    _check(response.statusCode, response.body, {200});
+    return AiStatusModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// What an AI feature would be shown right now. The two flags switch the
+  /// personal free text (journal, learning notes) in or out.
+  Future<AiContextPreview> aiContext({
+    bool includeJournal = true,
+    bool includeNotes = true,
+  }) async {
+    final uri = Uri.parse('$_base/ai/context').replace(
+      queryParameters: {
+        'includeJournal': '$includeJournal',
+        'includeNotes': '$includeNotes',
+      },
+    );
+    final response = await _api.get(uri);
+    _check(response.statusCode, response.body, {200});
+    return AiContextPreview.fromJson(jsonDecode(response.body));
+  }
+
   /// Everything the tracker stores, as the server's JSON export (pretty-printed
   /// would be wasted bytes here, so it is returned as the server sent it).
   Future<String> exportJson() async {

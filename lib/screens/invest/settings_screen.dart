@@ -7,6 +7,7 @@ import '../../models/invest/money.dart';
 import '../../models/invest/plan_model.dart';
 import '../../services/contribution_service.dart';
 import '../../services/plan_service.dart';
+import 'ai_context_dialog.dart';
 import 'invest_ui.dart';
 
 /// The plan (amount, buy day, ticker...) and the reminder preferences.
@@ -36,6 +37,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _reminders = false;
   late DateTime _startDate;
   ReminderStatusModel? _status;
+  AiStatusModel? _ai;
   bool _loading = true;
   bool _saving = false;
   bool _testing = false;
@@ -73,12 +75,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             .reminderStatus()
             .then<ReminderStatusModel?>((s) => s)
             .catchError((_) => null),
+        // Optional extras: the page still loads if either of these calls fails.
+        _plan.aiStatus().then<AiStatusModel?>((s) => s).catchError((_) => null),
       ]);
       final s = results[0] as InvestSettingsModel;
       if (!mounted) return;
       setState(() {
         _fill(s);
         _status = results[1] as ReminderStatusModel?;
+        _ai = results[2] as AiStatusModel?;
         _loading = false;
       });
     } catch (e) {
@@ -375,6 +380,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: const Key('save-settings'),
               onPressed: _saving ? null : _save,
               child: Text(_saving ? 'Saving…' : 'Save settings'),
+            ),
+            const Divider(height: 40),
+            Text('AI assistant', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              _ai == null
+                  ? 'AI status is unavailable right now.'
+                  : _ai!.configured
+                  ? 'The server is set up for AI (model ${_ai!.model}). No AI feature is switched '
+                        'on yet, so nothing about you has been sent anywhere.'
+                  : 'Not set up. ${_ai!.reason ?? ''}. No AI feature is switched on yet, so '
+                        'nothing about you has been sent anywhere.',
+              key: const Key('ai-status'),
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                key: const Key('preview-ai-context'),
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (_) => AiContextDialog(service: widget._plan),
+                ),
+                child: const Text('See what an AI would be shown'),
+              ),
             ),
             const Divider(height: 40),
             Text('Your data', style: theme.textTheme.titleMedium),

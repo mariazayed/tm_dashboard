@@ -102,6 +102,10 @@ only protected part of the app; the trade-journal screens remain open as before.
   (it says how many KB). It never touches disk on the device, and it holds your notes, so paste it
   into a file you keep safe. The server also takes nightly JSON backups and has a `pg_dump` script; see
   `docs/INVESTMENT_TRACKER.md` on the server.
+- **AI (groundwork only):** *Settings > AI assistant* says whether the server could call a model (the
+  key lives only on the server and is never shown) and has *See what an AI would be shown*: the exact
+  text, built fresh from your data, with switches to leave out your journal and learning notes and a
+  counter against the 12,000-character limit. No AI feature exists yet, so nothing is sent anywhere.
 - **Install as an app:** the web build is installable (Chrome/Edge: *Install*; Safari: *Add to Home
   Screen*). `web/manifest.json` is checked by a test (name, start URL, standalone display, 192/512 and
   maskable icons that exist and match their declared sizes, theme colour). The icons are still

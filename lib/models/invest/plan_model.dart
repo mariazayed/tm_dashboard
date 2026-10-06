@@ -82,3 +82,51 @@ class ReminderTestResult {
     return error ?? skipped ?? 'Nothing was sent';
   }
 }
+
+/// Whether the server could call a language model. The API key itself never reaches the app.
+class AiStatusModel {
+  const AiStatusModel({required this.configured, this.model, this.reason});
+
+  final bool configured;
+  final String? model;
+
+  /// What is missing, when [configured] is false.
+  final String? reason;
+
+  factory AiStatusModel.fromJson(Map<String, dynamic> json) => AiStatusModel(
+    configured: json['configured'] as bool,
+    model: json['model'] as String?,
+    reason: json['reason'] as String?,
+  );
+}
+
+/// The exact text an AI feature would be given, as rendered by the server.
+class AiContextPreview {
+  const AiContextPreview({
+    required this.text,
+    required this.characters,
+    required this.maxCharacters,
+    required this.truncated,
+    required this.includeJournal,
+    required this.includeNotes,
+  });
+
+  final String text;
+  final int characters;
+  final int maxCharacters;
+
+  /// Older entries were dropped to stay under [maxCharacters].
+  final bool truncated;
+  final bool includeJournal;
+  final bool includeNotes;
+
+  factory AiContextPreview.fromJson(Map<String, dynamic> json) =>
+      AiContextPreview(
+        text: json['text'] as String,
+        characters: json['characters'] as int,
+        maxCharacters: json['maxCharacters'] as int,
+        truncated: json['truncated'] as bool,
+        includeJournal: json['includeJournal'] as bool,
+        includeNotes: json['includeNotes'] as bool,
+      );
+}

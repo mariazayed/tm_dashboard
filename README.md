@@ -66,7 +66,14 @@ only protected part of the app; the trade-journal screens remain open as before.
   all-or-nothing and lists every bad row; re-importing the same data skips duplicates.
 - **Performance:** the Invest home page shows invested, value, gain and average cost, and says
   which day the price is from (it warns when it is out of date). *Refresh prices* asks the server
-  to fetch new closes; if the price source is down you keep seeing the last saved prices. Charts
-  come in the next phase.
+  to fetch new closes; if the price source is down you keep seeing the last saved prices.
+- **Dashboard:** the Invest home page is a single column (capped at 900px wide) with summary
+  tiles (invested, value, gain, average cost, shares, month streak), an *Invested vs value* line
+  chart with a 3M / 1Y / All toggle, the consistency card, and a projection panel.
+  - The chart draws value (solid blue) against invested (dashed grey), starts at zero, and has a
+    tooltip plus a *Show data table* view with the same numbers. It needs two days of data.
+  - The projection starts from your current value, adds the monthly amount you type, and shows 5%,
+    7% and 9% a year over 1-40 years (effective annual rate, compounded monthly). They are
+    illustrations, not predictions.
 - Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
   distributing builds to other devices.

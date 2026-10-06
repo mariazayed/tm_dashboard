@@ -13,11 +13,15 @@ class PerformanceCard extends StatelessWidget {
     required this.performance,
     required this.onRefresh,
     this.refreshing = false,
+    this.currentStreak,
   });
 
   final PerformanceModel performance;
   final VoidCallback onRefresh;
   final bool refreshing;
+
+  /// Months in a row with a contribution; hidden when null.
+  final int? currentStreak;
 
   static String gainText(PerformanceModel p) {
     final sign = p.gainCents > 0 ? '+' : '';
@@ -76,6 +80,17 @@ class PerformanceCard extends StatelessWidget {
                   _Figure(
                     'Avg cost',
                     '\$${performance.averageCost!.toStringAsFixed(2)}',
+                  ),
+                _Figure(
+                  'Shares',
+                  performance.shares.toStringAsFixed(4),
+                  key: const Key('shares-figure'),
+                ),
+                if (currentStreak != null)
+                  _Figure(
+                    'Month streak',
+                    '$currentStreak',
+                    key: const Key('streak-figure'),
                   ),
               ],
             ),

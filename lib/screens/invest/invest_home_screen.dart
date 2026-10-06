@@ -10,6 +10,8 @@ import '../../services/contribution_service.dart';
 import '../auth/auth_cubit.dart';
 import 'contribution_status_card.dart';
 import 'performance_card.dart';
+import 'projection_panel.dart';
+import 'value_chart_card.dart';
 
 /// Landing page of the investing tracker: the plan, this month's status and
 /// a way into the contribution log.
@@ -89,40 +91,60 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         final (settings, status, performance) = snapshot.data!;
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text('Invest', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 4),
-            Text(
-              'Plan: ${Money.format(settings.monthlyAmountCents, settings.currency)}'
-              ' / month into ${settings.ticker}, on day ${settings.buyDay}.',
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 16),
-            PerformanceCard(
-              performance: performance,
-              onRefresh: _refreshPrices,
-              refreshing: _refreshing,
-            ),
-            const SizedBox(height: 16),
-            ContributionStatusCard(status: status),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                FilledButton(
-                  onPressed: () =>
-                      context.goNamed(RouteNames.investContributions),
-                  child: const Text('Contributions'),
+                Text('Invest', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: 4),
+                Text(
+                  'Plan: ${Money.format(settings.monthlyAmountCents, settings.currency)}'
+                  ' / month into ${settings.ticker}, on day ${settings.buyDay}.',
+                  style: theme.textTheme.bodyMedium,
                 ),
-                OutlinedButton(
-                  onPressed: authCubit.logout,
-                  child: const Text('Log out'),
+                const SizedBox(height: 16),
+                PerformanceCard(
+                  performance: performance,
+                  onRefresh: _refreshPrices,
+                  refreshing: _refreshing,
+                  currentStreak: status.currentStreak,
+                ),
+                const SizedBox(height: 16),
+                ValueChartCard(
+                  key: ValueKey(performance.priceAsOf),
+                  initial: performance,
+                  loader: (range) =>
+                      ContributionService.shared.getPerformance(range: range),
+                ),
+                const SizedBox(height: 16),
+                ContributionStatusCard(status: status),
+                const SizedBox(height: 16),
+                ProjectionPanel(
+                  startCents: performance.valueCents,
+                  monthlyCents: settings.monthlyAmountCents,
+                  currency: settings.currency,
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    FilledButton(
+                      onPressed: () =>
+                          context.goNamed(RouteNames.investContributions),
+                      child: const Text('Contributions'),
+                    ),
+                    OutlinedButton(
+                      onPressed: authCubit.logout,
+                      child: const Text('Log out'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         );
       },
     );

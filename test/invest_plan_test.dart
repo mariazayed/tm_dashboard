@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -674,6 +675,83 @@ void main() {
       );
       await tester.ensureVisible(find.text('Recently sent'));
       expect(find.text('2026-10: buy-day reminder'), findsOneWidget);
+    });
+
+    testWidgets(
+      'exporting copies the whole JSON to the clipboard and says how much',
+      (tester) async {
+        String? copied;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied = (call.arguments as Map)['text'] as String;
+            }
+            return null;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          ),
+        );
+        final payload = jsonEncode({'schemaVersion': 1, 'notes': 'x' * 3000});
+        final r = Recorder((req) async {
+          if (req.url.path.endsWith('/export')) {
+            return http.Response(
+              payload,
+              200,
+              headers: {'content-type': 'application/json'},
+            );
+          }
+          if (req.url.path.endsWith('/reminders')) {
+            return ok(reminderStatusJson());
+          }
+          return ok(settingsJson());
+        });
+        await pump(tester, r);
+        await tester.ensureVisible(find.byKey(const Key('export-data')));
+        await tester.tap(find.byKey(const Key('export-data')));
+        await tester.pumpAndSettle();
+        expect(copied, payload);
+        expect(find.textContaining('Copied 3 KB of data'), findsOneWidget);
+        expect(r.where('GET', '/export'), hasLength(1));
+      },
+    );
+
+    testWidgets('a failed export is explained and copies nothing', (
+      tester,
+    ) async {
+      var copied = false;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') copied = true;
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final r = Recorder((req) async {
+        if (req.url.path.endsWith('/export')) {
+          return ok({'message': 'boom'}, 500);
+        }
+        if (req.url.path.endsWith('/reminders')) {
+          return ok(reminderStatusJson());
+        }
+        return ok(settingsJson());
+      });
+      await pump(tester, r);
+      await tester.ensureVisible(find.byKey(const Key('export-data')));
+      await tester.tap(find.byKey(const Key('export-data')));
+      await tester.pumpAndSettle();
+      expect(find.text('boom'), findsOneWidget);
+      expect(copied, isFalse);
     });
 
     testWidgets('the test email reports success and failure', (tester) async {

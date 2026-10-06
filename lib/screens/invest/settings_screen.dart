@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/invest/contribution_model.dart';
 import '../../models/invest/invest_settings_model.dart';
@@ -42,6 +43,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _error;
   String? _saved;
   String? _testMessage;
+  bool _exporting = false;
+  String? _exportMessage;
 
   PlanService get _plan => widget._plan ?? PlanService.shared;
   ContributionService get _contributions =>
@@ -182,6 +185,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) setState(() => _testMessage = message);
     } finally {
       if (mounted) setState(() => _testing = false);
+    }
+  }
+
+  /// Copies the whole export to the clipboard. The file never touches disk on this
+  /// device, and the clipboard holds your notes until something else replaces it.
+  Future<void> _exportData() async {
+    setState(() {
+      _exporting = true;
+      _exportMessage = null;
+    });
+    try {
+      final json = await _plan.exportJson();
+      await Clipboard.setData(ClipboardData(text: json));
+      final kb = (json.length / 1024).ceil();
+      if (mounted) {
+        setState(
+          () => _exportMessage =
+              'Copied $kb KB of data to the clipboard. Paste it into a file you keep safe.',
+        );
+      }
+    } catch (e) {
+      final message = await describeInvestError(e);
+      if (mounted) setState(() => _exportMessage = message);
+    } finally {
+      if (mounted) setState(() => _exporting = false);
     }
   }
 
@@ -348,6 +376,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: _saving ? null : _save,
               child: Text(_saving ? 'Saving…' : 'Save settings'),
             ),
+            const Divider(height: 40),
+            Text('Your data', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Everything the tracker stores (contributions, journal, notes, cards, rules), '
+              'as one JSON document. Keep it private: it contains your notes.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                key: const Key('export-data'),
+                onPressed: _exporting ? null : _exportData,
+                child: Text(_exporting ? 'Exporting…' : 'Copy all my data'),
+              ),
+            ),
+            if (_exportMessage != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(_exportMessage!, key: const Key('export-message')),
+              ),
           ],
         ),
       ),

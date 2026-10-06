@@ -60,8 +60,11 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
-      builder: (_) =>
-          AddContributionSheet(settings: settings, existing: existing),
+      builder: (_) => AddContributionSheet(
+        settings: settings,
+        existing: existing,
+        service: widget._service,
+      ),
     );
     if (saved == true) _reload();
   }

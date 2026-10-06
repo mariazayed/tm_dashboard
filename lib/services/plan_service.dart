@@ -82,6 +82,14 @@ class PlanService {
     return ReminderTestResult.fromJson(jsonDecode(response.body));
   }
 
+  /// Everything the tracker stores, as the server's JSON export (pretty-printed
+  /// would be wasted bytes here, so it is returned as the server sent it).
+  Future<String> exportJson() async {
+    final response = await _api.get(Uri.parse('$_base/export'));
+    _check(response.statusCode, response.body, {200});
+    return response.body;
+  }
+
   List<RuleModel> _rules(String body) => (jsonDecode(body) as List)
       .map((e) => RuleModel.fromJson(e as Map<String, dynamic>))
       .toList();

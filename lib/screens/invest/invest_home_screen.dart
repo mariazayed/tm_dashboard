@@ -18,13 +18,26 @@ import 'value_chart_card.dart';
 /// Landing page of the investing tracker: the plan, this month's status and
 /// a way into the contribution log.
 class InvestHomeScreen extends StatefulWidget {
-  const InvestHomeScreen({super.key});
+  const InvestHomeScreen({
+    super.key,
+    ContributionService? contributions,
+    PlanService? plan,
+  }) : _contributions = contributions,
+       _plan = plan;
+
+  // Injectable so the screen can be driven against a fake server in tests.
+  final ContributionService? _contributions;
+  final PlanService? _plan;
 
   @override
   State<InvestHomeScreen> createState() => _InvestHomeScreenState();
 }
 
 class _InvestHomeScreenState extends State<InvestHomeScreen> {
+  ContributionService get _contributions =>
+      widget._contributions ?? ContributionService.shared;
+  PlanService get _plan => widget._plan ?? PlanService.shared;
+
   late Future<
     (
       InvestSettingsModel,
@@ -51,14 +64,14 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
     )
   >
   _load() async {
-    final service = ContributionService.shared;
+    final service = _contributions;
     try {
       final results = await Future.wait([
         service.getSettings(),
         service.getStatus(),
         service.getPerformance(),
         // Rules are a nicety here: if they fail to load, the dashboard still shows.
-        PlanService.shared
+        _plan
             .rules()
             .then<List<String>>((r) => r.map((e) => e.text).toList())
             .catchError((_) => <String>[]),
@@ -80,7 +93,7 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
     setState(() => _refreshing = true);
     String? message;
     try {
-      final result = await ContributionService.shared.refreshPrices();
+      final result = await _contributions.refreshPrices();
       message = result.ok
           ? 'Prices updated'
           : 'Could not fetch prices (${result.error}). Showing the last saved prices.';
@@ -148,7 +161,7 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                   key: ValueKey(performance.priceAsOf),
                   initial: performance,
                   loader: (range) =>
-                      ContributionService.shared.getPerformance(range: range),
+                      _contributions.getPerformance(range: range),
                 ),
                 const SizedBox(height: 16),
                 ContributionStatusCard(status: status),

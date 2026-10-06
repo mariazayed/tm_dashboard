@@ -98,5 +98,18 @@ only protected part of the app; the trade-journal screens remain open as before.
     timezone, plus buy-day email reminders (an address, and how many days later to nudge again).
     *Send a test email* checks the channel; the page warns if the server has no email settings.
   - Reminders arrive by email only. There is no push channel.
+- **Your data:** *Settings > Copy all my data* puts the server's full JSON export on the clipboard
+  (it says how many KB). It never touches disk on the device, and it holds your notes, so paste it
+  into a file you keep safe. The server also takes nightly JSON backups and has a `pg_dump` script; see
+  `docs/INVESTMENT_TRACKER.md` on the server.
+- **Install as an app:** the web build is installable (Chrome/Edge: *Install*; Safari: *Add to Home
+  Screen*). `web/manifest.json` is checked by a test (name, start URL, standalone display, 192/512 and
+  maskable icons that exist and match their declared sizes, theme colour). The icons are still
+  Flutter's defaults; swap the four PNGs in `web/icons/` for your own, keeping the sizes. Flutter's
+  service worker caches the app shell, so the page opens offline, but every screen needs the server for
+  its data, so there is no offline data mode.
+- **Tests:** `test/invest_flow_test.dart` drives the real screens against an in-memory stand-in for the
+  server (add a buy, see the dashboard change, delete it, a rejected buy). The server repo has the
+  full-stack counterpart, `InvestEndToEndTest`, which runs the same story over HTTP against PostgreSQL.
 - Note: `shared_preferences` is not encrypted storage; switch to `flutter_secure_storage` before
   distributing builds to other devices.

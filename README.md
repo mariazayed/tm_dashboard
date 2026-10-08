@@ -124,6 +124,10 @@ The **Invest** menu entry opens a personal investing tracker (plan: $300/month i
   sent* shows the exact prompt first. Every number in the draft is checked against the facts, and a draft that fails the
   check is not shown (you still see the facts and the reason). *Use in check-in* opens a new entry holding the draft for
   you to edit; nothing is saved unless you save it.
+- **Suggest tags** (in the journal entry sheet, under the tags): press it and the AI proposes up to five tags for the
+  note you are writing, preferring tags you already use and marking any new ones "(new)". It sends the note and the names
+  of your tags to the AI provider, only when you press the button. Tapping a suggestion adds it to the entry's tags;
+  nothing is saved until you save the entry. If AI is off or unavailable you just see why and keep your draft.
 - **AI status:** *Settings > AI assistant* says whether the server could call a model (the key lives only
   on the server and is never shown) and has *See what an AI would be shown*: the exact standing context,
   with switches to leave out your journal and learning notes and a counter against the 12,000-character

@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../constants/api_constants.dart';
 import '../models/invest/invest_settings_model.dart';
 import '../models/invest/checkin_summary_model.dart';
+import '../models/invest/tag_suggestion_model.dart';
 import '../models/invest/plan_model.dart';
 import '../models/invest/rule_check_model.dart';
 import 'api_client.dart';
@@ -133,6 +134,31 @@ class PlanService {
     );
     _check(response.statusCode, response.body, {200});
     return RuleCheckModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// Tags the AI proposes for an entry draft. Sends [body] and the names of
+  /// the owner's tags to the AI provider, so call it only when asked to.
+  Future<List<TagSuggestionModel>> tagSuggestions({
+    required String body,
+    required String entryType,
+    int? mood,
+    List<String> existingTags = const [],
+  }) async {
+    final response = await _api.post(
+      Uri.parse('$_base/ai/tag-suggestions'),
+      headers: _json,
+      body: jsonEncode({
+        'body': body,
+        'entryType': entryType,
+        if (mood != null) 'mood': mood,
+        'existingTags': existingTags,
+      }),
+    );
+    _check(response.statusCode, response.body, {200});
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return ((json['suggestions'] as List?) ?? const [])
+        .map((e) => TagSuggestionModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// A month's facts, worked out by the server (they need no AI). With

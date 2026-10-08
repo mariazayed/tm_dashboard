@@ -16,6 +16,7 @@ class AiContextDialog extends StatefulWidget {
     this.includeNotes = true,
     this.checkFrom,
     this.checkTo,
+    this.summaryMonth,
   }) : _service = service;
 
   final PlanService? _service;
@@ -27,7 +28,12 @@ class AiContextDialog extends StatefulWidget {
   final DateTime? checkFrom;
   final DateTime? checkTo;
 
-  bool get _isCheck => checkFrom != null && checkTo != null;
+  /// With this set (yyyy-MM) it shows the prompt of the month's AI summary
+  /// ([includeJournal] says whether the journal text is part of it).
+  final String? summaryMonth;
+
+  bool get _isSummary => summaryMonth != null;
+  bool get _isCheck => (checkFrom != null && checkTo != null) || _isSummary;
 
   @override
   State<AiContextDialog> createState() => _AiContextDialogState();
@@ -57,7 +63,12 @@ class _AiContextDialogState extends State<AiContextDialog> {
       _error = null;
     });
     try {
-      final preview = widget._isCheck
+      final preview = widget._isSummary
+          ? await _service.checkinPreview(
+              month: widget.summaryMonth!,
+              includeJournal: widget.includeJournal,
+            )
+          : widget._isCheck
           ? await _service.ruleCheckPreview(
               from: widget.checkFrom!,
               to: widget.checkTo!,
@@ -90,7 +101,9 @@ class _AiContextDialogState extends State<AiContextDialog> {
     final chat = widget.question != null || check;
     return AlertDialog(
       title: Text(
-        check
+        widget._isSummary
+            ? 'What will be sent for this summary'
+            : check
             ? 'What will be sent for this check'
             : chat
             ? 'What will be sent for this question'

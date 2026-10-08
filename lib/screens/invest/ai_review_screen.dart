@@ -5,14 +5,15 @@ import '../../models/invest/plan_model.dart';
 import '../../models/invest/rule_check_model.dart';
 import '../../services/plan_service.dart';
 import 'ai_context_dialog.dart';
+import 'ai_summary_tab.dart';
 import 'invest_ui.dart';
 import 'journal_entry_sheet.dart';
 
-/// Review: checks a stretch of your journal and plan against your own rules.
+/// The rule check half of Review: checks a stretch of your journal and plan against your own rules.
 /// The exact checks are plain code and always run. The AI reading is a
 /// separate choice, off until you switch it on, and it only ever suggests:
 /// nothing here changes or marks an entry.
-class AiReviewScreen extends StatefulWidget {
+class AiReviewScreen extends StatelessWidget {
   const AiReviewScreen({super.key, PlanService? service, this.now})
     : _service = service;
 
@@ -22,10 +23,45 @@ class AiReviewScreen extends StatefulWidget {
   final DateTime Function()? now;
 
   @override
-  State<AiReviewScreen> createState() => _AiReviewScreenState();
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Column(
+        children: [
+          const TabBar(
+            tabs: [
+              Tab(key: Key('review-tab-rules'), text: 'Rule check'),
+              Tab(key: Key('review-tab-summary'), text: 'Summary'),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                RuleCheckTab(service: _service, now: now),
+                AiSummaryTab(service: _service, now: now),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _AiReviewScreenState extends State<AiReviewScreen> {
+class RuleCheckTab extends StatefulWidget {
+  const RuleCheckTab({super.key, PlanService? service, this.now})
+    : _service = service;
+
+  final PlanService? _service;
+
+  /// For tests; defaults to the current time.
+  final DateTime Function()? now;
+
+  @override
+  State<RuleCheckTab> createState() => _RuleCheckTabState();
+}
+
+class _RuleCheckTabState extends State<RuleCheckTab> {
   static const _ranges = [7, 30, 90];
 
   int _days = 30;

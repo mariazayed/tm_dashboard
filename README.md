@@ -117,6 +117,13 @@ The **Invest** menu entry opens a personal investing tracker (plan: $300/month i
   rule, the reason, your own words as a quote (checked to be really in the entry), and *Add a reflection*, which opens a
   new journal entry for you to write. Low-confidence suggestions are hidden until you ask. If the AI part cannot run you
   still get the exact checks, with the reason. It never changes or marks an entry.
+- **Monthly summary** (the *Summary* tab on Review): choose one of the last six months and see its facts at once
+  (planned and invested amounts, how many days after the buy day you bought, streaks, month-end value, journal counts).
+  These come from your own records and send nothing anywhere. *Write a draft with AI* is a separate, explicit action: it
+  sends the facts and, if *Include my journal entries* is on, the text of the month's recent entries; *See what will be
+  sent* shows the exact prompt first. Every number in the draft is checked against the facts, and a draft that fails the
+  check is not shown (you still see the facts and the reason). *Use in check-in* opens a new entry holding the draft for
+  you to edit; nothing is saved unless you save it.
 - **AI status:** *Settings > AI assistant* says whether the server could call a model (the key lives only
   on the server and is never shown) and has *See what an AI would be shown*: the exact standing context,
   with switches to leave out your journal and learning notes and a counter against the 12,000-character

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../constants/api_constants.dart';
 import '../models/invest/invest_settings_model.dart';
+import '../models/invest/checkin_summary_model.dart';
 import '../models/invest/plan_model.dart';
 import '../models/invest/rule_check_model.dart';
 import 'api_client.dart';
@@ -132,6 +133,47 @@ class PlanService {
     );
     _check(response.statusCode, response.body, {200});
     return RuleCheckModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// A month's facts, worked out by the server (they need no AI). With
+  /// [includeModel] it also asks the AI for a draft summary of them, which
+  /// sends the facts and, unless [includeJournal] is false, that month's
+  /// journal text to the AI provider. [month] is yyyy-MM.
+  Future<CheckinSummaryModel> checkinSummary({
+    required String month,
+    bool includeModel = false,
+    bool includeJournal = true,
+  }) async {
+    final response = await _api.post(
+      Uri.parse('$_base/ai/checkin-summary'),
+      headers: _json,
+      body: jsonEncode({
+        'month': month,
+        if (includeModel) ...{
+          'includeModel': true,
+          'includeJournal': includeJournal,
+        },
+      }),
+    );
+    _check(response.statusCode, response.body, {200});
+    return CheckinSummaryModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// The exact prompt a draft summary of [month] would send.
+  Future<AiContextPreview> checkinPreview({
+    required String month,
+    bool includeJournal = true,
+  }) async {
+    final uri = Uri.parse('$_base/ai/context').replace(
+      queryParameters: {
+        'feature': 'checkin',
+        'month': month,
+        'includeJournal': '$includeJournal',
+      },
+    );
+    final response = await _api.get(uri);
+    _check(response.statusCode, response.body, {200});
+    return AiContextPreview.fromJson(jsonDecode(response.body));
   }
 
   /// The exact prompt the AI part of the check would send for this range.

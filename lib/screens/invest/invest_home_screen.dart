@@ -64,26 +64,22 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
   >
   _load() async {
     final service = _contributions;
-    try {
-      final results = await Future.wait([
-        service.getSettings(),
-        service.getStatus(),
-        service.getPerformance(),
-        // Rules are a nicety here: if they fail to load, the dashboard still shows.
-        _plan
-            .rules()
-            .then<List<String>>((r) => r.map((e) => e.text).toList())
-            .catchError((_) => <String>[]),
-      ]);
-      return (
-        results[0] as InvestSettingsModel,
-        results[1] as ContributionStatusModel,
-        results[2] as PerformanceModel,
-        results[3] as List<String>,
-      );
-    } on InvestApiException catch (e) {
-      rethrow;
-    }
+    final results = await Future.wait([
+      service.getSettings(),
+      service.getStatus(),
+      service.getPerformance(),
+      // Rules are a nicety here: if they fail to load, the dashboard still shows.
+      _plan
+          .rules()
+          .then<List<String>>((r) => r.map((e) => e.text).toList())
+          .catchError((_) => <String>[]),
+    ]);
+    return (
+      results[0] as InvestSettingsModel,
+      results[1] as ContributionStatusModel,
+      results[2] as PerformanceModel,
+      results[3] as List<String>,
+    );
   }
 
   Future<void> _refreshPrices() async {

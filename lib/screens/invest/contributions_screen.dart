@@ -30,18 +30,14 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
   }
 
   Future<(InvestSettingsModel, List<ContributionModel>)> _load() async {
-    try {
-      final results = await Future.wait([
-        _service.getSettings(),
-        _service.getAll(),
-      ]);
-      return (
-        results[0] as InvestSettingsModel,
-        results[1] as List<ContributionModel>,
-      );
-    } on InvestApiException catch (e) {
-      rethrow;
-    }
+    final results = await Future.wait([
+      _service.getSettings(),
+      _service.getAll(),
+    ]);
+    return (
+      results[0] as InvestSettingsModel,
+      results[1] as List<ContributionModel>,
+    );
   }
 
   void _reload() {

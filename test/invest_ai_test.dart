@@ -291,7 +291,7 @@ void main() {
     }
 
     testWidgets(
-      'a configured server shows the model and that nothing is being sent yet',
+      'a configured server shows the model and that nothing is sent until you ask',
       (tester) async {
         await pump(tester, {
           'configured': true,
@@ -302,7 +302,7 @@ void main() {
             .widget<Text>(find.byKey(const Key('ai-status')))
             .data!;
         expect(text, contains('model claude-x'));
-        expect(text, contains('nothing about you has been sent anywhere'));
+        expect(text, contains('Nothing about you is sent until you ask'));
         expect(text, isNot(contains('sk-')));
       },
     );

@@ -109,6 +109,9 @@ class AiContextPreview {
     required this.truncated,
     required this.includeJournal,
     required this.includeNotes,
+    this.feature = 'context',
+    this.systemPrompt,
+    this.snippets = 0,
   });
 
   final String text;
@@ -120,6 +123,15 @@ class AiContextPreview {
   final bool includeJournal;
   final bool includeNotes;
 
+  /// "context" for the standing context, or the feature previewed, such as "chat".
+  final String feature;
+
+  /// The standing instructions sent along with [text]; null for the plain context.
+  final String? systemPrompt;
+
+  /// How many pieces of journal or notes are in [text] (feature previews only).
+  final int snippets;
+
   factory AiContextPreview.fromJson(Map<String, dynamic> json) =>
       AiContextPreview(
         text: json['text'] as String,
@@ -128,5 +140,8 @@ class AiContextPreview {
         truncated: json['truncated'] as bool,
         includeJournal: json['includeJournal'] as bool,
         includeNotes: json['includeNotes'] as bool,
+        feature: json['feature'] as String? ?? 'context',
+        systemPrompt: json['systemPrompt'] as String?,
+        snippets: (json['snippets'] as num?)?.toInt() ?? 0,
       );
 }

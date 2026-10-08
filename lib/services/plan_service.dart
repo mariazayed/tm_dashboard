@@ -89,15 +89,18 @@ class PlanService {
   }
 
   /// What an AI feature would be shown right now. The two flags switch the
-  /// personal free text (journal, learning notes) in or out.
+  /// personal free text (journal, learning notes) in or out. With [question]
+  /// it is instead the complete prompt "Ask your journal" would send for it.
   Future<AiContextPreview> aiContext({
     bool includeJournal = true,
     bool includeNotes = true,
+    String? question,
   }) async {
     final uri = Uri.parse('$_base/ai/context').replace(
       queryParameters: {
         'includeJournal': '$includeJournal',
         'includeNotes': '$includeNotes',
+        if (question != null) ...{'feature': 'chat', 'q': question},
       },
     );
     final response = await _api.get(uri);

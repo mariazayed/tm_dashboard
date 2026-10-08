@@ -5,19 +5,29 @@ import '../../services/plan_service.dart';
 import 'invest_ui.dart';
 
 /// Shows, word for word, what an AI feature would be given about you, and lets
-/// you switch the personal free text off to see the difference.
+/// you switch the personal free text off to see the difference. With a
+/// [question] it shows the complete prompt "Ask your journal" would send.
 class AiContextDialog extends StatefulWidget {
-  const AiContextDialog({super.key, PlanService? service}) : _service = service;
+  const AiContextDialog({
+    super.key,
+    PlanService? service,
+    this.question,
+    this.includeJournal = true,
+    this.includeNotes = true,
+  }) : _service = service;
 
   final PlanService? _service;
+  final String? question;
+  final bool includeJournal;
+  final bool includeNotes;
 
   @override
   State<AiContextDialog> createState() => _AiContextDialogState();
 }
 
 class _AiContextDialogState extends State<AiContextDialog> {
-  bool _journal = true;
-  bool _notes = true;
+  late bool _journal = widget.includeJournal;
+  late bool _notes = widget.includeNotes;
   AiContextPreview? _preview;
   String? _error;
   bool _loading = true;
@@ -42,6 +52,7 @@ class _AiContextDialogState extends State<AiContextDialog> {
       final preview = await _service.aiContext(
         includeJournal: _journal,
         includeNotes: _notes,
+        question: widget.question,
       );
       if (!mounted || generation != _generation) return;
       setState(() {
@@ -62,8 +73,11 @@ class _AiContextDialogState extends State<AiContextDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final preview = _preview;
+    final chat = widget.question != null;
     return AlertDialog(
-      title: const Text('What an AI would see'),
+      title: Text(
+        chat ? 'What will be sent for this question' : 'What an AI would see',
+      ),
       content: SizedBox(
         width: 640,
         child: Column(
@@ -79,7 +93,9 @@ class _AiContextDialogState extends State<AiContextDialog> {
               key: const Key('include-journal'),
               dense: true,
               contentPadding: EdgeInsets.zero,
-              title: const Text('Include recent journal entries'),
+              title: Text(
+                chat ? 'Use journal entries' : 'Include recent journal entries',
+              ),
               value: _journal,
               onChanged: (v) {
                 setState(() => _journal = v);
@@ -90,19 +106,36 @@ class _AiContextDialogState extends State<AiContextDialog> {
               key: const Key('include-notes'),
               dense: true,
               contentPadding: EdgeInsets.zero,
-              title: const Text('Include recent learning notes'),
+              title: Text(
+                chat ? 'Use learning notes' : 'Include recent learning notes',
+              ),
               value: _notes,
               onChanged: (v) {
                 setState(() => _notes = v);
                 _load();
               },
             ),
+            if (preview?.systemPrompt != null && !_loading)
+              ExpansionTile(
+                key: const Key('context-system'),
+                tilePadding: EdgeInsets.zero,
+                title: const Text('Standing instructions'),
+                children: [
+                  SelectableText(
+                    preview!.systemPrompt!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
             if (preview != null && !_loading)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Text(
                   '${preview.characters} of ${preview.maxCharacters} characters'
-                  '${preview.truncated ? ' (older entries were left out)' : ''}',
+                  '${preview.truncated ? ' (older entries were left out)' : ''}'
+                  '${chat ? ' · ${preview.snippets} pieces of your writing' : ''}',
                   key: const Key('context-size'),
                   style: theme.textTheme.bodySmall,
                 ),

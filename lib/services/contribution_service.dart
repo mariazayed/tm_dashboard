@@ -14,7 +14,6 @@ class InvestApiException implements Exception {
   final String message;
   final int? statusCode;
 
-
   @override
   String toString() => message;
 }
@@ -120,7 +119,6 @@ class ContributionService {
   }
 
   static String messageFrom(int status, String body) {
-    if (status == 401) return 'Your session expired. Please sign in again.';
     try {
       final json = jsonDecode(body);
       if (json is Map) {

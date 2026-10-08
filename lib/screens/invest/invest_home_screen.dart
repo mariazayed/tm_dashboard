@@ -172,6 +172,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                           context.goNamed(RouteNames.investContributions),
                       child: const Text('Contributions'),
                     ),
+                    FilledButton.tonal(
+                      key: const Key('ask-journal'),
+                      onPressed: () => context.goNamed(RouteNames.investAsk),
+                      child: const Text('Ask your journal'),
+                    ),
                     OutlinedButton(
                       onPressed: () =>
                           context.goNamed(RouteNames.investLearning),

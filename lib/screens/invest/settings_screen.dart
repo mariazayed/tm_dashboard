@@ -388,10 +388,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _ai == null
                   ? 'AI status is unavailable right now.'
                   : _ai!.configured
-                  ? 'The server is set up for AI (model ${_ai!.model}). No AI feature is switched '
-                        'on yet, so nothing about you has been sent anywhere.'
-                  : 'Not set up. ${_ai!.reason ?? ''}. No AI feature is switched on yet, so '
-                        'nothing about you has been sent anywhere.',
+                  ? 'The server is set up for AI (model ${_ai!.model}). Nothing about '
+                        'you is sent until you ask a question under "Ask your journal".'
+                  : 'Not set up. ${_ai!.reason ?? ''}. Nothing about you is sent '
+                        'anywhere.',
               key: const Key('ai-status'),
               style: theme.textTheme.bodySmall,
             ),

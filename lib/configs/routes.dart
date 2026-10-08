@@ -1,15 +1,10 @@
-import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tm_dashboard/screens/strategies/strategy_screen.dart';
 import 'package:tm_dashboard/screens/strict_rules/reminder_notes_screen.dart';
 
 import '../constants/route_names.dart';
 import '../screens/assets/assets_screen.dart';
-import '../screens/auth/auth_cubit.dart';
-import '../screens/auth/auth_guard.dart';
-import '../screens/auth/login_screen.dart';
 import '../screens/invest/contributions_screen.dart';
 import '../screens/invest/invest_home_screen.dart';
 import '../screens/invest/journal_screen.dart';
@@ -31,30 +26,8 @@ import '../screens/trade_journal/trade_journal_screen.dart';
 import '../screens/trading_hours/trading_hours_screen.dart';
 import '../widgets/menu_bar.dart';
 
-/// Re-runs the router redirect whenever the auth state changes.
-class _AuthRefresh extends ChangeNotifier {
-  _AuthRefresh(Stream<AuthStatus> stream) {
-    _sub = stream.listen((_) => notifyListeners());
-  }
-
-  late final StreamSubscription<AuthStatus> _sub;
-
-  @override
-  void dispose() {
-    _sub.cancel();
-    super.dispose();
-  }
-}
-
 final GoRouter routes = GoRouter(
-  refreshListenable: _AuthRefresh(authCubit.stream),
-  redirect: (context, state) => authRedirect(authCubit.state, state.uri),
   routes: [
-    GoRoute(
-      name: RouteNames.login,
-      path: loginPath,
-      builder: (context, state) => const LoginScreen(),
-    ),
     ShellRoute(
       builder: (context, state, child) {
         return MainMenu(child: child);

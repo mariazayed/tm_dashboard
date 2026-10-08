@@ -7,7 +7,6 @@ import '../../models/invest/journal_model.dart';
 import '../../services/contribution_service.dart';
 import '../../services/journal_service.dart';
 import '../../widgets/md_editor_field.dart';
-import '../auth/auth_cubit.dart';
 import 'journal_entry_sheet.dart';
 
 /// Timeline of notes, check-ins and decisions with search and filters.
@@ -102,7 +101,6 @@ class _JournalScreenState extends State<JournalScreen> {
         _loading = false;
       });
     } on InvestApiException catch (e) {
-      if (e.unauthorized) await authCubit.logout();
       if (!mounted || generation != _generation) return;
       setState(() {
         _error = e.message;

@@ -113,23 +113,12 @@ void main() {
       });
     });
 
-    test('status goes to the status route and a 401 is flagged', () async {
+    test('status goes to the status route', () async {
       final r = Recorder(
         (_) async => ok({'configured': false, 'model': null, 'reason': 'x'}),
       );
       await PlanService(api: r.api()).aiStatus();
       expect(r.requests.single.url.path, '/api/v1/invest/ai/status');
-      final unauth = Recorder((_) async => http.Response('', 401));
-      await expectLater(
-        PlanService(api: unauth.api()).aiContext(),
-        throwsA(
-          isA<InvestApiException>().having(
-            (e) => e.unauthorized,
-            'unauthorized',
-            isTrue,
-          ),
-        ),
-      );
     });
   });
 

@@ -218,17 +218,6 @@ void main() {
         expect(result.sent, isFalse);
         expect(result.error, 'SMTP down');
 
-        final unauth = Recorder((_) async => http.Response('', 401));
-        await expectLater(
-          PlanService(api: unauth.api()).reminderStatus(),
-          throwsA(
-            isA<InvestApiException>().having(
-              (e) => e.unauthorized,
-              'unauthorized',
-              isTrue,
-            ),
-          ),
-        );
       },
     );
   });

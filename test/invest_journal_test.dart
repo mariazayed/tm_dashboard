@@ -172,17 +172,6 @@ void main() {
           ),
         ),
       );
-      final unauth = serviceWith((_) async => http.Response('', 401));
-      await expectLater(
-        unauth.tags(),
-        throwsA(
-          isA<InvestApiException>().having(
-            (e) => e.unauthorized,
-            'unauthorized',
-            isTrue,
-          ),
-        ),
-      );
     });
 
     test('delete accepts 204', () async {

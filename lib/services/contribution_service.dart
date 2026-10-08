@@ -7,14 +7,13 @@ import '../models/invest/invest_settings_model.dart';
 import '../models/invest/performance_model.dart';
 import 'api_client.dart';
 
-/// A failed call to the invest API. [statusCode] 401 means the login expired.
+/// A failed call to the invest API.
 class InvestApiException implements Exception {
   const InvestApiException(this.message, {this.statusCode});
 
   final String message;
   final int? statusCode;
 
-  bool get unauthorized => statusCode == 401;
 
   @override
   String toString() => message;

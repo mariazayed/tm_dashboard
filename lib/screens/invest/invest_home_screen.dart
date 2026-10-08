@@ -8,7 +8,6 @@ import '../../models/invest/money.dart';
 import '../../models/invest/performance_model.dart';
 import '../../services/plan_service.dart';
 import '../../services/contribution_service.dart';
-import '../auth/auth_cubit.dart';
 import 'contribution_status_card.dart';
 import 'performance_card.dart';
 import 'projection_panel.dart';
@@ -83,8 +82,6 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
         results[3] as List<String>,
       );
     } on InvestApiException catch (e) {
-      // Token expired or revoked: drop to the login screen.
-      if (e.unauthorized) await authCubit.logout();
       rethrow;
     }
   }
@@ -103,7 +100,6 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
         });
       }
     } on InvestApiException catch (e) {
-      if (e.unauthorized) await authCubit.logout();
       message = e.message;
     } catch (_) {
       message = 'Could not reach the server';
@@ -194,10 +190,6 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                       onPressed: () =>
                           context.goNamed(RouteNames.investSettings),
                       child: const Text('Settings'),
-                    ),
-                    OutlinedButton(
-                      onPressed: authCubit.logout,
-                      child: const Text('Log out'),
                     ),
                   ],
                 ),

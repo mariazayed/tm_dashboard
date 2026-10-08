@@ -105,6 +105,11 @@ The **Invest** menu entry opens a personal investing tracker (plan: $300/month i
   used. It needs the server to have AI switched on (`ai.enabled`, see `docs/INVESTMENT_TRACKER.md`); until
   then the screen says why and nothing is sent. *Cancel* only stops waiting: the server may still finish the
   call, which still counts toward the day's limit.
+- **Recent consistency** (on the Rules page): the last 30 days checked against your own rules by plain code on the
+  server, so it works with AI off. It flags a deviation without an earlier decision or with too short a wait, a plan
+  change with no journal entry in the week before, and a missed month with no note. Tag an entry `decision` when you
+  decide to deviate and `deviation` when you act. The wait is *Settings > Your rules* (hours; 0 turns that check off).
+  Findings are prompts to look, not verdicts, and nothing is stored or marked.
 - **AI status:** *Settings > AI assistant* says whether the server could call a model (the key lives only
   on the server and is never shown) and has *See what an AI would be shown*: the exact standing context,
   with switches to leave out your journal and learning notes and a counter against the 12,000-character

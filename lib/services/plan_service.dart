@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../constants/api_constants.dart';
 import '../models/invest/invest_settings_model.dart';
 import '../models/invest/plan_model.dart';
+import '../models/invest/rule_check_model.dart';
 import 'api_client.dart';
 import 'contribution_service.dart';
 
@@ -107,6 +108,25 @@ class PlanService {
     _check(response.statusCode, response.body, {200});
     return AiContextPreview.fromJson(jsonDecode(response.body));
   }
+
+  /// Checks a date range against your own rules (a wait before deviating, a
+  /// reason written before a plan change, a note for a missed month). Plain
+  /// code on the server: it works with AI off and sends nothing anywhere.
+  Future<RuleCheckModel> ruleCheck({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final response = await _api.post(
+      Uri.parse('$_base/ai/rule-check'),
+      headers: _json,
+      body: jsonEncode({'from': _date(from), 'to': _date(to)}),
+    );
+    _check(response.statusCode, response.body, {200});
+    return RuleCheckModel.fromJson(jsonDecode(response.body));
+  }
+
+  static String _date(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   /// Everything the tracker stores, as the server's JSON export (pretty-printed
   /// would be wasted bytes here, so it is returned as the server sent it).

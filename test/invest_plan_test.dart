@@ -31,6 +31,7 @@ Map<String, dynamic> settingsJson({
   bool reminders = false,
   String? email,
   int followup = 3,
+  int waitHours = 72,
 }) => {
   'monthlyAmountCents': cents,
   'currency': currency,
@@ -41,6 +42,22 @@ Map<String, dynamic> settingsJson({
   'remindersEnabled': reminders,
   'reminderEmail': email,
   'reminderFollowupDays': followup,
+  'ruleWaitHours': waitHours,
+};
+
+Map<String, dynamic> quietRuleCheckJson() => {
+  'from': '2026-09-17',
+  'to': '2026-10-16',
+  'waitHours': 72,
+  'findings': [],
+  'checks': [
+    {
+      'code': 'WAIT_PERIOD',
+      'label': 'Wait before a deviation',
+      'status': 'RAN',
+      'note': null,
+    },
+  ],
 };
 
 Map<String, dynamic> reminderStatusJson({
@@ -67,6 +84,10 @@ class Recorder {
     final api = ApiClient(
       client: MockClient((req) {
         requests.add(req);
+        // The Rules screen also asks for its consistency card; most tests here are not about it.
+        if (req.url.path.endsWith('/ai/rule-check')) {
+          return Future.value(ok(quietRuleCheckJson()));
+        }
         return handler(req);
       }),
     );
@@ -217,7 +238,6 @@ void main() {
         final result = await PlanService(api: r.api()).sendTestReminder();
         expect(result.sent, isFalse);
         expect(result.error, 'SMTP down');
-
       },
     );
   });
@@ -581,6 +601,65 @@ void main() {
       expect(sent['reminderFollowupDays'], 3);
       expect(find.byKey(const Key('saved-note')), findsOneWidget);
     });
+
+    testWidgets(
+      'the wait before a deviation loads, defaults for an old server, and is sent',
+      (tester) async {
+        final old = settingsJson()..remove('ruleWaitHours');
+        await pump(tester, server(settings: old));
+        expect(
+          text(tester, 'wait-hours-field'),
+          '72',
+          reason: 'an old server has no such field',
+        );
+
+        final r = server(settings: settingsJson(waitHours: 48));
+        await pump(tester, r);
+        expect(text(tester, 'wait-hours-field'), '48');
+        await tester.enterText(
+          find.byKey(const Key('wait-hours-field')),
+          ' 0 ',
+        );
+        await tester.ensureVisible(find.byKey(const Key('save-settings')));
+        await tester.tap(find.byKey(const Key('save-settings')));
+        await tester.pumpAndSettle();
+        final sent =
+            jsonDecode(r.where('PUT', '/settings').single.body)
+                as Map<String, dynamic>;
+        expect(sent['ruleWaitHours'], 0);
+      },
+    );
+
+    testWidgets(
+      'a wait that is not a whole number from 0 to 720 is caught before any request',
+      (tester) async {
+        final r = server();
+        await pump(tester, r);
+        for (final bad in ['', 'abc', '-1', '721', '1.5']) {
+          await tester.enterText(
+            find.byKey(const Key('wait-hours-field')),
+            bad,
+          );
+          await tester.ensureVisible(find.byKey(const Key('save-settings')));
+          await tester.tap(find.byKey(const Key('save-settings')));
+          await tester.pumpAndSettle();
+          expect(
+            find.text('The wait must be a whole number from 0 to 720 hours'),
+            findsOneWidget,
+            reason: '"$bad"',
+          );
+          expect(r.where('PUT', '/settings'), isEmpty);
+        }
+        await tester.enterText(
+          find.byKey(const Key('wait-hours-field')),
+          '720',
+        );
+        await tester.ensureVisible(find.byKey(const Key('save-settings')));
+        await tester.tap(find.byKey(const Key('save-settings')));
+        await tester.pumpAndSettle();
+        expect(r.where('PUT', '/settings'), hasLength(1));
+      },
+    );
 
     testWidgets('bad input is caught before any request', (tester) async {
       final r = server();

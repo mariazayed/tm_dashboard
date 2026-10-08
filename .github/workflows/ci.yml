@@ -17,5 +17,5 @@ jobs:
       - run: >
           flutter analyze lib/services/api_client.dart lib/services/ai_chat_service.dart
           lib/screens/invest lib/models/invest lib/services/contribution_service.dart lib/services/journal_service.dart lib/services/learning_service.dart lib/services/plan_service.dart
-          lib/configs/routes.dart lib/main.dart test/invest_contributions_test.dart test/invest_performance_test.dart test/invest_dashboard_test.dart test/invest_journal_test.dart test/invest_learning_test.dart test/invest_plan_test.dart test/invest_flow_test.dart test/invest_ai_test.dart test/invest_chat_test.dart test/web_manifest_test.dart
+          lib/configs/routes.dart lib/main.dart test/invest_contributions_test.dart test/invest_performance_test.dart test/invest_dashboard_test.dart test/invest_journal_test.dart test/invest_learning_test.dart test/invest_plan_test.dart test/invest_flow_test.dart test/invest_ai_test.dart test/invest_chat_test.dart test/invest_consistency_test.dart test/web_manifest_test.dart
       - run: flutter test $(ls test/*_test.dart test/*/*_test.dart | grep -v widget_test.dart)

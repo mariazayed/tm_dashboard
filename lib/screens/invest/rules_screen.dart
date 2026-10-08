@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/invest/plan_model.dart';
 import '../../services/plan_service.dart';
+import 'consistency_card.dart';
 import 'invest_ui.dart';
 
 /// Add, edit, delete and drag-to-reorder the rules.
@@ -191,6 +192,8 @@ class _RulesScreenState extends State<RulesScreen> {
                     },
                   ),
           ),
+          const SizedBox(height: 8),
+          ConsistencyCard(service: _service),
         ],
       ),
     );

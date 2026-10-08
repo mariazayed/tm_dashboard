@@ -112,17 +112,43 @@ class PlanService {
   /// Checks a date range against your own rules (a wait before deviating, a
   /// reason written before a plan change, a note for a missed month). Plain
   /// code on the server: it works with AI off and sends nothing anywhere.
+  ///
+  /// With [includeModel] the server also asks the AI to read the journal in
+  /// the range. That sends your rules and the text of those entries to the AI
+  /// provider, so it is off unless asked for.
   Future<RuleCheckModel> ruleCheck({
     required DateTime from,
     required DateTime to,
+    bool includeModel = false,
   }) async {
     final response = await _api.post(
       Uri.parse('$_base/ai/rule-check'),
       headers: _json,
-      body: jsonEncode({'from': _date(from), 'to': _date(to)}),
+      body: jsonEncode({
+        'from': _date(from),
+        'to': _date(to),
+        if (includeModel) 'includeModel': true,
+      }),
     );
     _check(response.statusCode, response.body, {200});
     return RuleCheckModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// The exact prompt the AI part of the check would send for this range.
+  Future<AiContextPreview> ruleCheckPreview({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final uri = Uri.parse('$_base/ai/context').replace(
+      queryParameters: {
+        'feature': 'rulecheck',
+        'from': _date(from),
+        'to': _date(to),
+      },
+    );
+    final response = await _api.get(uri);
+    _check(response.statusCode, response.body, {200});
+    return AiContextPreview.fromJson(jsonDecode(response.body));
   }
 
   static String _date(DateTime d) =>

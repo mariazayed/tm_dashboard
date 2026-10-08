@@ -110,6 +110,13 @@ The **Invest** menu entry opens a personal investing tracker (plan: $300/month i
   change with no journal entry in the week before, and a missed month with no note. Tag an entry `decision` when you
   decide to deviate and `deviation` when you act. The wait is *Settings > Your rules* (hours; 0 turns that check off).
   Findings are prompts to look, not verdicts, and nothing is stored or marked.
+- **Review** (the *Review* button on the Journal page, `/invest/review`): pick the last 7, 30 or 90 days and run the same
+  checks as *Recent consistency*. Optionally switch on **Also let AI read the journal**: the AI then reads your rules and
+  the journal entries in that range and suggests entries that may go against one of your own rules. It is off by default,
+  says what it sends, and *See what will be sent* shows the exact prompt first. Each suggestion shows its confidence, the
+  rule, the reason, your own words as a quote (checked to be really in the entry), and *Add a reflection*, which opens a
+  new journal entry for you to write. Low-confidence suggestions are hidden until you ask. If the AI part cannot run you
+  still get the exact checks, with the reason. It never changes or marks an entry.
 - **AI status:** *Settings > AI assistant* says whether the server could call a model (the key lives only
   on the server and is never shown) and has *See what an AI would be shown*: the exact standing context,
   with switches to leave out your journal and learning notes and a counter against the 12,000-character

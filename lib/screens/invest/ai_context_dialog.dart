@@ -14,12 +14,20 @@ class AiContextDialog extends StatefulWidget {
     this.question,
     this.includeJournal = true,
     this.includeNotes = true,
+    this.checkFrom,
+    this.checkTo,
   }) : _service = service;
 
   final PlanService? _service;
   final String? question;
   final bool includeJournal;
   final bool includeNotes;
+
+  /// With both set it shows the prompt of the AI journal check for that range.
+  final DateTime? checkFrom;
+  final DateTime? checkTo;
+
+  bool get _isCheck => checkFrom != null && checkTo != null;
 
   @override
   State<AiContextDialog> createState() => _AiContextDialogState();
@@ -49,11 +57,16 @@ class _AiContextDialogState extends State<AiContextDialog> {
       _error = null;
     });
     try {
-      final preview = await _service.aiContext(
-        includeJournal: _journal,
-        includeNotes: _notes,
-        question: widget.question,
-      );
+      final preview = widget._isCheck
+          ? await _service.ruleCheckPreview(
+              from: widget.checkFrom!,
+              to: widget.checkTo!,
+            )
+          : await _service.aiContext(
+              includeJournal: _journal,
+              includeNotes: _notes,
+              question: widget.question,
+            );
       if (!mounted || generation != _generation) return;
       setState(() {
         _preview = preview;
@@ -73,10 +86,15 @@ class _AiContextDialogState extends State<AiContextDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final preview = _preview;
-    final chat = widget.question != null;
+    final check = widget._isCheck;
+    final chat = widget.question != null || check;
     return AlertDialog(
       title: Text(
-        chat ? 'What will be sent for this question' : 'What an AI would see',
+        check
+            ? 'What will be sent for this check'
+            : chat
+            ? 'What will be sent for this question'
+            : 'What an AI would see',
       ),
       content: SizedBox(
         width: 640,
@@ -89,32 +107,36 @@ class _AiContextDialogState extends State<AiContextDialog> {
               'email and login details are never part of it.',
               style: theme.textTheme.bodySmall,
             ),
-            SwitchListTile(
-              key: const Key('include-journal'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                chat ? 'Use journal entries' : 'Include recent journal entries',
+            if (!check)
+              SwitchListTile(
+                key: const Key('include-journal'),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  chat
+                      ? 'Use journal entries'
+                      : 'Include recent journal entries',
+                ),
+                value: _journal,
+                onChanged: (v) {
+                  setState(() => _journal = v);
+                  _load();
+                },
               ),
-              value: _journal,
-              onChanged: (v) {
-                setState(() => _journal = v);
-                _load();
-              },
-            ),
-            SwitchListTile(
-              key: const Key('include-notes'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                chat ? 'Use learning notes' : 'Include recent learning notes',
+            if (!check)
+              SwitchListTile(
+                key: const Key('include-notes'),
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  chat ? 'Use learning notes' : 'Include recent learning notes',
+                ),
+                value: _notes,
+                onChanged: (v) {
+                  setState(() => _notes = v);
+                  _load();
+                },
               ),
-              value: _notes,
-              onChanged: (v) {
-                setState(() => _notes = v);
-                _load();
-              },
-            ),
             if (preview?.systemPrompt != null && !_loading)
               ExpansionTile(
                 key: const Key('context-system'),
@@ -135,7 +157,7 @@ class _AiContextDialogState extends State<AiContextDialog> {
                 child: Text(
                   '${preview.characters} of ${preview.maxCharacters} characters'
                   '${preview.truncated ? ' (older entries were left out)' : ''}'
-                  '${chat ? ' · ${preview.snippets} pieces of your writing' : ''}',
+                  '${chat ? ' · ${preview.snippets} ${check ? 'journal entries' : 'pieces of your writing'}' : ''}',
                   key: const Key('context-size'),
                   style: theme.textTheme.bodySmall,
                 ),

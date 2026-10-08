@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../constants/route_names.dart';
 import '../../models/invest/journal_model.dart';
 import '../../services/contribution_service.dart';
 import '../../services/journal_service.dart';
@@ -212,6 +214,11 @@ class _JournalScreenState extends State<JournalScreen> {
               OutlinedButton(
                 onPressed: _startCheckin,
                 child: const Text('Monthly check-in'),
+              ),
+              OutlinedButton(
+                key: const Key('open-review'),
+                onPressed: () => context.goNamed(RouteNames.investReview),
+                child: const Text('Review'),
               ),
             ],
           ),

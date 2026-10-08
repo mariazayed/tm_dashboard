@@ -7,10 +7,24 @@ class RuleFindingModel {
     required this.message,
     this.entryIds = const [],
     this.confidence = 'HIGH',
+    this.source = 'DETERMINISTIC',
+    this.ruleId,
+    this.quote,
   });
 
-  /// WAIT_PERIOD, PLAN_CHANGE or MISSED_MONTH.
+  /// WAIT_PERIOD, PLAN_CHANGE or MISSED_MONTH (exact), or MODEL_REVIEW.
   final String check;
+
+  /// DETERMINISTIC (plain code on the server) or MODEL (the AI's reading).
+  final String source;
+
+  /// The rule it relates to (AI findings only).
+  final int? ruleId;
+
+  /// Your own words, checked to be really in the entry (AI findings only).
+  final String? quote;
+
+  bool get isModel => source == 'MODEL';
 
   /// yyyy-MM-dd.
   final String date;
@@ -27,6 +41,9 @@ class RuleFindingModel {
             .map((e) => (e as num).toInt())
             .toList(),
         confidence: json['confidence'] as String? ?? 'HIGH',
+        source: json['source'] as String? ?? 'DETERMINISTIC',
+        ruleId: (json['ruleId'] as num?)?.toInt(),
+        quote: json['quote'] as String?,
       );
 }
 
@@ -57,6 +74,42 @@ class RuleCheckInfoModel {
       );
 }
 
+/// What happened with the optional AI reading of the journal.
+class RuleCheckModelInfo {
+  const RuleCheckModelInfo({
+    required this.requested,
+    required this.ran,
+    this.reason,
+    this.entriesChecked = 0,
+    this.entriesSkipped = 0,
+    this.dropped = 0,
+  });
+
+  final bool requested;
+  final bool ran;
+
+  /// Why it did not run (AI off, a limit reached, nothing to read, ...).
+  final String? reason;
+  final int entriesChecked;
+
+  /// Entries in the range the AI did not read (only the newest are sent).
+  final int entriesSkipped;
+
+  /// Suggestions discarded because they named a rule, entry or text that was
+  /// not really there, or gave advice.
+  final int dropped;
+
+  factory RuleCheckModelInfo.fromJson(Map<String, dynamic> json) =>
+      RuleCheckModelInfo(
+        requested: json['requested'] as bool? ?? false,
+        ran: json['ran'] as bool? ?? false,
+        reason: json['reason'] as String?,
+        entriesChecked: (json['entriesChecked'] as num?)?.toInt() ?? 0,
+        entriesSkipped: (json['entriesSkipped'] as num?)?.toInt() ?? 0,
+        dropped: (json['dropped'] as num?)?.toInt() ?? 0,
+      );
+}
+
 class RuleCheckModel {
   const RuleCheckModel({
     required this.from,
@@ -64,6 +117,7 @@ class RuleCheckModel {
     required this.waitHours,
     required this.findings,
     required this.checks,
+    this.model,
   });
 
   final String from;
@@ -71,6 +125,9 @@ class RuleCheckModel {
   final int waitHours;
   final List<RuleFindingModel> findings;
   final List<RuleCheckInfoModel> checks;
+
+  /// Null from a server that predates the AI reading.
+  final RuleCheckModelInfo? model;
 
   factory RuleCheckModel.fromJson(Map<String, dynamic> json) => RuleCheckModel(
     from: json['from'] as String,
@@ -82,5 +139,8 @@ class RuleCheckModel {
     checks: ((json['checks'] as List?) ?? const [])
         .map((e) => RuleCheckInfoModel.fromJson(e as Map<String, dynamic>))
         .toList(),
+    model: json['model'] == null
+        ? null
+        : RuleCheckModelInfo.fromJson(json['model'] as Map<String, dynamic>),
   );
 }

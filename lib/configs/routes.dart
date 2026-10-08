@@ -5,6 +5,7 @@ import 'package:tm_dashboard/screens/strict_rules/reminder_notes_screen.dart';
 import '../constants/route_names.dart';
 import '../screens/assets/assets_screen.dart';
 import '../screens/invest/ai_chat_screen.dart';
+import '../screens/invest/ai_review_screen.dart';
 import '../screens/invest/contributions_screen.dart';
 import '../screens/invest/invest_home_screen.dart';
 import '../screens/invest/journal_screen.dart';
@@ -67,6 +68,11 @@ final GoRouter routes = GoRouter(
                   name: RouteNames.investAsk,
                   path: 'ask',
                   builder: (context, state) => const AiChatScreen(),
+                ),
+                GoRoute(
+                  name: RouteNames.investReview,
+                  path: 'review',
+                  builder: (context, state) => const AiReviewScreen(),
                 ),
                 GoRoute(
                   name: RouteNames.investContributions,

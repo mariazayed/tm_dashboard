@@ -150,7 +150,7 @@ class PlanService {
       body: jsonEncode({
         'body': body,
         'entryType': entryType,
-        if (mood != null) 'mood': mood,
+        'mood': ?mood,
         'existingTags': existingTags,
       }),
     );

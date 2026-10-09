@@ -101,80 +101,94 @@ class _TradeRowTileState extends State<TradeRowTile> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          trade.asset.symbol,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 15,
-                                            letterSpacing: -0.2,
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            trade.asset.symbol,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 15,
+                                              letterSpacing: -0.2,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      _directionChip(isLong, directionColor),
-                                      if (!trade.isReviewed) ...[
-                                        const SizedBox(width: 6),
-                                        Tooltip(
-                                          message: 'Not reviewed yet',
-                                          child: Container(
-                                            padding: const EdgeInsets.all(3),
-                                            decoration: BoxDecoration(
-                                              color: semantic.orange.withValues(
-                                                alpha: 0.12,
+                                        const SizedBox(width: 8),
+                                        _directionChip(isLong, directionColor),
+                                        if (!trade.isReviewed) ...[
+                                          const SizedBox(width: 6),
+                                          Tooltip(
+                                            message: 'Not reviewed yet',
+                                            child: Container(
+                                              padding: const EdgeInsets.all(3),
+                                              decoration: BoxDecoration(
+                                                color: semantic.orange
+                                                    .withValues(alpha: 0.12),
+                                                shape: BoxShape.circle,
                                               ),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              Icons.schedule,
-                                              size: 11,
-                                              color: semantic.orange,
+                                              child: Icon(
+                                                Icons.schedule,
+                                                size: 11,
+                                                color: semantic.orange,
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                        ],
                                       ],
-                                    ],
+                                    ),
                                   ),
                                   const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.event_outlined,
-                                        size: 13,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        _dateFormat.format(trade.entryDateTime),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                      if (trade.strategy != null) ...[
-                                        const SizedBox(width: 10),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                         Icon(
-                                          Icons.label_outline,
+                                          Icons.event_outlined,
                                           size: 13,
                                           color: colorScheme.onSurfaceVariant,
                                         ),
                                         const SizedBox(width: 4),
-                                        Expanded(
-                                          child: Text(
-                                            trade.strategy!.name,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color:
-                                                  colorScheme.onSurfaceVariant,
-                                            ),
+                                        Text(
+                                          _dateFormat.format(
+                                            trade.entryDateTime,
+                                          ),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: colorScheme.onSurfaceVariant,
                                           ),
                                         ),
+                                        if (trade.strategy != null) ...[
+                                          const SizedBox(width: 10),
+                                          Icon(
+                                            Icons.label_outline,
+                                            size: 13,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          ConstrainedBox(
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 140,
+                                            ),
+                                            child: Text(
+                                              trade.strategy!.name,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ],
-                                    ],
+                                    ),
                                   ),
                                 ],
                               ),

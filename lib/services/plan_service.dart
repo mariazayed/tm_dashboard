@@ -2,7 +2,10 @@ import 'dart:convert';
 
 import '../constants/api_constants.dart';
 import '../models/invest/invest_settings_model.dart';
+import '../models/invest/checkin_summary_model.dart';
+import '../models/invest/tag_suggestion_model.dart';
 import '../models/invest/plan_model.dart';
+import '../models/invest/rule_check_model.dart';
 import 'api_client.dart';
 import 'contribution_service.dart';
 
@@ -89,21 +92,135 @@ class PlanService {
   }
 
   /// What an AI feature would be shown right now. The two flags switch the
-  /// personal free text (journal, learning notes) in or out.
+  /// personal free text (journal, learning notes) in or out. With [question]
+  /// it is instead the complete prompt "Ask your journal" would send for it.
   Future<AiContextPreview> aiContext({
     bool includeJournal = true,
     bool includeNotes = true,
+    String? question,
   }) async {
     final uri = Uri.parse('$_base/ai/context').replace(
       queryParameters: {
         'includeJournal': '$includeJournal',
         'includeNotes': '$includeNotes',
+        if (question != null) ...{'feature': 'chat', 'q': question},
       },
     );
     final response = await _api.get(uri);
     _check(response.statusCode, response.body, {200});
     return AiContextPreview.fromJson(jsonDecode(response.body));
   }
+
+  /// Checks a date range against your own rules (a wait before deviating, a
+  /// reason written before a plan change, a note for a missed month). Plain
+  /// code on the server: it works with AI off and sends nothing anywhere.
+  ///
+  /// With [includeModel] the server also asks the AI to read the journal in
+  /// the range. That sends your rules and the text of those entries to the AI
+  /// provider, so it is off unless asked for.
+  Future<RuleCheckModel> ruleCheck({
+    required DateTime from,
+    required DateTime to,
+    bool includeModel = false,
+  }) async {
+    final response = await _api.post(
+      Uri.parse('$_base/ai/rule-check'),
+      headers: _json,
+      body: jsonEncode({
+        'from': _date(from),
+        'to': _date(to),
+        if (includeModel) 'includeModel': true,
+      }),
+    );
+    _check(response.statusCode, response.body, {200});
+    return RuleCheckModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// Tags the AI proposes for an entry draft. Sends [body] and the names of
+  /// the owner's tags to the AI provider, so call it only when asked to.
+  Future<List<TagSuggestionModel>> tagSuggestions({
+    required String body,
+    required String entryType,
+    int? mood,
+    List<String> existingTags = const [],
+  }) async {
+    final response = await _api.post(
+      Uri.parse('$_base/ai/tag-suggestions'),
+      headers: _json,
+      body: jsonEncode({
+        'body': body,
+        'entryType': entryType,
+        'mood': ?mood,
+        'existingTags': existingTags,
+      }),
+    );
+    _check(response.statusCode, response.body, {200});
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return ((json['suggestions'] as List?) ?? const [])
+        .map((e) => TagSuggestionModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// A month's facts, worked out by the server (they need no AI). With
+  /// [includeModel] it also asks the AI for a draft summary of them, which
+  /// sends the facts and, unless [includeJournal] is false, that month's
+  /// journal text to the AI provider. [month] is yyyy-MM.
+  Future<CheckinSummaryModel> checkinSummary({
+    required String month,
+    bool includeModel = false,
+    bool includeJournal = true,
+  }) async {
+    final response = await _api.post(
+      Uri.parse('$_base/ai/checkin-summary'),
+      headers: _json,
+      body: jsonEncode({
+        'month': month,
+        if (includeModel) ...{
+          'includeModel': true,
+          'includeJournal': includeJournal,
+        },
+      }),
+    );
+    _check(response.statusCode, response.body, {200});
+    return CheckinSummaryModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// The exact prompt a draft summary of [month] would send.
+  Future<AiContextPreview> checkinPreview({
+    required String month,
+    bool includeJournal = true,
+  }) async {
+    final uri = Uri.parse('$_base/ai/context').replace(
+      queryParameters: {
+        'feature': 'checkin',
+        'month': month,
+        'includeJournal': '$includeJournal',
+      },
+    );
+    final response = await _api.get(uri);
+    _check(response.statusCode, response.body, {200});
+    return AiContextPreview.fromJson(jsonDecode(response.body));
+  }
+
+  /// The exact prompt the AI part of the check would send for this range.
+  Future<AiContextPreview> ruleCheckPreview({
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    final uri = Uri.parse('$_base/ai/context').replace(
+      queryParameters: {
+        'feature': 'rulecheck',
+        'from': _date(from),
+        'to': _date(to),
+      },
+    );
+    final response = await _api.get(uri);
+    _check(response.statusCode, response.body, {200});
+    return AiContextPreview.fromJson(jsonDecode(response.body));
+  }
+
+  static String _date(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   /// Everything the tracker stores, as the server's JSON export (pretty-printed
   /// would be wasted bytes here, so it is returned as the server sent it).

@@ -17,11 +17,12 @@ class RouteNames {
   static const expenses = 'expenses';
   static const expenseReasons = 'expenseReasons';
   static const planner = 'planner';
-  static const login = 'login';
   static const invest = 'invest';
   static const investContributions = 'investContributions';
   static const investJournal = 'investJournal';
   static const investLearning = 'investLearning';
   static const investRules = 'investRules';
   static const investSettings = 'investSettings';
+  static const investAsk = 'investAsk';
+  static const investReview = 'investReview';
 }

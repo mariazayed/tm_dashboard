@@ -175,20 +175,6 @@ void main() {
       );
     });
 
-    test('a 401 is flagged so the screen can sign the user out', () async {
-      final service = serviceWith((_) async => http.Response('', 401));
-      await expectLater(
-        service.getAll(),
-        throwsA(
-          isA<InvestApiException>().having(
-            (e) => e.unauthorized,
-            'unauthorized',
-            isTrue,
-          ),
-        ),
-      );
-    });
-
     test('import sends text/csv and reads a 422 as row errors', () async {
       late http.Request seen;
       final service = serviceWith((req) async {

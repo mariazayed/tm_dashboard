@@ -127,13 +127,19 @@ class _CapitalGrowthChartState extends State<CapitalGrowthChart>
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        value.toStringAsFixed(2),
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w700,
-                          color: lineColor,
-                          height: 1,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            value.toStringAsFixed(2),
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: lineColor,
+                              height: 1,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),

@@ -5,7 +5,6 @@ import '../../models/invest/contribution_model.dart';
 import '../../models/invest/invest_settings_model.dart';
 import '../../models/invest/money.dart';
 import '../../services/contribution_service.dart';
-import '../auth/auth_cubit.dart';
 import 'add_contribution_sheet.dart';
 import 'invest_ui.dart';
 
@@ -31,19 +30,14 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
   }
 
   Future<(InvestSettingsModel, List<ContributionModel>)> _load() async {
-    try {
-      final results = await Future.wait([
-        _service.getSettings(),
-        _service.getAll(),
-      ]);
-      return (
-        results[0] as InvestSettingsModel,
-        results[1] as List<ContributionModel>,
-      );
-    } on InvestApiException catch (e) {
-      if (e.unauthorized) await authCubit.logout();
-      rethrow;
-    }
+    final results = await Future.wait([
+      _service.getSettings(),
+      _service.getAll(),
+    ]);
+    return (
+      results[0] as InvestSettingsModel,
+      results[1] as List<ContributionModel>,
+    );
   }
 
   void _reload() {

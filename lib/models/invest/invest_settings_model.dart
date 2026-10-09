@@ -9,6 +9,7 @@ class InvestSettingsModel {
     this.remindersEnabled = false,
     this.reminderEmail,
     this.reminderFollowupDays = 3,
+    this.ruleWaitHours = 72,
   });
 
   final int monthlyAmountCents;
@@ -21,6 +22,9 @@ class InvestSettingsModel {
   final String? reminderEmail;
   final int reminderFollowupDays;
 
+  /// Hours your rule asks you to wait before a deviation; 0 turns that check off.
+  final int ruleWaitHours;
+
   factory InvestSettingsModel.fromJson(Map<String, dynamic> json) =>
       InvestSettingsModel(
         monthlyAmountCents: json['monthlyAmountCents'] as int,
@@ -32,5 +36,6 @@ class InvestSettingsModel {
         remindersEnabled: json['remindersEnabled'] as bool? ?? false,
         reminderEmail: json['reminderEmail'] as String?,
         reminderFollowupDays: json['reminderFollowupDays'] as int? ?? 3,
+        ruleWaitHours: json['ruleWaitHours'] as int? ?? 72,
       );
 }

@@ -32,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _ticker = TextEditingController();
   final _timezone = TextEditingController();
   final _email = TextEditingController();
+  final _waitHours = TextEditingController();
   int _buyDay = 1;
   int _followup = 3;
   bool _reminders = false;
@@ -61,7 +62,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
-    for (final c in [_amount, _currency, _ticker, _timezone, _email]) {
+    for (final c in [
+      _amount,
+      _currency,
+      _ticker,
+      _timezone,
+      _email,
+      _waitHours,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -105,6 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _email.text = s.reminderEmail ?? '';
     _buyDay = s.buyDay;
     _followup = s.reminderFollowupDays;
+    _waitHours.text = '${s.ruleWaitHours}';
     _reminders = s.remindersEnabled;
     _startDate = s.startDate;
   }
@@ -141,6 +150,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _error = 'Add an email address to turn reminders on');
       return null;
     }
+    final wait = int.tryParse(_waitHours.text.trim());
+    if (wait == null || wait < 0 || wait > 720) {
+      setState(
+        () => _error = 'The wait must be a whole number from 0 to 720 hours',
+      );
+      return null;
+    }
     return {
       'monthlyAmountCents': cents,
       'currency': currency,
@@ -151,6 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'remindersEnabled': _reminders,
       'reminderEmail': email.isEmpty ? null : email,
       'reminderFollowupDays': _followup,
+      'ruleWaitHours': wait,
     };
   }
 
@@ -299,6 +316,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const Divider(height: 40),
+            Text('Your rules', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('wait-hours-field'),
+              controller: _waitHours,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Wait before a deviation (hours)',
+                helperText:
+                    'Used by Recent consistency on the Rules page. 0 turns that check off. '
+                    'Tag an entry decision when you decide, deviation when you act.',
+                helperMaxLines: 3,
+              ),
+            ),
+            const Divider(height: 40),
             Text('Reminders', style: theme.textTheme.titleMedium),
             SwitchListTile(
               key: const Key('reminders-switch'),
@@ -388,10 +420,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _ai == null
                   ? 'AI status is unavailable right now.'
                   : _ai!.configured
-                  ? 'The server is set up for AI (model ${_ai!.model}). No AI feature is switched '
-                        'on yet, so nothing about you has been sent anywhere.'
-                  : 'Not set up. ${_ai!.reason ?? ''}. No AI feature is switched on yet, so '
-                        'nothing about you has been sent anywhere.',
+                  ? 'The server is set up for AI (model ${_ai!.model}). Nothing about '
+                        'you is sent until you ask a question under "Ask your journal".'
+                  : 'Not set up. ${_ai!.reason ?? ''}. Nothing about you is sent '
+                        'anywhere.',
               key: const Key('ai-status'),
               style: theme.textTheme.bodySmall,
             ),

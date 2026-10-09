@@ -8,7 +8,6 @@ import '../../models/invest/money.dart';
 import '../../models/invest/performance_model.dart';
 import '../../services/plan_service.dart';
 import '../../services/contribution_service.dart';
-import '../auth/auth_cubit.dart';
 import 'contribution_status_card.dart';
 import 'performance_card.dart';
 import 'projection_panel.dart';
@@ -65,28 +64,22 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
   >
   _load() async {
     final service = _contributions;
-    try {
-      final results = await Future.wait([
-        service.getSettings(),
-        service.getStatus(),
-        service.getPerformance(),
-        // Rules are a nicety here: if they fail to load, the dashboard still shows.
-        _plan
-            .rules()
-            .then<List<String>>((r) => r.map((e) => e.text).toList())
-            .catchError((_) => <String>[]),
-      ]);
-      return (
-        results[0] as InvestSettingsModel,
-        results[1] as ContributionStatusModel,
-        results[2] as PerformanceModel,
-        results[3] as List<String>,
-      );
-    } on InvestApiException catch (e) {
-      // Token expired or revoked: drop to the login screen.
-      if (e.unauthorized) await authCubit.logout();
-      rethrow;
-    }
+    final results = await Future.wait([
+      service.getSettings(),
+      service.getStatus(),
+      service.getPerformance(),
+      // Rules are a nicety here: if they fail to load, the dashboard still shows.
+      _plan
+          .rules()
+          .then<List<String>>((r) => r.map((e) => e.text).toList())
+          .catchError((_) => <String>[]),
+    ]);
+    return (
+      results[0] as InvestSettingsModel,
+      results[1] as ContributionStatusModel,
+      results[2] as PerformanceModel,
+      results[3] as List<String>,
+    );
   }
 
   Future<void> _refreshPrices() async {
@@ -103,7 +96,6 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
         });
       }
     } on InvestApiException catch (e) {
-      if (e.unauthorized) await authCubit.logout();
       message = e.message;
     } catch (_) {
       message = 'Could not reach the server';
@@ -180,6 +172,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                           context.goNamed(RouteNames.investContributions),
                       child: const Text('Contributions'),
                     ),
+                    FilledButton.tonal(
+                      key: const Key('ask-journal'),
+                      onPressed: () => context.goNamed(RouteNames.investAsk),
+                      child: const Text('Ask your journal'),
+                    ),
                     OutlinedButton(
                       onPressed: () =>
                           context.goNamed(RouteNames.investLearning),
@@ -194,10 +191,6 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                       onPressed: () =>
                           context.goNamed(RouteNames.investSettings),
                       child: const Text('Settings'),
-                    ),
-                    OutlinedButton(
-                      onPressed: authCubit.logout,
-                      child: const Text('Log out'),
                     ),
                   ],
                 ),

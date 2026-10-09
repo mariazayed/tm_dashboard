@@ -172,17 +172,6 @@ void main() {
           ),
         ),
       );
-      final unauth = serviceWith((_) async => http.Response('', 401));
-      await expectLater(
-        unauth.tags(),
-        throwsA(
-          isA<InvestApiException>().having(
-            (e) => e.unauthorized,
-            'unauthorized',
-            isTrue,
-          ),
-        ),
-      );
     });
 
     test('delete accepts 204', () async {
@@ -301,6 +290,13 @@ void main() {
   });
 
   group('JournalEntrySheet', () {
+    // The sheet scrolls in the app; a tall view keeps Save on screen for taps.
+    void tall(WidgetTester tester) {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+    }
+
     Finder bodyField() => find.descendant(
       of: find.byType(MdEditorField),
       matching: find.byType(TextField),
@@ -326,6 +322,7 @@ void main() {
     testWidgets('quick capture sends type, mood, body and tags', (
       tester,
     ) async {
+      tall(tester);
       late Map<String, dynamic> sent;
       final service = serviceWith((req) async {
         sent = jsonDecode(req.body);
@@ -370,6 +367,7 @@ void main() {
     testWidgets(
       'a monthly check-in is prefilled, tagged and linked to the buy',
       (tester) async {
+        tall(tester);
         late Map<String, dynamic> sent;
         final service = serviceWith((req) async {
           sent = jsonDecode(req.body);
@@ -400,6 +398,7 @@ void main() {
     testWidgets('editing updates the entry and keeps its contribution link', (
       tester,
     ) async {
+      tall(tester);
       late http.Request seen;
       final service = serviceWith((req) async {
         seen = req;

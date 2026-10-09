@@ -256,17 +256,6 @@ void main() {
             ),
           ),
         );
-        final unauth = Recorder((_) async => http.Response('', 401)).service();
-        await expectLater(
-          unauth.sources(),
-          throwsA(
-            isA<InvestApiException>().having(
-              (e) => e.unauthorized,
-              'u',
-              isTrue,
-            ),
-          ),
-        );
       },
     );
   });

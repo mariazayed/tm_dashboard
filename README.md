@@ -49,16 +49,10 @@ Cache regression tests:
 flutter test test/api_client_test.dart test/service_cache_test.dart
 ```
 
-## Invest tracker (auth)
+## Invest tracker
 
-The **Invest** menu entry opens a personal investing tracker (plan: $300/month into VT). It is the
-only protected part of the app; the trade-journal screens remain open as before.
+The **Invest** menu entry opens a personal investing tracker (plan: $300/month into VT).
 
-- Sign in with the single-user password configured on `tm-server` (see its
-  `docs/INVESTMENT_TRACKER.md`). The bearer token is kept in `shared_preferences` and re-checked
-  with `GET /api/v1/auth/me` on startup.
-- `ApiClient` attaches `Authorization: Bearer <token>` automatically once signed in.
-- Routes under `/invest` redirect to `/login` when signed out (`lib/screens/auth/auth_guard.dart`).
 - **Contributions** (`/invest/contributions`): add, edit and delete monthly buys. Shares and price
   fill each other in from the amount. The Invest home page shows this month's status (done, due in
   N days, overdue), the streak and a chip per month.
@@ -102,10 +96,42 @@ only protected part of the app; the trade-journal screens remain open as before.
   (it says how many KB). It never touches disk on the device, and it holds your notes, so paste it
   into a file you keep safe. The server also takes nightly JSON backups and has a `pg_dump` script; see
   `docs/INVESTMENT_TRACKER.md` on the server.
-- **AI (groundwork only):** *Settings > AI assistant* says whether the server could call a model (the
-  key lives only on the server and is never shown) and has *See what an AI would be shown*: the exact
-  text, built fresh from your data, with switches to leave out your journal and learning notes and a
-  counter against the 12,000-character limit. No AI feature exists yet, so nothing is sent anywhere.
+- **Ask your journal** (`/invest/ask`, the *Ask your journal* button on the Invest page): a read-only chat
+  over your own rules, journal entries and learning notes. The answer cites the entries it used as chips
+  (tap one to read the excerpt the assistant saw, with a button to open the Journal or Learning screen).
+  *Use journal* and *Use notes* switch those sources off for a question, and *See what will be sent* shows
+  the exact prompt (standing instructions included) before you send. It never changes your data, does not
+  give financial advice (an answer that tries to is replaced), and shows how many of today's AI calls are
+  used. It needs the server to have AI switched on (`ai.enabled`, see `docs/INVESTMENT_TRACKER.md`); until
+  then the screen says why and nothing is sent. *Cancel* only stops waiting: the server may still finish the
+  call, which still counts toward the day's limit.
+- **Recent consistency** (on the Rules page): the last 30 days checked against your own rules by plain code on the
+  server, so it works with AI off. It flags a deviation without an earlier decision or with too short a wait, a plan
+  change with no journal entry in the week before, and a missed month with no note. Tag an entry `decision` when you
+  decide to deviate and `deviation` when you act. The wait is *Settings > Your rules* (hours; 0 turns that check off).
+  Findings are prompts to look, not verdicts, and nothing is stored or marked.
+- **Review** (the *Review* button on the Journal page, `/invest/review`): pick the last 7, 30 or 90 days and run the same
+  checks as *Recent consistency*. Optionally switch on **Also let AI read the journal**: the AI then reads your rules and
+  the journal entries in that range and suggests entries that may go against one of your own rules. It is off by default,
+  says what it sends, and *See what will be sent* shows the exact prompt first. Each suggestion shows its confidence, the
+  rule, the reason, your own words as a quote (checked to be really in the entry), and *Add a reflection*, which opens a
+  new journal entry for you to write. Low-confidence suggestions are hidden until you ask. If the AI part cannot run you
+  still get the exact checks, with the reason. It never changes or marks an entry.
+- **Monthly summary** (the *Summary* tab on Review): choose one of the last six months and see its facts at once
+  (planned and invested amounts, how many days after the buy day you bought, streaks, month-end value, journal counts).
+  These come from your own records and send nothing anywhere. *Write a draft with AI* is a separate, explicit action: it
+  sends the facts and, if *Include my journal entries* is on, the text of the month's recent entries; *See what will be
+  sent* shows the exact prompt first. Every number in the draft is checked against the facts, and a draft that fails the
+  check is not shown (you still see the facts and the reason). *Use in check-in* opens a new entry holding the draft for
+  you to edit; nothing is saved unless you save it.
+- **Suggest tags** (in the journal entry sheet, under the tags): press it and the AI proposes up to five tags for the
+  note you are writing, preferring tags you already use and marking any new ones "(new)". It sends the note and the names
+  of your tags to the AI provider, only when you press the button. Tapping a suggestion adds it to the entry's tags;
+  nothing is saved until you save the entry. If AI is off or unavailable you just see why and keep your draft.
+- **AI status:** *Settings > AI assistant* says whether the server could call a model (the key lives only
+  on the server and is never shown) and has *See what an AI would be shown*: the exact standing context,
+  with switches to leave out your journal and learning notes and a counter against the 12,000-character
+  limit.
 - **Install as an app:** the web build is installable (Chrome/Edge: *Install*; Safari: *Add to Home
   Screen*). `web/manifest.json` is checked by a test (name, start URL, standalone display, 192/512 and
   maskable icons that exist and match their declared sizes, theme colour). The icons are still

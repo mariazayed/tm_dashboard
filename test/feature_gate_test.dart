@@ -27,12 +27,10 @@ void main() {
         '/goals',
         '/decisions',
         '/planner',
-        '/capital',
         '/expenses',
         '/expense-reasons',
         '/questions-answers',
         '/reminder-notes',
-        '/strict-rules',
       ]) {
         expect(r(p), isNull, reason: p);
       }

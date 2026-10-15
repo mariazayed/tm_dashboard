@@ -73,6 +73,8 @@ void main() {
       'Assets',
       'Risk Management',
       'Strategies',
+      'Deposits & Withdraws',
+      'Strict Rules',
     ]) {
       expect(find.text(hidden), findsNothing, reason: hidden);
     }

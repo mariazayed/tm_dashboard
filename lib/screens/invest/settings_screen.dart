@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../constants/api_constants.dart';
+import '../../services/feature_service.dart';
 
 import '../../models/invest/contribution_model.dart';
 import '../../models/invest/invest_settings_model.dart';
@@ -461,6 +464,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(_exportMessage!, key: const Key('export-message')),
               ),
+            // Trading is hidden, but its records are still yours: keep the history
+            // reachable for statements and tax returns.
+            if (!Features.tradingEnabled) ...[
+              const Divider(height: 40),
+              Text('Trading history', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                'Trading is turned off, but your past trades are kept. '
+                'Download them as a spreadsheet (CSV) for statements or tax records.',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OutlinedButton(
+                  key: const Key('export-trades'),
+                  onPressed: () => launchUrl(
+                    Uri.parse(ApiConstants.tradesArchiveURL),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: const Text('Download trade history (CSV)'),
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -18,4 +18,5 @@ class ApiConstants {
   static const String plannerURL = '$baseURL/planner';
   static const String investURL = '$baseURL/invest';
   static const String featuresURL = '$baseURL/features';
+  static const String tradesArchiveURL = '$baseURL/archive/trades.csv';
 }

@@ -14,12 +14,28 @@ import 'package:tm_dashboard/screens/invest/settings_screen.dart';
 import 'package:tm_dashboard/services/api_client.dart';
 import 'package:tm_dashboard/services/contribution_service.dart';
 import 'package:tm_dashboard/services/plan_service.dart';
+import 'package:tm_dashboard/services/holding_service.dart';
 import 'package:tm_dashboard/theme/app_theme.dart';
 
 Map<String, dynamic> ruleJson(int id, String text, int position) => {
   'id': id,
   'text': text,
   'position': position,
+};
+
+Map<String, dynamic> holdingJson({
+  int id = 1,
+  String ticker = 'VT',
+  num target = 100,
+}) => {
+  'id': id,
+  'ticker': ticker,
+  'name': null,
+  'assetClass': 'EQUITY',
+  'region': 'Global',
+  'targetPct': target,
+  'expenseRatio': null,
+  'notes': null,
 };
 
 Map<String, dynamic> settingsJson({
@@ -504,9 +520,13 @@ void main() {
       Map<String, dynamic>? status,
       Future<http.Response> Function(http.Request)? onPut,
       Map<String, dynamic>? testResult,
+      List<Map<String, dynamic>>? holdings,
     }) {
       return Recorder((req) async {
         final path = req.url.path;
+        if (path.endsWith('/holdings')) {
+          return ok(holdings ?? [holdingJson()]);
+        }
         if (path.endsWith('/reminders/test')) {
           return ok(
             testResult ??
@@ -520,7 +540,8 @@ void main() {
           if (onPut != null) {
             return onPut(req);
           }
-          return ok(jsonDecode(req.body));
+          // The real server always answers with the primary fund's ticker.
+          return ok({'ticker': 'VT', ...jsonDecode(req.body)});
         }
         return ok(settings ?? settingsJson());
       });
@@ -537,6 +558,7 @@ void main() {
           SettingsScreen(
             plan: PlanService(api: api),
             contributions: ContributionService(api: api),
+            holdings: HoldingService(api: api),
           ),
         ),
       );
@@ -553,7 +575,6 @@ void main() {
           settings: settingsJson(
             cents: 45050,
             currency: 'EUR',
-            ticker: 'VWCE',
             timezone: 'Europe/Berlin',
             reminders: true,
             email: 'me@example.com',
@@ -562,7 +583,7 @@ void main() {
       );
       expect(text(tester, 'amount-field'), '450.50');
       expect(text(tester, 'currency-field'), 'EUR');
-      expect(text(tester, 'ticker-field'), 'VWCE');
+      expect(find.byKey(const Key('ticker-field')), findsNothing);
       expect(text(tester, 'timezone-field'), 'Europe/Berlin');
       expect(text(tester, 'email-field'), 'me@example.com');
       expect(
@@ -595,6 +616,7 @@ void main() {
       expect(sent['monthlyAmountCents'], 45050);
       expect(sent['currency'], 'eur');
       expect(sent['buyDay'], 1);
+      expect(sent.containsKey('ticker'), isFalse);
       expect(sent['startDate'], '2026-08-01');
       expect(sent['remindersEnabled'], isTrue);
       expect(sent['reminderEmail'], 'me@example.com');
@@ -678,9 +700,6 @@ void main() {
       await tester.enterText(find.byKey(const Key('currency-field')), 'US');
       await saveAndExpect('Currency is a 3-letter code such as USD');
       await tester.enterText(find.byKey(const Key('currency-field')), 'USD');
-      await tester.enterText(find.byKey(const Key('ticker-field')), 'V T!');
-      await saveAndExpect('Ticker can use letters, digits, "." and "-"');
-      await tester.enterText(find.byKey(const Key('ticker-field')), 'VT');
       await tester.tap(find.byKey(const Key('reminders-switch')));
       await tester.pump();
       await saveAndExpect('Add an email address to turn reminders on');

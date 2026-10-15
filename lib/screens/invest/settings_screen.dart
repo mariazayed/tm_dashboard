@@ -9,8 +9,10 @@ import '../../models/invest/invest_settings_model.dart';
 import '../../models/invest/money.dart';
 import '../../models/invest/plan_model.dart';
 import '../../services/contribution_service.dart';
+import '../../services/holding_service.dart';
 import '../../services/plan_service.dart';
 import 'ai_context_dialog.dart';
+import 'funds_section.dart';
 import 'invest_ui.dart';
 
 /// The plan (amount, buy day, ticker...) and the reminder preferences.
@@ -19,11 +21,14 @@ class SettingsScreen extends StatefulWidget {
     super.key,
     PlanService? plan,
     ContributionService? contributions,
+    HoldingService? holdings,
   }) : _plan = plan,
-       _contributions = contributions;
+       _contributions = contributions,
+       _holdings = holdings;
 
   final PlanService? _plan;
   final ContributionService? _contributions;
+  final HoldingService? _holdings;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -32,7 +37,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final _amount = TextEditingController();
   final _currency = TextEditingController();
-  final _ticker = TextEditingController();
   final _timezone = TextEditingController();
   final _email = TextEditingController();
   final _waitHours = TextEditingController();
@@ -65,14 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void dispose() {
-    for (final c in [
-      _amount,
-      _currency,
-      _ticker,
-      _timezone,
-      _email,
-      _waitHours,
-    ]) {
+    for (final c in [_amount, _currency, _timezone, _email, _waitHours]) {
       c.dispose();
     }
     super.dispose();
@@ -111,7 +108,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _fill(InvestSettingsModel s) {
     _amount.text = Money.plain(s.monthlyAmountCents);
     _currency.text = s.currency;
-    _ticker.text = s.ticker;
     _timezone.text = s.timezone;
     _email.text = s.reminderEmail ?? '';
     _buyDay = s.buyDay;
@@ -143,11 +139,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _error = 'Currency is a 3-letter code such as USD');
       return null;
     }
-    final ticker = _ticker.text.trim();
-    if (!RegExp(r'^[A-Za-z0-9.\-]{1,16}$').hasMatch(ticker)) {
-      setState(() => _error = 'Ticker can use letters, digits, "." and "-"');
-      return null;
-    }
     final email = _email.text.trim();
     if (_reminders && email.isEmpty) {
       setState(() => _error = 'Add an email address to turn reminders on');
@@ -164,7 +155,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'monthlyAmountCents': cents,
       'currency': currency,
       'buyDay': _buyDay,
-      'ticker': ticker,
       'startDate': ContributionModel.dateString(_startDate),
       'timezone': _timezone.text.trim(),
       'remindersEnabled': _reminders,
@@ -276,15 +266,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    key: const Key('ticker-field'),
-                    controller: _ticker,
-                    textCapitalization: TextCapitalization.characters,
-                    decoration: const InputDecoration(labelText: 'ETF ticker'),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -318,6 +299,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 helperText: 'For example Europe/Berlin or America/New_York',
               ),
             ),
+            const Divider(height: 40),
+            FundsSection(service: widget._holdings),
             const Divider(height: 40),
             Text('Your rules', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),

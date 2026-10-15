@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/invest/contribution_model.dart';
+import '../../models/invest/holding_model.dart';
 import '../../models/invest/invest_settings_model.dart';
 import '../../models/invest/money.dart';
 import '../../services/contribution_service.dart';
@@ -14,11 +15,20 @@ class AddContributionSheet extends StatefulWidget {
     super.key,
     required this.settings,
     this.existing,
+    this.holdings = const [],
+    this.defaultHoldingId,
     ContributionService? service,
   }) : _service = service;
 
   final InvestSettingsModel settings;
   final ContributionModel? existing;
+
+  /// The funds to choose from. Empty from a server that predates funds: the
+  /// plan's own ticker is used and no choice is shown.
+  final List<HoldingModel> holdings;
+
+  /// The fund to start on for a new buy, such as the one bought last time.
+  final int? defaultHoldingId;
   final ContributionService? _service;
 
   @override
@@ -36,8 +46,18 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
   bool _updatingShares = false;
   bool _saving = false;
   String? _error;
+  int? _holdingId;
 
   bool get _isEdit => widget.existing != null;
+
+  /// The ticker of the chosen fund, else the plan's.
+  String get _ticker {
+    for (final h in widget.holdings) {
+      if (h.id == _holdingId) return h.ticker;
+    }
+    return widget.settings.ticker;
+  }
+
   ContributionService get _service =>
       widget._service ?? ContributionService.shared;
 
@@ -56,6 +76,10 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
       text: e == null ? '' : Money.plain(e.feeCents),
     );
     _notes = TextEditingController(text: e?.notes ?? '');
+    final wanted = e?.holdingId ?? widget.defaultHoldingId;
+    _holdingId = widget.holdings.any((h) => h.id == wanted)
+        ? wanted
+        : (widget.holdings.isEmpty ? null : widget.holdings.first.id);
     _sharesEdited = e != null;
     _amount.addListener(_recalculate);
     _price.addListener(_recalculate);
@@ -126,6 +150,7 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
       'price': price,
       'feeCents': fee,
       'notes': _notes.text.trim().isEmpty ? null : _notes.text.trim(),
+      if (_holdingId != null) 'holdingId': _holdingId,
     };
   }
 
@@ -177,8 +202,21 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
               label: 'Amount (${widget.settings.currency})',
               controller: _amount,
             ),
+            if (widget.holdings.length > 1) ...[
+              DropdownButtonFormField<int>(
+                key: const Key('fund-picker'),
+                initialValue: _holdingId,
+                decoration: const InputDecoration(labelText: 'Fund'),
+                items: [
+                  for (final h in widget.holdings)
+                    DropdownMenuItem(value: h.id, child: Text(h.title)),
+                ],
+                onChanged: (v) => setState(() => _holdingId = v),
+              ),
+              const SizedBox(height: 12),
+            ],
             FormNumberField(
-              label: 'Price per ${widget.settings.ticker} share',
+              label: 'Price per $_ticker share',
               controller: _price,
             ),
             FormNumberField(label: 'Shares', controller: _shares),

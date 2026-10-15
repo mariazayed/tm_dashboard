@@ -160,6 +160,17 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  /// With several funds the price per share is not one number, so these charts are per fund.
+  Widget _perFund(BuildContext context, String title) => InsightCard(
+    title: title,
+    height: null,
+    child: Text(
+      'This chart is per fund, because shares and prices of different funds '
+      'cannot be added together. A per-fund view is not available yet.',
+      key: Key('per-fund-$title'),
+    ),
+  );
+
   Widget _heading(String text) => Padding(
     padding: const EdgeInsets.only(top: 12, bottom: 0),
     child: Text(text, style: Theme.of(context).textTheme.titleLarge),
@@ -209,6 +220,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
     title: 'Average cost against price',
     builder: (context, data) {
       final (performance, buys) = data;
+      if (performance.isMixed) {
+        return _perFund(context, 'Average cost against price');
+      }
       final points = pricePoints(performance.series, buys);
       final c = ChartColors.of(context);
       final money = _money(performance.currency);
@@ -290,10 +304,13 @@ class _InsightsScreenState extends State<InsightsScreen> {
     },
   );
 
-  Widget _sharesOwned() => InsightLoader<List<ContributionModel>>(
-    load: () => _buys,
+  Widget
+  _sharesOwned() => InsightLoader<(PerformanceModel, List<ContributionModel>)>(
+    load: () => _both(_performance, _buys),
     title: 'Shares owned',
-    builder: (context, buys) {
+    builder: (context, data) {
+      final (performance, buys) = data;
+      if (performance.isMixed) return _perFund(context, 'Shares owned');
       final shares = sharesOwned(buys);
       return InsightCard(
         title: 'Shares owned',
@@ -317,6 +334,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
     title: 'Each buy on the price line',
     builder: (context, data) {
       final (performance, buys) = data;
+      if (performance.isMixed) {
+        return _perFund(context, 'Each buy on the price line');
+      }
       final points = pricePoints(performance.series, buys);
       final c = ChartColors.of(context);
       final money = _money(performance.currency);
@@ -440,6 +460,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
     title: 'Best and worst months',
     builder: (context, data) {
       final (performance, buys) = data;
+      if (performance.isMixed) {
+        return _perFund(context, 'Best and worst months');
+      }
       final returns = monthlyReturns(pricePoints(performance.series, buys));
       final c = ChartColors.of(context);
       final pct = NumberFormat('+0.0%;−0.0%');
@@ -473,6 +496,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
     title: 'Rolling 12-month change',
     builder: (context, data) {
       final (performance, buys) = data;
+      if (performance.isMixed) {
+        return _perFund(context, 'Rolling 12-month change');
+      }
       final returns = monthlyReturns(pricePoints(performance.series, buys));
       final withYear = returns.where((r) => r.rolling12 != null).toList();
       final pct = NumberFormat('+0.0%;−0.0%');

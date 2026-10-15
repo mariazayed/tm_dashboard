@@ -4,15 +4,22 @@ import 'package:flutter/services.dart';
 import '../../models/invest/contribution_model.dart';
 import '../../models/invest/invest_settings_model.dart';
 import '../../models/invest/money.dart';
+import '../../models/invest/holding_model.dart';
 import '../../services/contribution_service.dart';
+import '../../services/holding_service.dart';
 import 'add_contribution_sheet.dart';
 import 'invest_ui.dart';
 
 class ContributionsScreen extends StatefulWidget {
-  const ContributionsScreen({super.key, ContributionService? service})
-    : _service = service;
+  const ContributionsScreen({
+    super.key,
+    ContributionService? service,
+    HoldingService? holdings,
+  }) : _service = service,
+       _holdings = holdings;
 
   final ContributionService? _service;
+  final HoldingService? _holdings;
 
   @override
   State<ContributionsScreen> createState() => _ContributionsScreenState();
@@ -21,7 +28,12 @@ class ContributionsScreen extends StatefulWidget {
 class _ContributionsScreenState extends State<ContributionsScreen> {
   ContributionService get _service =>
       widget._service ?? ContributionService.shared;
-  late Future<(InvestSettingsModel, List<ContributionModel>)> _future;
+  HoldingService get _holdingService =>
+      widget._holdings ?? HoldingService.shared;
+  late Future<
+    (InvestSettingsModel, List<ContributionModel>, List<HoldingModel>)
+  >
+  _future;
 
   @override
   void initState() {
@@ -29,14 +41,21 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
     _future = _load();
   }
 
-  Future<(InvestSettingsModel, List<ContributionModel>)> _load() async {
+  Future<(InvestSettingsModel, List<ContributionModel>, List<HoldingModel>)>
+  _load() async {
     final results = await Future.wait([
       _service.getSettings(),
       _service.getAll(),
+      // The list of funds is optional: an older server has none, and the page works without it.
+      _holdingService
+          .list()
+          .then<List<HoldingModel>>((h) => h)
+          .catchError((_) => <HoldingModel>[]),
     ]);
     return (
       results[0] as InvestSettingsModel,
       results[1] as List<ContributionModel>,
+      results[2] as List<HoldingModel>,
     );
   }
 
@@ -48,7 +67,9 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
   }
 
   Future<void> _openSheet(
-    InvestSettingsModel settings, {
+    InvestSettingsModel settings,
+    List<HoldingModel> holdings,
+    List<ContributionModel> items, {
     ContributionModel? existing,
   }) async {
     final saved = await showModalBottomSheet<bool>(
@@ -57,6 +78,9 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
       builder: (_) => AddContributionSheet(
         settings: settings,
         existing: existing,
+        holdings: holdings,
+        // the list is newest first, so this is the fund you bought last
+        defaultHoldingId: items.isEmpty ? null : items.first.holdingId,
         service: widget._service,
       ),
     );
@@ -111,7 +135,8 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
       minLines: 6,
       maxLines: 12,
       width: 480,
-      hint: 'date,amount,shares,price,fee,notes\n2026-09-01,300,2.55,117.64',
+      hint:
+          'date,amount,shares,price,fee,notes,ticker\n2026-09-01,300,2.55,117.64,,,VT',
       fieldKey: const Key('csv-input'),
     );
     if (csv == null || csv.trim().isEmpty) return;
@@ -163,7 +188,7 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final (settings, items) = snapshot.data!;
+        final (settings, items, holdings) = snapshot.data!;
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -179,7 +204,7 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   FilledButton.icon(
-                    onPressed: () => _openSheet(settings),
+                    onPressed: () => _openSheet(settings, holdings, items),
                     icon: const Icon(Icons.add),
                     label: const Text('Add'),
                   ),
@@ -208,13 +233,18 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
                               '  ·  ${ContributionModel.dateString(c.contributedOn)}',
                             ),
                             subtitle: Text(
-                              '${c.shares.toStringAsFixed(4)} ${settings.ticker} '
+                              '${c.shares.toStringAsFixed(4)} ${c.ticker ?? settings.ticker} '
                               '@ ${c.price.toStringAsFixed(2)}'
                               '${c.feeCents > 0 ? '  ·  fee ${Money.format(c.feeCents, settings.currency)}' : ''}'
                               '${c.notes == null ? '' : '\n${c.notes}'}',
                             ),
                             isThreeLine: c.notes != null,
-                            onTap: () => _openSheet(settings, existing: c),
+                            onTap: () => _openSheet(
+                              settings,
+                              holdings,
+                              items,
+                              existing: c,
+                            ),
                             trailing: IconButton(
                               tooltip: 'Delete',
                               icon: const Icon(Icons.delete_outline),

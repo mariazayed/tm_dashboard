@@ -109,6 +109,16 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
     }
   }
 
+  /// "Plan: $300 / month into VT, on day 5." or, with several funds, across them.
+  String _planLine(InvestSettingsModel settings, PerformanceModel performance) {
+    final amount = Money.format(settings.monthlyAmountCents, settings.currency);
+    final into = performance.isMixed
+        ? 'across ${performance.holdings.length} funds '
+              '(${performance.holdings.map((h) => h.ticker).join(', ')})'
+        : 'into ${settings.ticker}';
+    return 'Plan: $amount / month $into, on day ${settings.buyDay}.';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -132,8 +142,7 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                 Text('Invest', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: 4),
                 Text(
-                  'Plan: ${Money.format(settings.monthlyAmountCents, settings.currency)}'
-                  ' / month into ${settings.ticker}, on day ${settings.buyDay}.',
+                  _planLine(settings, performance),
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
@@ -174,7 +183,8 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                     ),
                     FilledButton.tonal(
                       key: const Key('open-charts'),
-                      onPressed: () => context.goNamed(RouteNames.investInsights),
+                      onPressed: () =>
+                          context.goNamed(RouteNames.investInsights),
                       child: const Text('Charts'),
                     ),
                     FilledButton.tonal(

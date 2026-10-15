@@ -8,6 +8,8 @@ import '../../services/goal_service.dart';
 import '../../theme/app_theme.dart';
 import 'add_goal_sheet.dart';
 import 'goal_card.dart';
+import '../../configs/feature_gate.dart';
+import '../../services/feature_service.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -216,7 +218,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
           selected: categoryFilter == null,
           onSelected: (_) => setState(() => categoryFilter = null),
         ),
-        ...GoalCategoryEnum.values.map(
+        ...goalCategoriesFor(tradingEnabled: Features.tradingEnabled).map(
           (c) => ChoiceChip(
             label: Text(c.label),
             selected: categoryFilter == c,

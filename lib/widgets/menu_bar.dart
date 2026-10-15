@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../configs/feature_gate.dart';
 import '../constants/route_names.dart';
+import '../services/feature_service.dart';
 import '../theme/app_theme.dart';
 
 class MenuEntry {
@@ -486,7 +488,28 @@ class _MenuItem {
   _MenuItem({required this.label, this.routeName, this.icon, this.children});
 }
 
+/// The menu for the current feature flags: trading entries are dropped, and a
+/// group left with no children disappears with them.
 List<_MenuItem> _menus(BuildContext context) {
+  final all = _allMenus(context);
+  if (Features.tradingEnabled) return all;
+  return [
+    for (final item in all)
+      if (!isTradingRouteName(item.routeName))
+        if (item.hasChildren)
+          _MenuItem(
+            label: item.label,
+            icon: item.icon,
+            children: item.children!
+                .where((c) => !isTradingRouteName(c.routeName))
+                .toList(),
+          )
+        else
+          item,
+  ].where((i) => i.routeName != null || i.hasChildren).toList();
+}
+
+List<_MenuItem> _allMenus(BuildContext context) {
   return [
     _MenuItem(
       label: 'Home',

@@ -10,6 +10,8 @@ import '../../widgets/form_dropdown.dart';
 import '../../widgets/form_text_area_field.dart';
 import '../../widgets/md_editor_field.dart';
 import 'decision_detail_sheet.dart';
+import '../../configs/feature_gate.dart';
+import '../../services/feature_service.dart';
 
 class AddDecisionSheet extends StatefulWidget {
   final DecisionModel? existing;
@@ -214,7 +216,10 @@ class _AddDecisionSheetState extends State<AddDecisionSheet> {
           const SizedBox(height: 4),
           FormDropdown<DecisionCategoryEnum>(
             label: 'Category',
-            items: DecisionCategoryEnum.values,
+            items: {
+              ...decisionCategoriesFor(tradingEnabled: Features.tradingEnabled),
+              _category,
+            }.toList(),
             value: _category,
             labelBuilder: (c) => c.label,
             onChanged: (c) => setState(() => _category = c ?? _category),

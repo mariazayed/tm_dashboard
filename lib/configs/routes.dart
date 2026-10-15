@@ -3,6 +3,8 @@ import 'package:tm_dashboard/screens/strategies/strategy_screen.dart';
 import 'package:tm_dashboard/screens/strict_rules/reminder_notes_screen.dart';
 
 import '../constants/route_names.dart';
+import '../services/feature_service.dart';
+import 'feature_gate.dart';
 import '../screens/assets/assets_screen.dart';
 import '../screens/invest/ai_chat_screen.dart';
 import '../screens/invest/ai_review_screen.dart';
@@ -28,6 +30,11 @@ import '../screens/trading_hours/trading_hours_screen.dart';
 import '../widgets/menu_bar.dart';
 
 final GoRouter routes = GoRouter(
+  refreshListenable: Features.notifier,
+  redirect: (context, state) => tradingRedirect(
+    state.uri.path,
+    tradingEnabled: Features.tradingEnabled,
+  ),
   routes: [
     ShellRoute(
       builder: (context, state, child) {

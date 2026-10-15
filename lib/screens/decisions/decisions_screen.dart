@@ -8,6 +8,8 @@ import '../../services/decision_service.dart';
 import '../../theme/app_theme.dart';
 import 'add_decision_sheet.dart';
 import 'decision_card.dart';
+import '../../configs/feature_gate.dart';
+import '../../services/feature_service.dart';
 
 class DecisionsScreen extends StatefulWidget {
   const DecisionsScreen({super.key});
@@ -331,7 +333,9 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
             categoryFilter == null,
             () => setState(() => categoryFilter = null),
           ),
-          ...DecisionCategoryEnum.values.map(
+          ...decisionCategoriesFor(
+            tradingEnabled: Features.tradingEnabled,
+          ).map(
             (c) => _filterButton(
               c.label,
               categoryFilter == c,

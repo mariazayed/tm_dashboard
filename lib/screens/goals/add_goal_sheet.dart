@@ -9,6 +9,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/form_dropdown.dart';
 import '../../widgets/form_number_field.dart';
 import '../../widgets/form_text_area_field.dart';
+import '../../configs/feature_gate.dart';
+import '../../services/feature_service.dart';
 
 class AddGoalSheet extends StatefulWidget {
   final GoalModel? existing;
@@ -44,7 +46,10 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
           : '',
     );
     _notesController = TextEditingController(text: existing?.notes ?? '');
-    _category = existing?.category ?? GoalCategoryEnum.PROFIT;
+    _category = existing?.category ??
+        (Features.tradingEnabled
+            ? GoalCategoryEnum.PROFIT
+            : GoalCategoryEnum.MANUAL);
     _startDate = existing?.startDate ?? DateTime(now.year, now.month, 1);
     _endDate = existing?.endDate ?? DateTime(now.year, now.month + 1, 0);
     _manualProgress = existing?.manualProgressPct ?? 0;
@@ -185,7 +190,10 @@ class _AddGoalSheetState extends State<AddGoalSheet> {
           const SizedBox(height: 4),
           FormDropdown<GoalCategoryEnum>(
             label: 'Category',
-            items: GoalCategoryEnum.values,
+            items: {
+              ...goalCategoriesFor(tradingEnabled: Features.tradingEnabled),
+              _category,
+            }.toList(),
             value: _category,
             labelBuilder: (c) => c.label,
             onChanged: (c) => setState(() => _category = c ?? _category),

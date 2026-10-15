@@ -495,7 +495,9 @@ List<_MenuItem> _menus(BuildContext context) {
   if (Features.tradingEnabled) return all;
   return [
     for (final item in all)
-      if (!isTradingRouteName(item.routeName))
+      if (item.routeName == RouteNames.invest)
+        _investGroup(item)
+      else if (!isTradingRouteName(item.routeName))
         if (item.hasChildren)
           _MenuItem(
             label: item.label,
@@ -508,6 +510,55 @@ List<_MenuItem> _menus(BuildContext context) {
           item,
   ].where((i) => i.routeName != null || i.hasChildren).toList();
 }
+
+/// Without trading, investing is the whole product, so its pages get their own
+/// menu group instead of being reachable only through buttons on the overview.
+_MenuItem _investGroup(_MenuItem invest) => _MenuItem(
+  label: invest.label,
+  icon: invest.icon,
+  children: [
+    _MenuItem(
+      label: 'Overview',
+      routeName: RouteNames.invest,
+      icon: Icons.dashboard_outlined,
+    ),
+    _MenuItem(
+      label: 'Contributions',
+      routeName: RouteNames.investContributions,
+      icon: Icons.add_card_outlined,
+    ),
+    _MenuItem(
+      label: 'Journal',
+      routeName: RouteNames.investJournal,
+      icon: Icons.edit_note_outlined,
+    ),
+    _MenuItem(
+      label: 'Learning',
+      routeName: RouteNames.investLearning,
+      icon: Icons.school_outlined,
+    ),
+    _MenuItem(
+      label: 'Rules',
+      routeName: RouteNames.investRules,
+      icon: Icons.gavel_outlined,
+    ),
+    _MenuItem(
+      label: 'Ask your journal',
+      routeName: RouteNames.investAsk,
+      icon: Icons.chat_bubble_outline,
+    ),
+    _MenuItem(
+      label: 'Review',
+      routeName: RouteNames.investReview,
+      icon: Icons.insights_outlined,
+    ),
+    _MenuItem(
+      label: 'Settings',
+      routeName: RouteNames.investSettings,
+      icon: Icons.tune_outlined,
+    ),
+  ],
+);
 
 List<_MenuItem> _allMenus(BuildContext context) {
   return [

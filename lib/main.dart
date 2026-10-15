@@ -3,10 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'screens/calendar/calendar_state.dart';
 import 'configs/routes.dart';
+import 'services/feature_service.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Fails closed: if the server cannot be reached the app starts investing-only.
+  await Features.load();
   runApp(const MyApp());
 }
 

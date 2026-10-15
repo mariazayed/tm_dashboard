@@ -135,8 +135,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
             _valueChart(),
             _contributionsByMonth(),
             _costBasis(),
+            _allocation(),
             _planGrid(),
             _heading('How you buy'),
+            _fundPicker(),
             _fees(),
             _sharesOwned(),
             _buysOnPrice(),
@@ -160,15 +162,85 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
-  /// With several funds the price per share is not one number, so these charts are per fund.
-  Widget _perFund(BuildContext context, String title) => InsightCard(
-    title: title,
-    height: null,
-    child: Text(
-      'This chart is per fund, because shares and prices of different funds '
-      'cannot be added together. A per-fund view is not available yet.',
-      key: Key('per-fund-$title'),
-    ),
+  /// The fund the per-fund charts show; the first one until a chip is tapped.
+  final ValueNotifier<int?> _fund = ValueNotifier(null);
+
+  @override
+  void dispose() {
+    _fund.dispose();
+    super.dispose();
+  }
+
+  /// Builds a per-fund chart for the chosen fund. With one fund it is the
+  /// whole portfolio, as before.
+  Widget _scoped(
+    PerformanceModel performance,
+    List<ContributionModel> buys,
+    Widget Function(FundScope scope) build,
+  ) => ValueListenableBuilder<int?>(
+    valueListenable: _fund,
+    builder: (context, id, _) => build(fundScope(performance, buys, id)),
+  );
+
+  /// "VT: " in front of a note when a single fund of several is shown.
+  String _of(FundScope scope, String note) =>
+      scope.ticker == null ? note : '${scope.ticker}. $note';
+
+  Widget _fundPicker() => InsightLoader<PerformanceModel>(
+    load: () => _performance,
+    title: 'Fund',
+    builder: (context, performance) {
+      if (!performance.isMixed) return const SizedBox.shrink();
+      return ValueListenableBuilder<int?>(
+        valueListenable: _fund,
+        builder: (context, id, _) {
+          final selected = fundScope(performance, const [], id).ticker;
+          return InsightCard(
+            title: 'Fund',
+            note: 'The charts below are drawn for one fund at a time.',
+            height: null,
+            child: Wrap(
+              spacing: 8,
+              children: [
+                for (final h in performance.holdings)
+                  ChoiceChip(
+                    key: Key('fund-chip-${h.holdingId}'),
+                    label: Text(h.ticker),
+                    selected: h.ticker == selected,
+                    onSelected: (_) => _fund.value = h.holdingId,
+                  ),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+
+  Widget _allocation() => InsightLoader<PerformanceModel>(
+    load: () => _performance,
+    title: 'Allocation against target',
+    builder: (context, performance) {
+      if (!performance.isMixed) return const SizedBox.shrink();
+      final c = ChartColors.of(context);
+      final off = performance.holdings
+          .where((h) => (h.driftPoints ?? 0).abs() > 5)
+          .map((h) => h.ticker)
+          .toList();
+      return InsightCard(
+        title: 'Allocation against target',
+        note:
+            'Each fund\'s share of the portfolio now, next to the share you aim for.',
+        summary: off.isEmpty
+            ? 'Every fund is within 5 points of its target.'
+            : 'More than 5 points from target: ${off.join(', ')}.',
+        legend: [
+          LegendItem('Share now', c.accent),
+          LegendItem('Target', c.second, outlined: true),
+        ],
+        child: AllocationChart(funds: performance.holdings),
+      );
+    },
   );
 
   Widget _heading(String text) => Padding(
@@ -219,36 +291,38 @@ class _InsightsScreenState extends State<InsightsScreen> {
     load: () => _both(_performance, _buys),
     title: 'Average cost against price',
     builder: (context, data) {
-      final (performance, buys) = data;
-      if (performance.isMixed) {
-        return _perFund(context, 'Average cost against price');
-      }
-      final points = pricePoints(performance.series, buys);
-      final c = ChartColors.of(context);
-      final money = _money(performance.currency);
-      String? summary;
-      if (points.isNotEmpty) {
-        final last = points.last;
-        final diff = last.price / last.avgCost - 1;
-        summary =
-            'Price ${money.format(last.price)} against an average cost of ${money.format(last.avgCost)}: '
-            '${diff >= 0 ? 'ahead' : 'behind'} by ${NumberFormat.decimalPercentPattern(decimalDigits: 1).format(diff.abs())}.';
-      }
-      return InsightCard(
-        title: 'Average cost against price',
-        note:
+      final (performance, allBuys) = data;
+      return _scoped(performance, allBuys, (scope) {
+        final buys = scope.buys;
+        final points = pricePoints(scope.series, buys);
+        final c = ChartColors.of(context);
+        final money = _money(performance.currency);
+        String? summary;
+        if (points.isNotEmpty) {
+          final last = points.last;
+          final diff = last.price / last.avgCost - 1;
+          summary =
+              'Price ${money.format(last.price)} against an average cost of ${money.format(last.avgCost)}: '
+              '${diff >= 0 ? 'ahead' : 'behind'} by ${NumberFormat.decimalPercentPattern(decimalDigits: 1).format(diff.abs())}.';
+        }
+        return InsightCard(
+          title: 'Average cost against price',
+          note: _of(
+            scope,
             'When the price line is above the dashed line, the position is in profit.',
-        summary: summary,
-        legend: [
-          LegendItem('Price per share', c.muted),
-          LegendItem('Your average cost', c.accent, dashed: true),
-        ],
-        child: PriceLineChart(
-          points: points,
-          currency: performance.currency,
-          showAvgCost: true,
-        ),
-      );
+          ),
+          summary: summary,
+          legend: [
+            LegendItem('Price per share', c.muted),
+            LegendItem('Your average cost', c.accent, dashed: true),
+          ],
+          child: PriceLineChart(
+            points: points,
+            currency: performance.currency,
+            showAvgCost: true,
+          ),
+        );
+      });
     },
   );
 
@@ -309,22 +383,24 @@ class _InsightsScreenState extends State<InsightsScreen> {
     load: () => _both(_performance, _buys),
     title: 'Shares owned',
     builder: (context, data) {
-      final (performance, buys) = data;
-      if (performance.isMixed) return _perFund(context, 'Shares owned');
-      final shares = sharesOwned(buys);
-      return InsightCard(
-        title: 'Shares owned',
-        note: 'Grows with every buy, whatever the price did.',
-        summary: shares.isEmpty
-            ? null
-            : '${shares.last.value.toStringAsFixed(2)} shares after ${buys.length} buys.',
-        child: StepTotalChart(
-          values: shares,
-          axisFormat: (v) => v.toStringAsFixed(0),
-          tooltipFormat: (v) => '${v.toStringAsFixed(2)} shares',
-          color: ChartColors.of(context).accent,
-        ),
-      );
+      final (performance, allBuys) = data;
+      return _scoped(performance, allBuys, (scope) {
+        final buys = scope.buys;
+        final shares = sharesOwned(buys);
+        return InsightCard(
+          title: 'Shares owned',
+          note: _of(scope, 'Grows with every buy, whatever the price did.'),
+          summary: shares.isEmpty
+              ? null
+              : '${shares.last.value.toStringAsFixed(2)} shares after ${buys.length} buys.',
+          child: StepTotalChart(
+            values: shares,
+            axisFormat: (v) => v.toStringAsFixed(0),
+            tooltipFormat: (v) => '${v.toStringAsFixed(2)} shares',
+            color: ChartColors.of(context).accent,
+          ),
+        );
+      });
     },
   );
 
@@ -333,34 +409,38 @@ class _InsightsScreenState extends State<InsightsScreen> {
     load: () => _both(_performance, _buys),
     title: 'Each buy on the price line',
     builder: (context, data) {
-      final (performance, buys) = data;
-      if (performance.isMixed) {
-        return _perFund(context, 'Each buy on the price line');
-      }
-      final points = pricePoints(performance.series, buys);
-      final c = ChartColors.of(context);
-      final money = _money(performance.currency);
-      var avg = 0.0;
-      if (buys.isNotEmpty) {
-        avg = buys.fold<double>(0, (a, b) => a + b.price) / buys.length;
-      }
-      return InsightCard(
-        title: 'Each buy on the price line',
-        note:
+      final (performance, allBuys) = data;
+      return _scoped(performance, allBuys, (scope) {
+        final buys = scope.buys;
+        final points = pricePoints(scope.series, buys);
+        final c = ChartColors.of(context);
+        final money = _money(performance.currency);
+        var avg = 0.0;
+        if (buys.isNotEmpty) {
+          avg = buys.fold<double>(0, (a, b) => a + b.price) / buys.length;
+        }
+        return InsightCard(
+          title: 'Each buy on the price line',
+          note: _of(
+            scope,
             'Shows whether you bought high or low, without trying to time it.',
-        summary: buys.isEmpty
-            ? null
-            : 'Average buy price ${money.format(avg)}${points.isEmpty ? '' : ', latest price ${money.format(points.last.price)}'}.',
-        legend: [
-          LegendItem('Price per share', c.accent),
-          LegendItem('A buy', c.second, dot: true),
-        ],
-        child: PriceLineChart(
-          points: points,
-          currency: performance.currency,
-          buys: [for (final b in buys) (date: b.contributedOn, price: b.price)],
-        ),
-      );
+          ),
+          summary: buys.isEmpty
+              ? null
+              : 'Average buy price ${money.format(avg)}${points.isEmpty ? '' : ', latest price ${money.format(points.last.price)}'}.',
+          legend: [
+            LegendItem('Price per share', c.accent),
+            LegendItem('A buy', c.second, dot: true),
+          ],
+          child: PriceLineChart(
+            points: points,
+            currency: performance.currency,
+            buys: [
+              for (final b in buys) (date: b.contributedOn, price: b.price),
+            ],
+          ),
+        );
+      });
     },
   );
 
@@ -459,34 +539,37 @@ class _InsightsScreenState extends State<InsightsScreen> {
     load: () => _both(_performance, _buys),
     title: 'Best and worst months',
     builder: (context, data) {
-      final (performance, buys) = data;
-      if (performance.isMixed) {
-        return _perFund(context, 'Best and worst months');
-      }
-      final returns = monthlyReturns(pricePoints(performance.series, buys));
-      final c = ChartColors.of(context);
-      final pct = NumberFormat('+0.0%;−0.0%');
-      String? summary;
-      if (returns.isNotEmpty) {
-        final best = returns.reduce((a, b) => a.monthly >= b.monthly ? a : b);
-        final worst = returns.reduce((a, b) => a.monthly <= b.monthly ? a : b);
-        final up = returns.where((r) => r.monthly > 0).length;
-        summary =
-            'Best month ${pct.format(best.monthly)} (${DateFormat.yMMM().format(monthStart(best.month))}), '
-            'worst ${pct.format(worst.monthly)} (${DateFormat.yMMM().format(monthStart(worst.month))}). '
-            'Up in $up of ${returns.length} months.';
-      }
-      return InsightCard(
-        title: 'Best and worst months',
-        note:
+      final (performance, allBuys) = data;
+      return _scoped(performance, allBuys, (scope) {
+        final returns = monthlyReturns(pricePoints(scope.series, scope.buys));
+        final c = ChartColors.of(context);
+        final pct = NumberFormat('+0.0%;−0.0%');
+        String? summary;
+        if (returns.isNotEmpty) {
+          final best = returns.reduce((a, b) => a.monthly >= b.monthly ? a : b);
+          final worst = returns.reduce(
+            (a, b) => a.monthly <= b.monthly ? a : b,
+          );
+          final up = returns.where((r) => r.monthly > 0).length;
+          summary =
+              'Best month ${pct.format(best.monthly)} (${DateFormat.yMMM().format(monthStart(best.month))}), '
+              'worst ${pct.format(worst.monthly)} (${DateFormat.yMMM().format(monthStart(worst.month))}). '
+              'Up in $up of ${returns.length} months.';
+        }
+        return InsightCard(
+          title: 'Best and worst months',
+          note: _of(
+            scope,
             'How many months fell in each band of price change. Most months are ordinary; a few are not.',
-        summary: summary,
-        legend: [
-          LegendItem('Month fell', c.bad),
-          LegendItem('Month rose', c.accent),
-        ],
-        child: ReturnsHistogram(returns: returns),
-      );
+          ),
+          summary: summary,
+          legend: [
+            LegendItem('Month fell', c.bad),
+            LegendItem('Month rose', c.accent),
+          ],
+          child: ReturnsHistogram(returns: returns),
+        );
+      });
     },
   );
 
@@ -495,21 +578,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
     load: () => _both(_performance, _buys),
     title: 'Rolling 12-month change',
     builder: (context, data) {
-      final (performance, buys) = data;
-      if (performance.isMixed) {
-        return _perFund(context, 'Rolling 12-month change');
-      }
-      final returns = monthlyReturns(pricePoints(performance.series, buys));
-      final withYear = returns.where((r) => r.rolling12 != null).toList();
-      final pct = NumberFormat('+0.0%;−0.0%');
-      return InsightCard(
-        title: 'Rolling 12-month change',
-        note: 'The price change over the year before each month-end.',
-        summary: withYear.isEmpty
-            ? null
-            : 'Latest: ${pct.format(withYear.last.rolling12)} over the last 12 months.',
-        child: Rolling12Chart(returns: returns),
-      );
+      final (performance, allBuys) = data;
+      return _scoped(performance, allBuys, (scope) {
+        final returns = monthlyReturns(pricePoints(scope.series, scope.buys));
+        final withYear = returns.where((r) => r.rolling12 != null).toList();
+        final pct = NumberFormat('+0.0%;−0.0%');
+        return InsightCard(
+          title: 'Rolling 12-month change',
+          note: _of(
+            scope,
+            'The price change over the year before each month-end.',
+          ),
+          summary: withYear.isEmpty
+              ? null
+              : 'Latest: ${pct.format(withYear.last.rolling12)} over the last 12 months.',
+          child: Rolling12Chart(returns: returns),
+        );
+      });
     },
   );
 

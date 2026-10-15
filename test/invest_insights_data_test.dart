@@ -324,4 +324,74 @@ void main() {
       'Buy day 1 to 5',
     ]);
   });
+
+  group('fundScope', () {
+    ContributionModel buyFor(String date, int holdingId) => ContributionModel(
+      id: date.hashCode,
+      contributedOn: DateTime.parse(date),
+      amountCents: 10000,
+      shares: 1,
+      price: 100,
+      feeCents: 0,
+      holdingId: holdingId,
+    );
+    HoldingPerformanceModel fund(int id, String ticker) =>
+        HoldingPerformanceModel(
+          holdingId: id,
+          ticker: ticker,
+          targetPct: 50,
+          investedCents: 0,
+          valueCents: 0,
+          gainCents: 0,
+          shares: 0,
+          series: [
+            SeriesPoint(
+              date: DateTime(2026, 1, id),
+              investedCents: 0,
+              valueCents: 0,
+            ),
+          ],
+        );
+    PerformanceModel perf(List<HoldingPerformanceModel> holdings) =>
+        PerformanceModel(
+          ticker: 'MIXED',
+          currency: 'USD',
+          investedCents: 0,
+          feesCents: 0,
+          shares: 0,
+          valueCents: 0,
+          gainCents: 0,
+          priceFromCache: false,
+          stale: false,
+          range: 'ALL',
+          series: const [],
+          holdings: holdings,
+        );
+    final buys = [
+      buyFor('2026-01-05', 1),
+      buyFor('2026-02-05', 2),
+      buyFor('2026-03-05', 2),
+    ];
+
+    test('keeps one fund\'s buys and series', () {
+      final p = perf([fund(1, 'VT'), fund(2, 'AGG')]);
+      final s = fundScope(p, buys, 2);
+      expect(s.ticker, 'AGG');
+      expect(s.buys, hasLength(2));
+      expect(s.series.single.date, DateTime(2026, 1, 2));
+    });
+
+    test('starts on the first fund and survives a vanished pick', () {
+      final p = perf([fund(1, 'VT'), fund(2, 'AGG')]);
+      expect(fundScope(p, buys, null).ticker, 'VT');
+      expect(fundScope(p, buys, 99).ticker, 'VT');
+    });
+
+    test('a single fund is the whole portfolio', () {
+      final p = perf([fund(1, 'VT')]);
+      final s = fundScope(p, buys, null);
+      expect(s.ticker, isNull);
+      expect(s.buys, hasLength(3));
+    });
+  });
 }

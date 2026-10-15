@@ -373,3 +373,42 @@ String _cents(String raw, String Function(int cents) money) {
   final v = int.tryParse(raw);
   return v == null ? raw : money(v);
 }
+
+/// What the per-fund charts draw: one fund's value series and its own buys.
+/// With a single fund this is the whole portfolio, unchanged.
+class FundScope {
+  const FundScope({
+    required this.ticker,
+    required this.series,
+    required this.buys,
+  });
+
+  /// Null when the portfolio is not split by fund.
+  final String? ticker;
+  final List<SeriesPoint> series;
+  final List<ContributionModel> buys;
+}
+
+/// The fund picked by [selectedId], or the first fund when none is picked yet
+/// or the pick no longer exists.
+FundScope fundScope(
+  PerformanceModel performance,
+  List<ContributionModel> buys,
+  int? selectedId,
+) {
+  if (!performance.isMixed) {
+    return FundScope(ticker: null, series: performance.series, buys: buys);
+  }
+  final fund = performance.holdings.firstWhere(
+    (h) => h.holdingId == selectedId,
+    orElse: () => performance.holdings.first,
+  );
+  return FundScope(
+    ticker: fund.ticker,
+    series: fund.series,
+    buys: [
+      for (final b in buys)
+        if (b.holdingId == fund.holdingId) b,
+    ],
+  );
+}

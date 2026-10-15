@@ -1172,3 +1172,81 @@ List<MonthCell> reminderCells(
         }(),
   ];
 }
+
+/// Each fund's share of the portfolio next to the share you aim for.
+class AllocationChart extends StatelessWidget {
+  const AllocationChart({super.key, required this.funds});
+
+  final List<HoldingPerformanceModel> funds;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ChartColors.of(context);
+    if (funds.isEmpty) {
+      return const InsightEmpty('Appears after the first buy.');
+    }
+    final top = funds.fold<double>(
+      0,
+      (a, f) => [
+        a,
+        f.targetPct,
+        f.allocationPct ?? 0,
+      ].reduce((x, y) => x > y ? x : y),
+    );
+    final max = ((top / 10).ceil() * 10).clamp(10, 100).toDouble();
+    return BarChart(
+      BarChartData(
+        maxY: max,
+        gridData: gridData(c),
+        borderData: FlBorderData(show: false),
+        titlesData: titles(
+          leftTitles(c, (v) => '${v.toStringAsFixed(0)}%', reserved: 40),
+          SideTitles(
+            showTitles: true,
+            reservedSize: 26,
+            getTitlesWidget: (value, meta) {
+              final i = value.round();
+              if (i < 0 || i >= funds.length) return const SizedBox.shrink();
+              return SideTitleWidget(
+                meta: meta,
+                child: Text(funds[i].ticker, style: labelStyle(c)),
+              );
+            },
+          ),
+        ),
+        barTouchData: barTouch(c, (g, r) {
+          final f = funds[g];
+          return r == 0
+              ? '${f.ticker}\nNow ${(f.allocationPct ?? 0).toStringAsFixed(1)}%'
+              : '${f.ticker}\nTarget ${f.targetPct.toStringAsFixed(1)}%';
+        }),
+        barGroups: [
+          for (var i = 0; i < funds.length; i++)
+            BarChartGroupData(
+              x: i,
+              barsSpace: 4,
+              barRods: [
+                BarChartRodData(
+                  toY: funds[i].allocationPct ?? 0,
+                  width: 14,
+                  color: c.accent,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(3),
+                  ),
+                ),
+                BarChartRodData(
+                  toY: funds[i].targetPct,
+                  width: 14,
+                  color: Colors.transparent,
+                  borderSide: BorderSide(color: c.second, width: 1.5),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(3),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}

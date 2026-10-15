@@ -17,7 +17,10 @@ import 'package:tm_dashboard/theme/app_theme.dart';
 /// Ten months of a plan, answered like tm-server would. Anything in [failing]
 /// answers 500 so one broken source can be checked in isolation.
 class FakeServer {
-  FakeServer({this.failing = const {}});
+  FakeServer({this.failing = const {}, this.twoFunds = false});
+
+  /// Splits the portfolio into VT (odd months) and AGG (even months).
+  final bool twoFunds;
 
   final Set<String> failing;
   final calls = <String>[];
@@ -29,6 +32,37 @@ class FakeServer {
     status,
     headers: {'content-type': 'application/json'},
   );
+
+  List<Map<String, dynamic>> _holdings() => [
+    for (final (id, t, target, alloc) in [
+      (1, 'VT', 60.0, 72.0),
+      (2, 'AGG', 40.0, 28.0),
+    ])
+      {
+        'holdingId': id,
+        'ticker': t,
+        'name': null,
+        'assetClass': id == 1 ? 'EQUITY' : 'BONDS',
+        'targetPct': target,
+        'investedCents': 135000,
+        'valueCents': 140000,
+        'gainCents': 5000,
+        'shares': 12.5,
+        'averageCost': 108.0,
+        'currentPrice': 112.0,
+        'gainPercent': 3.7,
+        'allocationPct': alloc,
+        'driftPoints': alloc - target,
+        'series': [
+          for (var m = 1; m <= 9; m++)
+            {
+              'date': '2026-${two(m)}-10',
+              'investedCents': 15000 * m,
+              'valueCents': 15000 * m + m * 100 * id,
+            },
+        ],
+      },
+  ];
 
   Future<http.Response> handle(http.Request req) async {
     final path = req.url.path.replaceFirst('/api/v1/invest', '');
@@ -66,6 +100,7 @@ class FakeServer {
           'gainCents': 10000,
           'gainPercent': 3.7,
           'range': req.url.queryParameters['range'] ?? 'ALL',
+          if (twoFunds) 'holdings': _holdings(),
           'series': [
             for (var m = 1; m <= 9; m++) ...[
               {
@@ -92,6 +127,7 @@ class FakeServer {
                 'shares': 2.8,
                 'price': 107.0 + m,
                 'feeCents': m == 2 ? 100 : 0,
+                if (twoFunds) 'holdingId': m.isEven ? 2 : 1,
                 'notes': null,
               },
         ]);
@@ -342,7 +378,7 @@ void main() {
       tester.view.physicalSize = Size(width, 16000);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      await tester.pumpWidget(screen(FakeServer()));
+      await tester.pumpWidget(screen(FakeServer(twoFunds: width == 320.0)));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       expect(find.text('Did the plan happen?'), findsOneWidget);
@@ -387,6 +423,40 @@ void main() {
     expect(find.textContaining('Could not load'), findsNothing);
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('Charts'), findsOneWidget);
+  });
+
+  group('with several funds', () {
+    testWidgets('a fund picker and the allocation chart appear', (
+      tester,
+    ) async {
+      await pump(tester, FakeServer(twoFunds: true));
+      expect(find.byKey(const Key('fund-chip-1')), findsOneWidget);
+      expect(find.byKey(const Key('fund-chip-2')), findsOneWidget);
+      expect(find.text('Allocation against target'), findsOneWidget);
+      expect(find.textContaining('VT, AGG'), findsOneWidget);
+      expect(find.byKey(const Key('per-fund-Shares owned')), findsNothing);
+      expect(find.textContaining('Could not load'), findsNothing);
+    });
+
+    testWidgets('picking a fund redraws the per-fund charts for it', (
+      tester,
+    ) async {
+      await pump(tester, FakeServer(twoFunds: true));
+      // First fund by default: 5 odd-month buys (1,3,5,7,9).
+      expect(find.textContaining('5 buys'), findsWidgets);
+      await tester.tap(find.byKey(const Key('fund-chip-2')));
+      await tester.pumpAndSettle();
+      // AGG has the even months 2,6,8 (4 is missed): 3 buys.
+      expect(find.textContaining('3 buys'), findsWidgets);
+    });
+
+    testWidgets('one fund shows neither picker nor allocation chart', (
+      tester,
+    ) async {
+      await pump(tester, FakeServer());
+      expect(find.byKey(const Key('fund-chip-1')), findsNothing);
+      expect(find.text('Allocation against target'), findsNothing);
+    });
   });
 }
 

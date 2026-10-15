@@ -523,6 +523,11 @@ _MenuItem _investGroup(_MenuItem invest) => _MenuItem(
       icon: Icons.dashboard_outlined,
     ),
     _MenuItem(
+      label: 'Charts',
+      routeName: RouteNames.investInsights,
+      icon: Icons.bar_chart_outlined,
+    ),
+    _MenuItem(
       label: 'Contributions',
       routeName: RouteNames.investContributions,
       icon: Icons.add_card_outlined,

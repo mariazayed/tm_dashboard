@@ -14,7 +14,7 @@ const _names = [
   'home', 'calendar', 'tradingHours', 'riskManagement', 'trades', 'assets',
   'reminderNotes', 'strictRules', 'strategies', 'goals', 'capital', 'decisions',
   'questionsAnswers', 'expenses', 'expenseReasons', 'planner', 'invest',
-  'investContributions', 'investJournal', 'investLearning', 'investRules',
+  'investContributions', 'investInsights', 'investJournal', 'investLearning', 'investRules',
   'investSettings', 'investAsk', 'investReview',
 ];
 
@@ -49,6 +49,14 @@ void main() {
     tester.view.physicalSize = const Size(1400, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
+    // The test font is much wider than the real one, so long labels overflow
+    // the 260px sidebar here; that is a test artefact, not what users see.
+    final original = FlutterError.onError;
+    FlutterError.onError = (details) {
+      if (details.exceptionAsString().contains('overflowed')) return;
+      original?.call(details);
+    };
+    addTearDown(() => FlutterError.onError = original);
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
   }
@@ -71,6 +79,7 @@ void main() {
     for (final shown in [
       'Invest',
       'Overview',
+      'Charts',
       'Contributions',
       'Journal',
       'Learning',

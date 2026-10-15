@@ -173,6 +173,11 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
                       child: const Text('Contributions'),
                     ),
                     FilledButton.tonal(
+                      key: const Key('open-charts'),
+                      onPressed: () => context.goNamed(RouteNames.investInsights),
+                      child: const Text('Charts'),
+                    ),
+                    FilledButton.tonal(
                       key: const Key('ask-journal'),
                       onPressed: () => context.goNamed(RouteNames.investAsk),
                       child: const Text('Ask your journal'),

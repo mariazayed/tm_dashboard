@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../constants/api_constants.dart';
+import '../models/invest/insights_model.dart';
 import '../models/invest/invest_settings_model.dart';
 import '../models/invest/checkin_summary_model.dart';
 import '../models/invest/tag_suggestion_model.dart';
@@ -71,6 +72,15 @@ class PlanService {
     );
     _check(response.statusCode, response.body, {200});
     return InvestSettingsModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// History of plan changes, oldest first.
+  Future<List<SettingsChangeModel>> settingsChanges() async {
+    final response = await _api.get(Uri.parse('$_base/settings/changes'));
+    _check(response.statusCode, response.body, {200});
+    return (jsonDecode(response.body) as List)
+        .map((e) => SettingsChangeModel.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<ReminderStatusModel> reminderStatus() async {

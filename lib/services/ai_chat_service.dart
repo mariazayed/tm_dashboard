@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../constants/api_constants.dart';
 import '../models/invest/ai_chat_model.dart';
+import '../models/invest/insights_model.dart';
 import 'api_client.dart';
 import 'contribution_service.dart';
 
@@ -42,6 +43,13 @@ class AiChatService {
     final response = await _api.get(Uri.parse('$_base/usage'));
     _check(response.statusCode, response.body);
     return AiUsageModel.fromJson(jsonDecode(response.body));
+  }
+
+  /// Calls per day for the last [days] days (1 to 90), against the daily cap.
+  Future<AiUsageHistoryModel> usageHistory({int days = 30}) async {
+    final response = await _api.get(Uri.parse('$_base/usage/history?days=$days'));
+    _check(response.statusCode, response.body);
+    return AiUsageHistoryModel.fromJson(jsonDecode(response.body));
   }
 
   void _check(int status, String body) {

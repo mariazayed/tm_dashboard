@@ -25,4 +25,5 @@ class RouteNames {
   static const investSettings = 'investSettings';
   static const investAsk = 'investAsk';
   static const investReview = 'investReview';
+  static const investInsights = 'investInsights';
 }

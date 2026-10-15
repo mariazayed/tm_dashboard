@@ -51,7 +51,7 @@ flutter test test/api_client_test.dart test/service_cache_test.dart
 
 ## Invest tracker
 
-The **Invest** menu entry opens a personal investing tracker (plan: $300/month into VT).
+The **Invest** menu entry opens a personal investing tracker (a monthly plan across one or more funds).
 
 - **Contributions** (`/invest/contributions`): add, edit and delete monthly buys. Shares and price
   fill each other in from the amount. The Invest home page shows this month's status (done, due in

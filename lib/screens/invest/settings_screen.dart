@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/api_constants.dart';
@@ -241,7 +242,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('Plan settings', style: theme.textTheme.headlineSmall),
+            Row(
+              children: [
+                const PageBackButton(),
+                Text('Plan Settings', style: theme.textTheme.headlineSmall),
+              ],
+            ),
             const SizedBox(height: 12),
             TextField(
               key: const Key('amount-field'),
@@ -302,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Divider(height: 40),
             FundsSection(service: widget._holdings),
             const Divider(height: 40),
-            Text('Your rules', style: theme.textTheme.titleMedium),
+            Text('Your Rules', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             TextField(
               key: const Key('wait-hours-field'),

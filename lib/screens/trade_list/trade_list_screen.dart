@@ -10,6 +10,8 @@
 // machine. classes/trade_list_filters.dart (same folder) is similarly
 // unused now -- TradesScreen uses TradeJournalFilters instead.
 import 'package:flutter/material.dart';
+
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:intl/intl.dart';
 
 import '../../enums/trade_direction_enum.dart';
@@ -147,6 +149,8 @@ class _TradeListScreenState extends State<TradeListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         title: const Text('Trades'),
         actions: [
           IconButton(
@@ -238,7 +242,9 @@ class _TradeListScreenState extends State<TradeListScreen> {
                               ? const SizedBox(
                                   width: 22,
                                   height: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
                                 )
                               : const SizedBox.shrink(),
                         ),
@@ -277,7 +283,11 @@ class _TradeListScreenState extends State<TradeListScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.tune_rounded, size: 17, color: colorScheme.onSurfaceVariant),
+              Icon(
+                Icons.tune_rounded,
+                size: 17,
+                color: colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Filters',
@@ -295,7 +305,10 @@ class _TradeListScreenState extends State<TradeListScreen> {
                   icon: const Icon(Icons.clear_rounded, size: 16),
                   label: const Text('Clear filters'),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
                 ),
@@ -352,14 +365,16 @@ class _TradeListScreenState extends State<TradeListScreen> {
         isExpanded: true,
         decoration: _fieldDecoration('Asset'),
         items: [
-          const DropdownMenuItem<Asset?>(value: null, child: Text('All assets')),
+          const DropdownMenuItem<Asset?>(
+            value: null,
+            child: Text('All assets'),
+          ),
           ..._assets.map(
             (a) => DropdownMenuItem<Asset?>(value: a, child: Text(a.symbol)),
           ),
         ],
-        onChanged: (v) => _updateFilters(
-          (f) => f.copyWith(asset: v, clearAsset: v == null),
-        ),
+        onChanged: (v) =>
+            _updateFilters((f) => f.copyWith(asset: v, clearAsset: v == null)),
       ),
     );
   }
@@ -372,7 +387,10 @@ class _TradeListScreenState extends State<TradeListScreen> {
         isExpanded: true,
         decoration: _fieldDecoration('Strategy'),
         items: [
-          const DropdownMenuItem<Strategy?>(value: null, child: Text('All strategies')),
+          const DropdownMenuItem<Strategy?>(
+            value: null,
+            child: Text('All strategies'),
+          ),
           ..._strategies.map(
             (s) => DropdownMenuItem<Strategy?>(value: s, child: Text(s.name)),
           ),
@@ -392,9 +410,15 @@ class _TradeListScreenState extends State<TradeListScreen> {
         isExpanded: true,
         decoration: _fieldDecoration('Direction'),
         items: [
-          const DropdownMenuItem<TradeDirectionEnum?>(value: null, child: Text('All')),
+          const DropdownMenuItem<TradeDirectionEnum?>(
+            value: null,
+            child: Text('All'),
+          ),
           ...TradeDirectionEnum.values.map(
-            (d) => DropdownMenuItem<TradeDirectionEnum?>(value: d, child: Text(d.name)),
+            (d) => DropdownMenuItem<TradeDirectionEnum?>(
+              value: d,
+              child: Text(d.name),
+            ),
           ),
         ],
         onChanged: (v) => _updateFilters(
@@ -414,8 +438,14 @@ class _TradeListScreenState extends State<TradeListScreen> {
         items: const [
           DropdownMenuItem(value: TradeResultFilter.all, child: Text('All')),
           DropdownMenuItem(value: TradeResultFilter.win, child: Text('Wins')),
-          DropdownMenuItem(value: TradeResultFilter.loss, child: Text('Losses')),
-          DropdownMenuItem(value: TradeResultFilter.breakeven, child: Text('Breakeven')),
+          DropdownMenuItem(
+            value: TradeResultFilter.loss,
+            child: Text('Losses'),
+          ),
+          DropdownMenuItem(
+            value: TradeResultFilter.breakeven,
+            child: Text('Breakeven'),
+          ),
         ],
         onChanged: (v) {
           if (v != null) _updateFilters((f) => f.copyWith(result: v));
@@ -433,8 +463,14 @@ class _TradeListScreenState extends State<TradeListScreen> {
         decoration: _fieldDecoration('Review status'),
         items: const [
           DropdownMenuItem(value: TradeReviewFilter.all, child: Text('All')),
-          DropdownMenuItem(value: TradeReviewFilter.reviewed, child: Text('Reviewed')),
-          DropdownMenuItem(value: TradeReviewFilter.unreviewed, child: Text('Unreviewed')),
+          DropdownMenuItem(
+            value: TradeReviewFilter.reviewed,
+            child: Text('Reviewed'),
+          ),
+          DropdownMenuItem(
+            value: TradeReviewFilter.unreviewed,
+            child: Text('Unreviewed'),
+          ),
         ],
         onChanged: (v) {
           if (v != null) _updateFilters((f) => f.copyWith(reviewed: v));
@@ -444,8 +480,9 @@ class _TradeListScreenState extends State<TradeListScreen> {
   }
 
   Widget _dateRangePicker() {
-    final format = (DateTime? d) =>
-        d == null ? null : '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    final format = (DateTime? d) => d == null
+        ? null
+        : '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
     return SizedBox(
       width: 260,
@@ -485,7 +522,8 @@ class _TradeListScreenState extends State<TradeListScreen> {
 
   Future<void> _pickDateRange() async {
     final now = DateTime.now();
-    final initialRange = (_filters.entryFrom != null && _filters.entryTo != null)
+    final initialRange =
+        (_filters.entryFrom != null && _filters.entryTo != null)
         ? DateTimeRange(start: _filters.entryFrom!, end: _filters.entryTo!)
         : null;
 
@@ -498,11 +536,21 @@ class _TradeListScreenState extends State<TradeListScreen> {
 
     if (picked == null) return;
 
-    final from = DateTime(picked.start.year, picked.start.month, picked.start.day);
+    final from = DateTime(
+      picked.start.year,
+      picked.start.month,
+      picked.start.day,
+    );
     // End of day, inclusive -- otherwise a trade entered later that same
     // day would be wrongly excluded by TradeListFilters.apply().
     final to = DateTime(
-      picked.end.year, picked.end.month, picked.end.day, 23, 59, 59, 999,
+      picked.end.year,
+      picked.end.month,
+      picked.end.day,
+      23,
+      59,
+      59,
+      999,
     );
 
     _updateFilters((f) => f.copyWith(entryFrom: from, entryTo: to));
@@ -552,7 +600,9 @@ class _TradeListScreenState extends State<TradeListScreen> {
         ),
         if (filtered.isNotEmpty) ...[
           _statPill(
-            icon: total >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+            icon: total >= 0
+                ? Icons.trending_up_rounded
+                : Icons.trending_down_rounded,
             iconColor: totalColor,
             label: 'Total P&L',
             value: '${total >= 0 ? '+' : ''}${_money.format(total)}',
@@ -671,7 +721,10 @@ class _TradeListScreenState extends State<TradeListScreen> {
             const SizedBox(height: 4),
             Text(
               'Try adjusting or clearing your filters',
-              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12.5),
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 12.5,
+              ),
             ),
           ],
         ],

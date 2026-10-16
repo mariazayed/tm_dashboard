@@ -263,33 +263,43 @@ void main() {
 
     Finder field(String label) => find.widgetWithText(TextFormField, label);
 
-    testWidgets('prefills the monthly amount and derives shares from price', (
-      tester,
-    ) async {
-      await open(tester, serviceWith((_) async => http.Response('{}', 500)));
+    testWidgets(
+      'starts blank, then derives whole shares and keeps full amount',
+      (tester) async {
+        await open(tester, serviceWith((_) async => http.Response('{}', 500)));
 
-      expect(
-        tester.widget<TextFormField>(field('Amount (USD)')).controller!.text,
-        '300.00',
-      );
-      await tester.enterText(field('Price per VT share'), '120');
-      await tester.pump();
-      expect(
-        tester.widget<TextFormField>(field('Shares')).controller!.text,
-        '2.50000000',
-      );
-    });
+        expect(
+          tester.widget<TextFormField>(field('Amount (USD)')).controller!.text,
+          '',
+        );
+        await tester.enterText(field('Amount (USD)'), '300');
+        await tester.enterText(field('Price per share'), '120');
+        await tester.pump();
+        expect(
+          tester.widget<TextFormField>(field('Shares')).controller!.text,
+          '2',
+        );
+        expect(
+          tester.widget<TextFormField>(field('Amount (USD)')).controller!.text,
+          '300',
+        );
+      },
+    );
 
-    testWidgets('a hand-typed share count is not overwritten', (tester) async {
-      await open(tester, serviceWith((_) async => http.Response('{}', 500)));
-      await tester.enterText(field('Shares'), '2.4');
-      await tester.enterText(field('Price per VT share'), '120');
-      await tester.pump();
-      expect(
-        tester.widget<TextFormField>(field('Shares')).controller!.text,
-        '2.4',
-      );
-    });
+    testWidgets(
+      'shares are calculated as whole shares for a new contribution',
+      (tester) async {
+        await open(tester, serviceWith((_) async => http.Response('{}', 500)));
+        await tester.enterText(field('Amount (USD)'), '300');
+        await tester.enterText(field('Price per share'), '120');
+        await tester.pump();
+        expect(tester.widget<TextFormField>(field('Shares')).readOnly, isTrue);
+        expect(
+          tester.widget<TextFormField>(field('Shares')).controller!.text,
+          '2',
+        );
+      },
+    );
 
     testWidgets('rejects a bad amount without calling the server', (
       tester,
@@ -323,7 +333,8 @@ void main() {
           );
         }),
       );
-      await tester.enterText(field('Price per VT share'), '120');
+      await tester.enterText(field('Amount (USD)'), '300');
+      await tester.enterText(field('Price per share'), '120');
       await tester.pump();
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
@@ -331,7 +342,7 @@ void main() {
       final body = jsonDecode(seen!.body) as Map<String, dynamic>;
       expect(body['amountCents'], 30000);
       expect(body['price'], 120);
-      expect(body['shares'], 2.5);
+      expect(body['shares'], 2);
       expect(body['feeCents'], 0);
       expect(find.text('Shares do not match amount / price'), findsOneWidget);
     });

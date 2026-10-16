@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:tm_dashboard/enums/strategy_tag_enum.dart';
 import 'package:tm_dashboard/models/strategy_tag_model.dart';
 import 'package:tm_dashboard/services/static_data_service.dart';
@@ -62,7 +64,11 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Strategies")),
+      appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
+        title: const Text("Strategies"),
+      ),
       body: Padding(padding: const EdgeInsets.all(16), child: _buildBody()),
       floatingActionButton: FloatingActionButton(
         onPressed: openAddDialog,
@@ -306,12 +312,21 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                                         link: linkController.text,
                                         tags: selectedTags,
                                       );
-                                      if (context.mounted) Navigator.pop(context);
+                                      if (context.mounted)
+                                        Navigator.pop(context);
                                     } catch (e) {
-                                      setStateDialog(() => isSubmitting = false);
+                                      setStateDialog(
+                                        () => isSubmitting = false,
+                                      );
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Failed to create strategy: $e')),
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Failed to create strategy: $e',
+                                            ),
+                                          ),
                                         );
                                       }
                                     }
@@ -325,7 +340,9 @@ class _StrategiesScreenState extends State<StrategiesScreen> {
                                 ? const SizedBox(
                                     width: 18,
                                     height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text("Create"),
                           ),

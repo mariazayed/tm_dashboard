@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../enums/decision_category_enum.dart';
 import '../../enums/decision_status_enum.dart';
 import '../../models/decision_model.dart';
@@ -101,6 +103,8 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
       // (Dashboard included), so this page's background matches the rest
       // of the app instead of standing out.
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         surfaceTintColor: Colors.transparent,
         title: const Text('Decisions'),
         actions: [
@@ -188,7 +192,9 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
                                 decisions.isEmpty
                                     ? 'No decisions logged yet'
                                     : 'No decisions in this category',
-                                style: TextStyle(color: colorScheme.onSurfaceVariant),
+                                style: TextStyle(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ],
                           ),
@@ -253,11 +259,7 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
         runSpacing: 10,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          _summaryMetric(
-            'Active',
-            activeCount.toString(),
-            semantic.profit,
-          ),
+          _summaryMetric('Active', activeCount.toString(), semantic.profit),
           _summaryMetric(
             'Resolved',
             resolvedCount.toString(),
@@ -333,9 +335,7 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
             categoryFilter == null,
             () => setState(() => categoryFilter = null),
           ),
-          ...decisionCategoriesFor(
-            tradingEnabled: Features.tradingEnabled,
-          ).map(
+          ...decisionCategoriesFor(tradingEnabled: Features.tradingEnabled).map(
             (c) => _filterButton(
               c.label,
               categoryFilter == c,
@@ -380,7 +380,9 @@ class _DecisionsScreenState extends State<DecisionsScreen> {
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+                  color: selected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                 ),

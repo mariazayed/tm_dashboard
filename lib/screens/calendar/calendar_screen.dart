@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import 'header.dart';
 import 'month_grid.dart';
 import 'week_labels.dart';
@@ -11,7 +13,11 @@ class CalendarScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calendar')),
+      appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
+        title: const Text('Calendar'),
+      ),
       body: SafeArea(
         child: Column(
           children: [

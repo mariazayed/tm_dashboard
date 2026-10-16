@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:tm_dashboard/models/strict_rule_model.dart';
 import 'package:tm_dashboard/services/strict_rules_service.dart';
 
@@ -114,7 +116,9 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
       curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        color: isDraft ? semantic.orange.withValues(alpha: 0.12) : colorScheme.surface,
+        color: isDraft
+            ? semantic.orange.withValues(alpha: 0.12)
+            : colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -131,10 +135,7 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: colorScheme.onSurface,
-                ),
+                style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
               ),
             ),
             if (!isDraft && isDeleting)
@@ -211,7 +212,11 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
       // the theme's scaffoldBackgroundColor/appBarTheme, same as every
       // other screen (Dashboard included), so this page's background
       // matches the rest of the app instead of standing out.
-      appBar: AppBar(title: const Text('Strict Rules')),
+      appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
+        title: const Text('Strict Rules'),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -301,7 +306,9 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
                     Padding(
                       padding: const EdgeInsets.only(top: 12),
                       child: ElevatedButton(
-                        onPressed: _isSubmittingDrafts ? null : _submitAllDrafts,
+                        onPressed: _isSubmittingDrafts
+                            ? null
+                            : _submitAllDrafts,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: semantic.profit,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -321,7 +328,10 @@ class _StrictRulesScreenState extends State<StrictRulesScreen>
                                 )
                               : const Text(
                                   'Submit All',
-                                  style: TextStyle(fontSize: 16, color: Colors.white),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
                                 ),
                         ),
                       ),

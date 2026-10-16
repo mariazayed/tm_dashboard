@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -242,9 +243,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
             children: [
               Row(
                 children: [
+                  const PageBackButton(),
                   Expanded(
                     child: Text(
-                      'Ask your journal',
+                      'Ask Your Journal',
                       style: theme.textTheme.headlineSmall,
                     ),
                   ),

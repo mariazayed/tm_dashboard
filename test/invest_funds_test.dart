@@ -206,7 +206,7 @@ void main() {
         ),
       );
       expect(find.byKey(const Key('fund-picker')), findsOneWidget);
-      expect(find.text('Price per VT share'), findsOneWidget);
+      expect(find.text('Price per share'), findsOneWidget);
     });
   });
 

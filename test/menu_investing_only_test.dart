@@ -11,11 +11,31 @@ import 'package:tm_dashboard/widgets/menu_bar.dart';
 /// `namedLocation`, which throws for an unregistered name, so the stub
 /// router has to know all of them.
 const _names = [
-  'home', 'calendar', 'tradingHours', 'riskManagement', 'trades', 'assets',
-  'reminderNotes', 'strictRules', 'strategies', 'goals', 'capital', 'decisions',
-  'questionsAnswers', 'expenses', 'expenseReasons', 'planner', 'invest',
-  'investContributions', 'investInsights', 'investJournal', 'investLearning', 'investRules',
-  'investSettings', 'investAsk', 'investReview',
+  'home',
+  'calendar',
+  'tradingHours',
+  'riskManagement',
+  'trades',
+  'assets',
+  'reminderNotes',
+  'strictRules',
+  'strategies',
+  'goals',
+  'capital',
+  'decisions',
+  'questionsAnswers',
+  'expenses',
+  'expenseReasons',
+  'planner',
+  'invest',
+  'investContributions',
+  'investInsights',
+  'investJournal',
+  'investLearning',
+  'investRules',
+  'investSettings',
+  'investAsk',
+  'investReview',
 ];
 
 Widget _app() {
@@ -61,8 +81,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('trading off: trading entries are gone, investing pages listed',
-      (tester) async {
+  testWidgets('trading off: trading entries are gone, investing pages listed', (
+    tester,
+  ) async {
     await pump(tester);
 
     for (final hidden in [
@@ -75,34 +96,44 @@ void main() {
       'Strategies',
       'Deposits & Withdraws',
       'Strict Rules',
+      'Expenses',
+      'Expense Reasons',
     ]) {
       expect(find.text(hidden), findsNothing, reason: hidden);
     }
     for (final shown in [
-      'Invest',
       'Overview',
-      'Charts',
       'Contributions',
       'Journal',
-      'Learning',
-      'Rules',
-      'Ask your journal',
-      'Review',
-      'Settings',
+      'Charts',
       'Goals',
       'Planner',
+      'Learning',
+      'Rules',
+      'Review',
+      'Ask your journal',
       'Decisions',
-      'Expenses',
+      'Questions & Answers',
+      'Reminder Notes',
+      'Settings',
     ]) {
       expect(find.text(shown), findsOneWidget, reason: shown);
     }
+    expect(find.text('Invest'), findsNothing);
+    expect(find.text('Others'), findsNothing);
   });
 
   testWidgets('trading on: the original menu is unchanged', (tester) async {
     Features.reset(const FeatureFlags(trading: true));
     await pump(tester);
 
-    for (final shown in ['Home', 'Invest', 'Calendar', 'Trading Hours', 'Trades']) {
+    for (final shown in [
+      'Home',
+      'Invest',
+      'Calendar',
+      'Trading Hours',
+      'Trades',
+    ]) {
       expect(find.text(shown), findsOneWidget, reason: shown);
     }
     expect(find.text('Overview'), findsNothing);

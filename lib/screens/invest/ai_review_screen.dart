@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 
 import '../../models/invest/journal_model.dart';
 import '../../models/invest/plan_model.dart';
@@ -170,7 +171,12 @@ class _RuleCheckTabState extends State<RuleCheckTab> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('Review', style: theme.textTheme.headlineSmall),
+            Row(
+              children: [
+                const PageBackButton(),
+                Text('Review', style: theme.textTheme.headlineSmall),
+              ],
+            ),
             const SizedBox(height: 4),
             Text(
               'Check a stretch of your journal and plan against your own rules. '

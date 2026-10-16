@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../theme/app_theme.dart';
 import 'risk_equity_curve_chart.dart';
 import 'risk_metrics.dart';
@@ -73,7 +75,11 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Risk Management')),
+      appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
+        title: const Text('Risk Management'),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth > 1200;
@@ -246,7 +252,10 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
                 if (showPercent)
                   Text(
                     '${stat.percent.toStringAsFixed(2)}%',
-                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
               ],
             ),
@@ -379,7 +388,10 @@ class _RiskManagementScreenState extends State<RiskManagementScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(

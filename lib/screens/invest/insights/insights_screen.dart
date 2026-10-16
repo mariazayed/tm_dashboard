@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 
 import '../../../models/invest/contribution_model.dart';
 import '../../../models/invest/contribution_status_model.dart';
@@ -36,6 +37,12 @@ class InsightsScreen extends StatefulWidget {
     LearningService? learning,
     AiChatService? ai,
     this.now,
+    this.embedded = false,
+    this.showHeader = true,
+    this.initialSettings,
+    this.initialPerformance,
+    this.initialBuys,
+    this.initialStatus,
   }) : _contributions = contributions,
        _plan = plan,
        _journal = journal,
@@ -50,6 +57,12 @@ class InsightsScreen extends StatefulWidget {
 
   /// For tests; defaults to the current time.
   final DateTime Function()? now;
+  final bool embedded;
+  final bool showHeader;
+  final InvestSettingsModel? initialSettings;
+  final PerformanceModel? initialPerformance;
+  final List<ContributionModel>? initialBuys;
+  final ContributionStatusModel? initialStatus;
 
   @override
   State<InsightsScreen> createState() => _InsightsScreenState();
@@ -84,10 +97,26 @@ class _InsightsScreenState extends State<InsightsScreen> {
     // Started together so the page fills in at once. A chart far down the page
     // may not be on screen yet when its data fails, so each error is marked as
     // handled here; the chart still shows it when it is built.
-    _settings = _contributions.getSettings()..ignore();
-    _performance = _contributions.getPerformance()..ignore();
-    _buys = _contributions.getAll()..ignore();
-    _status = _contributions.getStatus()..ignore();
+    _settings =
+        (widget.initialSettings == null
+              ? _contributions.getSettings()
+              : Future.value(widget.initialSettings!))
+          ..ignore();
+    _performance =
+        (widget.initialPerformance == null
+              ? _contributions.getPerformance()
+              : Future.value(widget.initialPerformance!))
+          ..ignore();
+    _buys =
+        (widget.initialBuys == null
+              ? _contributions.getAll()
+              : Future.value(widget.initialBuys!))
+          ..ignore();
+    _status =
+        (widget.initialStatus == null
+              ? _contributions.getStatus()
+              : Future.value(widget.initialStatus!))
+          ..ignore();
     _changes = _plan.settingsChanges()..ignore();
     _entries = _loadJournal()..ignore();
     _rules = _plan.ruleCheck(from: monthStart(_months.first), to: _now)
@@ -118,46 +147,138 @@ class _InsightsScreenState extends State<InsightsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final sections = <Widget>[
+      if (widget.showHeader) ...[
+        Row(
+          children: [
+            const PageBackButton(),
+            Text('Charts', style: theme.textTheme.headlineSmall),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Everything about your plan in pictures, from what you have already recorded.',
+          style: theme.textTheme.bodyMedium,
+        ),
+      ],
+      _heading('Your plan'),
+      _valueChart(),
+      _contributionsByMonth(),
+      _costBasis(),
+      _allocation(),
+      _planGrid(),
+      _heading('How you buy'),
+      _fundPicker(),
+      _fees(),
+      _sharesOwned(),
+      _buysOnPrice(),
+      _plannedVsActual(),
+      _timing(),
+      _planChanges(),
+      _heading('How the price moved'),
+      _monthlyReturns(),
+      _rolling12(),
+      _heading('Habits'),
+      _journalActivity(),
+      _ruleFindings(),
+      _reminderTimeline(),
+      _heading('Learning and AI'),
+      _flashcards(),
+      _reading(),
+      _aiUsage(),
+    ].expand((w) => [w, if (w is! Padding) const SizedBox(height: 12)]).toList();
+    if (widget.embedded) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _analyticsGroup(
+            title: 'Portfolio progress',
+            subtitle: 'Value, contributions, cost basis and allocation',
+            icon: Icons.account_balance_outlined,
+            children: [
+              _valueChart(),
+              _contributionsByMonth(),
+              _costBasis(),
+              _allocation(),
+              _planGrid(),
+            ],
+          ),
+          _analyticsGroup(
+            title: 'Buying patterns',
+            subtitle: 'Fees, shares, timing and plan consistency',
+            icon: Icons.swap_horiz_rounded,
+            children: [
+              _fundPicker(),
+              _fees(),
+              _sharesOwned(),
+              _buysOnPrice(),
+              _plannedVsActual(),
+              _timing(),
+              _planChanges(),
+            ],
+          ),
+          _analyticsGroup(
+            title: 'Market trends',
+            subtitle: 'Monthly performance and rolling returns',
+            icon: Icons.show_chart_rounded,
+            children: [_monthlyReturns(), _rolling12()],
+          ),
+          _analyticsGroup(
+            title: 'Habits and reminders',
+            subtitle: 'Journal activity, rule checks and reminders',
+            icon: Icons.event_note_outlined,
+            children: [
+              _journalActivity(),
+              _ruleFindings(),
+              _reminderTimeline(),
+            ],
+          ),
+          _analyticsGroup(
+            title: 'Learning and AI',
+            subtitle: 'Study progress and assistant usage',
+            icon: Icons.school_outlined,
+            children: [_flashcards(), _reading(), _aiUsage()],
+          ),
+        ],
+      );
+    }
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 900),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text('Charts', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 4),
-            Text(
-              'Everything about your plan in pictures, from what you have already recorded.',
-              style: theme.textTheme.bodyMedium,
-            ),
-            _heading('Your plan'),
-            _valueChart(),
-            _contributionsByMonth(),
-            _costBasis(),
-            _allocation(),
-            _planGrid(),
-            _heading('How you buy'),
-            _fundPicker(),
-            _fees(),
-            _sharesOwned(),
-            _buysOnPrice(),
-            _plannedVsActual(),
-            _timing(),
-            _planChanges(),
-            _heading('How the price moved'),
-            _monthlyReturns(),
-            _rolling12(),
-            _heading('Habits'),
-            _journalActivity(),
-            _ruleFindings(),
-            _reminderTimeline(),
-            _heading('Learning and AI'),
-            _flashcards(),
-            _reading(),
-            _aiUsage(),
-          ].expand((w) => [w, if (w is! Padding) const SizedBox(height: 12)]).toList(),
+        child: ListView(padding: const EdgeInsets.all(16), children: sections),
+      ),
+    );
+  }
+
+  Widget _analyticsGroup({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: colors.primaryContainer,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          child: Icon(icon, color: colors.onPrimaryContainer, size: 21),
         ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(subtitle),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final child in children)
+            if (child is! SizedBox) ...[child, const SizedBox(height: 12)],
+        ],
       ),
     );
   }

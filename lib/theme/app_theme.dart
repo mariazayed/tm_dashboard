@@ -55,45 +55,47 @@ class AppTheme {
     onPopoverColor: AppPalette.gray900,
   );
 
-  static ColorScheme get _lightColorScheme => ColorScheme.fromSeed(
-    seedColor: AppPalette.indigo400,
-    brightness: Brightness.light,
-  ).copyWith(
-    primary: AppPalette.indigo400,
-    onPrimary: Colors.white,
-    error: AppPalette.red500,
-    surface: Colors.white,
-    onSurface: AppPalette.gray700,
-    surfaceContainerLowest: Colors.white,
-    surfaceContainerLow: AppPalette.gray50,
-    surfaceContainer: AppPalette.gray50,
-    surfaceContainerHigh: AppPalette.gray100,
-    surfaceContainerHighest: AppPalette.gray100,
-    onSurfaceVariant: AppPalette.gray500,
-    outline: AppPalette.gray300,
-    outlineVariant: AppPalette.gray100,
-    shadow: Colors.black,
-  );
+  static ColorScheme get _lightColorScheme =>
+      ColorScheme.fromSeed(
+        seedColor: AppPalette.indigo400,
+        brightness: Brightness.light,
+      ).copyWith(
+        primary: AppPalette.indigo400,
+        onPrimary: Colors.white,
+        error: AppPalette.red500,
+        surface: Colors.white,
+        onSurface: AppPalette.gray700,
+        surfaceContainerLowest: Colors.white,
+        surfaceContainerLow: AppPalette.gray50,
+        surfaceContainer: AppPalette.gray50,
+        surfaceContainerHigh: AppPalette.gray100,
+        surfaceContainerHighest: AppPalette.gray100,
+        onSurfaceVariant: AppPalette.gray500,
+        outline: AppPalette.gray300,
+        outlineVariant: AppPalette.gray100,
+        shadow: Colors.black,
+      );
 
-  static ColorScheme get _darkColorScheme => ColorScheme.fromSeed(
-    seedColor: AppPalette.indigo400,
-    brightness: Brightness.dark,
-  ).copyWith(
-    primary: AppPalette.indigo300,
-    onPrimary: AppPalette.gray900,
-    error: AppPalette.red400,
-    surface: AppPalette.gray900,
-    onSurface: AppPalette.gray100,
-    surfaceContainerLowest: AppPalette.gray950,
-    surfaceContainerLow: AppPalette.gray900,
-    surfaceContainer: AppPalette.gray900,
-    surfaceContainerHigh: AppPalette.gray800,
-    surfaceContainerHighest: AppPalette.gray800,
-    onSurfaceVariant: AppPalette.gray400,
-    outline: AppPalette.gray700,
-    outlineVariant: AppPalette.gray800,
-    shadow: Colors.black,
-  );
+  static ColorScheme get _darkColorScheme =>
+      ColorScheme.fromSeed(
+        seedColor: AppPalette.indigo400,
+        brightness: Brightness.dark,
+      ).copyWith(
+        primary: AppPalette.indigo300,
+        onPrimary: AppPalette.gray900,
+        error: AppPalette.red400,
+        surface: AppPalette.gray900,
+        onSurface: AppPalette.gray100,
+        surfaceContainerLowest: AppPalette.gray950,
+        surfaceContainerLow: AppPalette.gray900,
+        surfaceContainer: AppPalette.gray900,
+        surfaceContainerHigh: AppPalette.gray800,
+        surfaceContainerHighest: AppPalette.gray800,
+        onSurfaceVariant: AppPalette.gray400,
+        outline: AppPalette.gray700,
+        outlineVariant: AppPalette.gray800,
+        shadow: Colors.black,
+      );
 
   static ThemeData _themeFor({
     required Brightness brightness,
@@ -120,24 +122,42 @@ class AppTheme {
       extensions: [semanticColors],
 
       textTheme: TextTheme(
+        headlineSmall: TextStyle(
+          fontSize: 26,
+          fontWeight: FontWeight.w700,
+          color: headlineColor,
+          letterSpacing: -0.55,
+          height: 1.15,
+        ),
         headlineMedium: TextStyle(
+          fontSize: 32,
           fontWeight: FontWeight.w800,
           color: headlineColor,
-          letterSpacing: -0.5,
+          letterSpacing: -0.8,
+          height: 1.1,
         ),
-        titleLarge: TextStyle(fontWeight: FontWeight.w700, color: titleColor),
+        titleLarge: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: titleColor,
+          letterSpacing: -0.25,
+        ),
         bodyMedium: TextStyle(color: bodyColor),
       ),
 
       appBarTheme: AppBarTheme(
+        toolbarHeight: 72,
+        titleSpacing: 24,
         elevation: 0,
         backgroundColor: scaffoldBackground,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: headlineColor,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w800,
+          fontSize: 23,
+          fontWeight: FontWeight.w700,
           color: headlineColor,
+          letterSpacing: -0.45,
         ),
         iconTheme: IconThemeData(color: bodyColor),
       ),
@@ -208,12 +228,13 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
 
-      listTileTheme: ListTileThemeData(iconColor: iconColor, textColor: titleColor),
+      listTileTheme: ListTileThemeData(
+        iconColor: iconColor,
+        textColor: titleColor,
+      ),
 
       drawerTheme: DrawerThemeData(backgroundColor: colorScheme.surface),
 
@@ -232,9 +253,7 @@ class AppTheme {
         backgroundColor: popoverColor,
         contentTextStyle: TextStyle(color: onPopoverColor),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
 
       scrollbarTheme: ScrollbarThemeData(

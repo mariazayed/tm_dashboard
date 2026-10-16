@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../models/expense_reason_model.dart';
 import '../../services/api_client.dart';
 import '../../services/expense_reason_service.dart';
@@ -94,6 +96,8 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         title: const Text('Expense Reasons'),
         actions: [
           IconButton(icon: const Icon(Icons.add), onPressed: () => _openAdd()),
@@ -120,8 +124,12 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
           final filtered = _query.trim().isEmpty
               ? reasons
               : reasons
-                  .where((r) => r.name.toLowerCase().contains(_query.trim().toLowerCase()))
-                  .toList();
+                    .where(
+                      (r) => r.name.toLowerCase().contains(
+                        _query.trim().toLowerCase(),
+                      ),
+                    )
+                    .toList();
 
           return RefreshIndicator(
             onRefresh: () => ApiClient.shared.refresh(_refresh),
@@ -151,13 +159,19 @@ class _ExpenseReasonsScreenState extends State<ExpenseReasonsScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, size: 48, color: colorScheme.outlineVariant),
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 48,
+                            color: colorScheme.outlineVariant,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             reasons.isEmpty
                                 ? 'No expense reasons yet — add your first one'
                                 : 'No reasons match your search',
-                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),

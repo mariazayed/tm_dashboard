@@ -5,6 +5,8 @@ class FormNumberField extends StatelessWidget {
   final TextEditingController controller;
   final bool readOnly;
   final Color? fillColor;
+  final String? hintText;
+  final String? helperText;
 
   const FormNumberField({
     super.key,
@@ -12,6 +14,8 @@ class FormNumberField extends StatelessWidget {
     required this.controller,
     this.readOnly = false,
     this.fillColor,
+    this.hintText,
+    this.helperText,
   });
 
   @override
@@ -24,6 +28,8 @@ class FormNumberField extends StatelessWidget {
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           labelText: label,
+          hintText: hintText,
+          helperText: helperText,
           filled: fillColor != null,
           fillColor: fillColor,
         ),

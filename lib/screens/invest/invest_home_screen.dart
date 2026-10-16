@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/route_names.dart';
+import '../../models/invest/contribution_model.dart';
 import '../../models/invest/contribution_status_model.dart';
 import '../../models/invest/invest_settings_model.dart';
 import '../../models/invest/money.dart';
 import '../../models/invest/performance_model.dart';
-import '../../services/plan_service.dart';
 import '../../services/contribution_service.dart';
+import '../../services/plan_service.dart';
+import '../dashboard/goals_progress_section.dart';
 import 'contribution_status_card.dart';
+import 'insights/insights_screen.dart';
+import 'investing_planner_preview.dart';
 import 'performance_card.dart';
-import 'projection_panel.dart';
+import 'recent_contributions_card.dart';
 import 'rules_card.dart';
-import 'value_chart_card.dart';
 
 /// Landing page of the investing tracker: the plan, this month's status and
 /// a way into the contribution log.
@@ -43,6 +46,7 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
       ContributionStatusModel,
       PerformanceModel,
       List<String>,
+      List<ContributionModel>,
     )
   >
   _future;
@@ -60,6 +64,7 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
       ContributionStatusModel,
       PerformanceModel,
       List<String>,
+      List<ContributionModel>,
     )
   >
   _load() async {
@@ -73,12 +78,14 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
           .rules()
           .then<List<String>>((r) => r.map((e) => e.text).toList())
           .catchError((_) => <String>[]),
+      service.getAll().catchError((_) => <ContributionModel>[]),
     ]);
     return (
       results[0] as InvestSettingsModel,
       results[1] as ContributionStatusModel,
       results[2] as PerformanceModel,
       results[3] as List<String>,
+      results[4] as List<ContributionModel>,
     );
   }
 
@@ -119,6 +126,27 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
     return 'Plan: $amount / month $into, on day ${settings.buyDay}.';
   }
 
+  Widget _responsivePair({
+    required Widget first,
+    required Widget second,
+    int firstFlex = 1,
+    int secondFlex = 1,
+  }) => LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth < 720) {
+        return Column(children: [first, const SizedBox(height: 16), second]);
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: firstFlex, child: first),
+          const SizedBox(width: 16),
+          Expanded(flex: secondFlex, child: second),
+        ],
+      );
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -131,87 +159,115 @@ class _InvestHomeScreenState extends State<InvestHomeScreen> {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
-        final (settings, status, performance, rules) = snapshot.data!;
-        return Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text('Invest', style: theme.textTheme.headlineSmall),
-                const SizedBox(height: 4),
-                Text(
-                  _planLine(settings, performance),
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                RulesCard(
-                  rules: rules,
-                  onEdit: () => context.goNamed(RouteNames.investRules),
-                ),
-                const SizedBox(height: 16),
-                PerformanceCard(
-                  performance: performance,
-                  onRefresh: _refreshPrices,
-                  refreshing: _refreshing,
-                  currentStreak: status.currentStreak,
-                ),
-                const SizedBox(height: 16),
-                ValueChartCard(
-                  key: ValueKey(performance.priceAsOf),
-                  initial: performance,
-                  loader: (range) =>
-                      _contributions.getPerformance(range: range),
-                ),
-                const SizedBox(height: 16),
-                ContributionStatusCard(status: status),
-                const SizedBox(height: 16),
-                ProjectionPanel(
-                  startCents: performance.valueCents,
-                  monthlyCents: settings.monthlyAmountCents,
-                  currency: settings.currency,
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
+        final (settings, status, performance, rules, contributions) =
+            snapshot.data!;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(
+            MediaQuery.sizeOf(context).width < 600 ? 16 : 28,
+            24,
+            MediaQuery.sizeOf(context).width < 600 ? 16 : 28,
+            32,
+          ),
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final action = FilledButton.icon(
+                  onPressed: () =>
+                      context.goNamed(RouteNames.investContributions),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Record contribution'),
+                );
+                final heading = Row(
                   children: [
-                    FilledButton(
-                      onPressed: () =>
-                          context.goNamed(RouteNames.investContributions),
-                      child: const Text('Contributions'),
-                    ),
-                    FilledButton.tonal(
-                      key: const Key('open-charts'),
-                      onPressed: () =>
-                          context.goNamed(RouteNames.investInsights),
-                      child: const Text('Charts'),
-                    ),
-                    FilledButton.tonal(
-                      key: const Key('ask-journal'),
-                      onPressed: () => context.goNamed(RouteNames.investAsk),
-                      child: const Text('Ask your journal'),
-                    ),
-                    OutlinedButton(
-                      onPressed: () =>
-                          context.goNamed(RouteNames.investLearning),
-                      child: const Text('Learning'),
-                    ),
-                    OutlinedButton(
-                      onPressed: () =>
-                          context.goNamed(RouteNames.investJournal),
-                      child: const Text('Journal'),
-                    ),
-                    OutlinedButton(
-                      onPressed: () =>
-                          context.goNamed(RouteNames.investSettings),
-                      child: const Text('Settings'),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Investing Dashboard',
+                            style: theme.textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _planLine(settings, performance),
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
-                ),
-              ],
+                );
+                if (constraints.maxWidth < 580) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [heading, const SizedBox(height: 12), action],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: heading),
+                    const SizedBox(width: 16),
+                    action,
+                  ],
+                );
+              },
             ),
-          ),
+            const SizedBox(height: 16),
+            PerformanceCard(
+              performance: performance,
+              cashBalanceCents: contributions.fold<int>(
+                0,
+                (balance, contribution) =>
+                    balance + contribution.cashDeltaCents,
+              ),
+              onRefresh: _refreshPrices,
+              refreshing: _refreshing,
+              currentStreak: status.currentStreak,
+            ),
+            const SizedBox(height: 16),
+            ContributionStatusCard(status: status),
+            const SizedBox(height: 16),
+            _responsivePair(
+              first: const GoalsProgressSection(),
+              second: const InvestingPlannerPreview(),
+            ),
+            const SizedBox(height: 16),
+            RecentContributionsCard(
+              contributions: contributions,
+              currency: settings.currency,
+              onViewAll: () => context.goNamed(RouteNames.investContributions),
+            ),
+            const SizedBox(height: 16),
+            RulesCard(
+              rules: rules,
+              onEdit: () => context.goNamed(RouteNames.investRules),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Analytics',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Explore your portfolio, contribution history and investing habits.',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            InsightsScreen(
+              key: ValueKey(
+                '${performance.priceAsOf}:${contributions.length}:${status.currentStreak}',
+              ),
+              embedded: true,
+              showHeader: false,
+              initialSettings: settings,
+              initialPerformance: performance,
+              initialBuys: contributions,
+              initialStatus: status,
+            ),
+            const SizedBox(height: 16),
+          ],
         );
       },
     );

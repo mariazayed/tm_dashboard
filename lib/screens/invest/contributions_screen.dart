@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 
 import '../../models/invest/contribution_model.dart';
 import '../../models/invest/invest_settings_model.dart';
@@ -79,6 +80,7 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
         settings: settings,
         existing: existing,
         holdings: holdings,
+        contributions: items,
         // the list is newest first, so this is the fund you bought last
         defaultHoldingId: items.isEmpty ? null : items.first.holdingId,
         service: widget._service,
@@ -189,66 +191,342 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         final (settings, items, holdings) = snapshot.data!;
+        final cashBalance = items.fold<int>(
+          0,
+          (sum, c) => sum + c.cashDeltaCents,
+        );
+        final availableCash = cashBalance > 0 ? cashBalance : 0;
+        final totalContributed = items.fold<int>(
+          0,
+          (sum, c) => sum + c.amountCents + c.feeCents,
+        );
+        final colors = Theme.of(context).colorScheme;
         return Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final narrow = constraints.maxWidth < 600;
+                  final title = Row(
+                    children: [
+                      const PageBackButton(),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Contributions',
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Track your buys, fees and cash ready to reinvest.',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: colors.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                  final actions = Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: () => _openSheet(settings, holdings, items),
+                        icon: const Icon(Icons.add_rounded),
+                        label: const Text('Add'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _importCsv,
+                        icon: const Icon(Icons.file_upload_outlined),
+                        label: const Text('Import CSV'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _exportCsv,
+                        icon: const Icon(Icons.content_copy_rounded),
+                        label: const Text('Copy CSV'),
+                      ),
+                    ],
+                  );
+                  if (narrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [title, const SizedBox(height: 16), actions],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(child: title),
+                      const SizedBox(width: 16),
+                      actions,
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+              Card(
+                clipBehavior: Clip.antiAlias,
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        colors.primaryContainer.withValues(alpha: 0.72),
+                        colors.surfaceContainerHigh,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(20),
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    runSpacing: 16,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: colors.primary.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Icon(
+                              Icons.account_balance_wallet_outlined,
+                              color: colors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Available to reinvest',
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(color: colors.onSurfaceVariant),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                Money.format(availableCash, settings.currency),
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surface.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: colors.outlineVariant.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Wrap(
+                          spacing: 20,
+                          runSpacing: 8,
+                          children: [
+                            _SummaryMetric(
+                              label: 'Contributions',
+                              value: '${items.length}',
+                            ),
+                            _SummaryMetric(
+                              label: 'Total added',
+                              value: Money.format(
+                                totalContributed,
+                                settings.currency,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
                 children: [
+                  Expanded(
+                    child: Text(
+                      'Activity',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                   Text(
-                    'Contributions',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  FilledButton.icon(
-                    onPressed: () => _openSheet(settings, holdings, items),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add'),
-                  ),
-                  OutlinedButton(
-                    onPressed: _importCsv,
-                    child: const Text('Import CSV'),
-                  ),
-                  OutlinedButton(
-                    onPressed: _exportCsv,
-                    child: const Text('Copy CSV'),
+                    '${items.length} ${items.length == 1 ? 'entry' : 'entries'}',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Expanded(
                 child: items.isEmpty
-                    ? const Center(child: Text('No contributions yet'))
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 42,
+                              color: colors.onSurfaceVariant,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No contributions yet',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Add your first buy to start tracking your progress.',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(color: colors.onSurfaceVariant),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
                     : ListView.separated(
                         itemCount: items.length,
-                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        padding: const EdgeInsets.only(bottom: 12),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (_, i) {
                           final c = items[i];
-                          return ListTile(
-                            title: Text(
-                              '${Money.format(c.amountCents, settings.currency)}'
-                              '  ·  ${ContributionModel.dateString(c.contributedOn)}',
-                            ),
-                            subtitle: Text(
-                              '${c.shares.toStringAsFixed(4)} ${c.ticker ?? settings.ticker} '
-                              '@ ${c.price.toStringAsFixed(2)}'
-                              '${c.feeCents > 0 ? '  ·  fee ${Money.format(c.feeCents, settings.currency)}' : ''}'
-                              '${c.notes == null ? '' : '\n${c.notes}'}',
-                            ),
-                            isThreeLine: c.notes != null,
-                            onTap: () => _openSheet(
-                              settings,
-                              holdings,
-                              items,
-                              existing: c,
-                            ),
-                            trailing: IconButton(
-                              tooltip: 'Delete',
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () => _confirmDelete(c),
+                          return Card(
+                            margin: EdgeInsets.zero,
+                            clipBehavior: Clip.antiAlias,
+                            child: InkWell(
+                              onTap: () => _openSheet(
+                                settings,
+                                holdings,
+                                items,
+                                existing: c,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  14,
+                                  8,
+                                  14,
+                                ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor:
+                                          colors.secondaryContainer,
+                                      foregroundColor:
+                                          colors.onSecondaryContainer,
+                                      child: const Icon(
+                                        Icons.south_west_rounded,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Wrap(
+                                            spacing: 10,
+                                            runSpacing: 2,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              Text(
+                                                Money.format(
+                                                  c.amountCents + c.feeCents,
+                                                  settings.currency,
+                                                ),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                              ),
+                                              Text(
+                                                ContributionModel.dateString(
+                                                  c.contributedOn,
+                                                ),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                      color: colors
+                                                          .onSurfaceVariant,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 9),
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 6,
+                                            children: [
+                                              _DetailChip(
+                                                icon: Icons.pie_chart_outline,
+                                                text:
+                                                    '${c.shares.toStringAsFixed(4)} ${c.ticker ?? settings.ticker} @ ${c.price.toStringAsFixed(2)}',
+                                              ),
+                                              _DetailChip(
+                                                icon: Icons.receipt_outlined,
+                                                text:
+                                                    'Fee ${Money.format(c.feeCents, settings.currency)}',
+                                              ),
+                                              _DetailChip(
+                                                icon: Icons
+                                                    .account_balance_wallet_outlined,
+                                                text:
+                                                    'Cash left ${Money.format(c.cashLeftCents, settings.currency)}',
+                                              ),
+                                            ],
+                                          ),
+                                          if (c.notes != null) ...[
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              c.notes!,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color:
+                                                        colors.onSurfaceVariant,
+                                                  ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Delete',
+                                      icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                      ),
+                                      onPressed: () => _confirmDelete(c),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           );
                         },
@@ -258,6 +536,56 @@ class _ContributionsScreenState extends State<ContributionsScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _SummaryMetric extends StatelessWidget {
+  const _SummaryMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(label, style: Theme.of(context).textTheme.labelSmall),
+      const SizedBox(height: 2),
+      Text(
+        value,
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      ),
+    ],
+  );
+}
+
+class _DetailChip extends StatelessWidget {
+  const _DetailChip({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colors.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(text, style: Theme.of(context).textTheme.labelSmall),
+        ],
+      ),
     );
   }
 }

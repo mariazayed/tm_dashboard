@@ -1,6 +1,8 @@
 import '../../widgets/responsive_row.dart';
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
 import '../../services/capital_service.dart';
@@ -214,7 +216,11 @@ class _CapitalScreenState extends State<CapitalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Deposits & Withdraws')),
+      appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
+        title: const Text('Deposits & Withdraws'),
+      ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

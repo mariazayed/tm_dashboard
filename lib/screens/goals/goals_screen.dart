@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../enums/goal_category_enum.dart';
 import '../../enums/goal_status_enum.dart';
 import '../../models/goal_model.dart';
@@ -39,8 +41,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
   Future<void> _refresh() async {
     setState(() {
       // Paged transport under the hood (GoalService.getAllPaged ->
-    // .../goal/search) instead of one unbounded GET.
-    future = GoalService.getAllPaged();
+      // .../goal/search) instead of one unbounded GET.
+      future = GoalService.getAllPaged();
     });
     try {
       await future;
@@ -86,9 +88,9 @@ class _GoalsScreenState extends State<GoalsScreen> {
       } catch (e) {
         if (mounted) {
           setState(() => _pendingGoalIds.remove(goal.id));
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete goal: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to delete goal: $e')));
         }
         return;
       }
@@ -102,13 +104,16 @@ class _GoalsScreenState extends State<GoalsScreen> {
   Future<void> _setStatus(GoalModel goal, GoalStatusEnum status) async {
     setState(() => _pendingGoalIds.add(goal.id));
     try {
-      await GoalService.update(goal.id, goal.copyWith(status: status).toUpdateJson());
+      await GoalService.update(
+        goal.id,
+        goal.copyWith(status: status).toUpdateJson(),
+      );
       _refresh();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update goal: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update goal: $e')));
       }
     } finally {
       if (mounted) setState(() => _pendingGoalIds.remove(goal.id));
@@ -119,9 +124,14 @@ class _GoalsScreenState extends State<GoalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         title: const Text('Goals'),
         actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: () => _openAddGoal()),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _openAddGoal(),
+          ),
         ],
       ),
       body: FutureBuilder<List<GoalModel>>(
@@ -143,8 +153,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
           final colorScheme = Theme.of(context).colorScheme;
           final goals = snapshot.data ?? [];
 
-          final active = goals.where((g) => g.status == GoalStatusEnum.ACTIVE).toList();
-          final history = goals.where((g) => g.status != GoalStatusEnum.ACTIVE).toList();
+          final active = goals
+              .where((g) => g.status == GoalStatusEnum.ACTIVE)
+              .toList();
+          final history = goals
+              .where((g) => g.status != GoalStatusEnum.ACTIVE)
+              .toList();
 
           final filteredActive = categoryFilter == null
               ? active
@@ -163,13 +177,19 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.flag_outlined, size: 48, color: colorScheme.outlineVariant),
+                          Icon(
+                            Icons.flag_outlined,
+                            size: 48,
+                            color: colorScheme.outlineVariant,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             goals.isEmpty
                                 ? 'No goals yet — set your first one'
                                 : 'No active goals in this category',
-                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -190,7 +210,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
                         const SizedBox(width: 4),
                         Text(
                           'History (${history.length})',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -232,12 +255,26 @@ class _GoalsScreenState extends State<GoalsScreen> {
   Widget _buildGrid(List<GoalModel> goals) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = (constraints.maxWidth / 340).floor().clamp(1, 3).toInt();
+        final columns = (constraints.maxWidth / 340)
+            .floor()
+            .clamp(1, 3)
+            .toInt();
         if (columns == 1) {
-          return Column(children: [
-            for (var i = 0; i < goals.length; i++)
-              Padding(padding: const EdgeInsets.only(bottom: 16), child: GoalCard(goal: goals[i], busy: _pendingGoalIds.contains(goals[i].id), onEdit: () => _openAddGoal(existing: goals[i]), onDelete: () => _confirmDelete(goals[i]), onSetStatus: (status) => _setStatus(goals[i], status))),
-          ]);
+          return Column(
+            children: [
+              for (var i = 0; i < goals.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: GoalCard(
+                    goal: goals[i],
+                    busy: _pendingGoalIds.contains(goals[i].id),
+                    onEdit: () => _openAddGoal(existing: goals[i]),
+                    onDelete: () => _confirmDelete(goals[i]),
+                    onSetStatus: (status) => _setStatus(goals[i], status),
+                  ),
+                ),
+            ],
+          );
         }
         return GridView.builder(
           shrinkWrap: true,

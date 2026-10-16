@@ -27,13 +27,13 @@ void main() {
         '/goals',
         '/decisions',
         '/planner',
-        '/expenses',
-        '/expense-reasons',
         '/questions-answers',
         '/reminder-notes',
       ]) {
         expect(r(p), isNull, reason: p);
       }
+      expect(r('/expenses'), '/invest');
+      expect(r('/expense-reasons'), '/invest');
     });
 
     test('a path that merely starts with a trading word is not caught', () {

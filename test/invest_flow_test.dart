@@ -188,7 +188,7 @@ void main() {
     await tester.tap(find.text('Add'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'Price per VT share'),
+      find.widgetWithText(TextFormField, 'Price per share'),
       price,
     );
     await tester.pump();
@@ -200,7 +200,7 @@ void main() {
     'an empty plan shows nothing invested and this month still to do',
     (tester) async {
       await openHome(tester);
-      expect(find.text('Invest'), findsOneWidget);
+      expect(find.text('Investing dashboard'), findsOneWidget);
       expect(
         find.textContaining(r'$300.00 / month into VT, on day 1'),
         findsOneWidget,
@@ -225,7 +225,7 @@ void main() {
     expect(find.text('This month: due in 5 days'), findsOneWidget);
 
     await openContributions(tester);
-    await addBuy(tester); // $300 at $120 -> 2.5 shares
+    await addBuy(tester); // $300 contribution at $120 -> 2 whole shares
     expect(server.contributions, hasLength(1));
     expect(
       jsonDecode(jsonEncode(server.contributions.single))['amountCents'],

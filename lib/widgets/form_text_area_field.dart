@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class FormTextAreaField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
+  final String? hintText;
 
   const FormTextAreaField({
     super.key,
     required this.label,
     required this.controller,
+    this.hintText,
   });
 
   @override
@@ -19,7 +21,7 @@ class FormTextAreaField extends StatelessWidget {
         maxLines: 5,
         controller: controller,
         keyboardType: TextInputType.text,
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(labelText: label, hintText: hintText),
       ),
     );
   }

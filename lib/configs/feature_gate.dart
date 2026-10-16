@@ -16,6 +16,8 @@ const List<String> tradingPaths = [
   '/assets',
   '/capital',
   '/strict-rules',
+  '/expenses',
+  '/expense-reasons',
 ];
 
 /// Menu / route names that only exist for trading (includes the trading home).
@@ -29,6 +31,8 @@ const Set<String> tradingRouteNames = {
   RouteNames.assets,
   RouteNames.capital,
   RouteNames.strictRules,
+  RouteNames.expenses,
+  RouteNames.expenseReasons,
 };
 
 bool isTradingRouteName(String? name) =>

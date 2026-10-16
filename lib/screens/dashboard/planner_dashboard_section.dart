@@ -29,7 +29,8 @@ class PlannerDashboardSection extends StatefulWidget {
   const PlannerDashboardSection({super.key, required this.wide});
 
   @override
-  State<PlannerDashboardSection> createState() => _PlannerDashboardSectionState();
+  State<PlannerDashboardSection> createState() =>
+      _PlannerDashboardSectionState();
 }
 
 class _PlannerDashboardSectionState extends State<PlannerDashboardSection> {
@@ -80,7 +81,10 @@ class _PlannerDashboardSectionState extends State<PlannerDashboardSection> {
             children: [
               Text(
                 'Planner',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               if (week != null) ...[
                 const SizedBox(height: 4),
@@ -93,7 +97,11 @@ class _PlannerDashboardSectionState extends State<PlannerDashboardSection> {
             ],
           ),
         ),
-        IconButton(tooltip: 'Refresh', onPressed: _loading ? null : () => ApiClient.shared.refresh(_load), icon: const Icon(Icons.refresh, size: 20)),
+        IconButton(
+          tooltip: 'Refresh',
+          onPressed: _loading ? null : () => ApiClient.shared.refresh(_load),
+          icon: const Icon(Icons.refresh, size: 20),
+        ),
         FilledButton.tonalIcon(
           onPressed: _openPlanner,
           icon: const Icon(Icons.checklist_rtl_outlined, size: 18),
@@ -112,13 +120,17 @@ class _PlannerDashboardSectionState extends State<PlannerDashboardSection> {
             Icon(Icons.cloud_off_outlined, color: cs.onSurfaceVariant),
             const SizedBox(width: 12),
             Expanded(
-              child: Text('Couldn\'t load the planner: $_error', style: TextStyle(color: cs.onSurfaceVariant)),
+              child: Text(
+                'Couldn\'t load the planner: $_error',
+                style: TextStyle(color: cs.onSurfaceVariant),
+              ),
             ),
             TextButton(onPressed: _load, child: const Text('Retry')),
           ],
         ),
       );
-    } else if (data.currentWeek.areas.isEmpty && data.history.every((w) => w.taskCount == 0)) {
+    } else if (data.currentWeek.areas.isEmpty &&
+        data.history.every((w) => w.taskCount == 0)) {
       body = PlannerPanel(
         child: PlannerEmptyState(
           icon: Icons.checklist_rtl_outlined,
@@ -149,12 +161,18 @@ class _PlannerDashboardSectionState extends State<PlannerDashboardSection> {
     final pulse = _WeekPulseCard(data: data, onOpen: _openPlanner);
     final mix = _FocusMixCard(week: data.currentWeek);
     final rhythm = _RhythmCard(history: data.history);
-    final month = _MonthObjectivesCard(month: data.currentMonth, onOpen: _openPlanner);
+    final month = _MonthObjectivesCard(
+      month: data.currentMonth,
+      onOpen: _openPlanner,
+    );
 
     if (widget.wide) {
       return Column(
         children: [
-          if (nudges.isNotEmpty) ...[_NudgeStrip(nudges: nudges, onAction: _openPlanner), const SizedBox(height: 16)],
+          if (nudges.isNotEmpty) ...[
+            _NudgeStrip(nudges: nudges, onAction: _openPlanner),
+            const SizedBox(height: 16),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -177,7 +195,10 @@ class _PlannerDashboardSectionState extends State<PlannerDashboardSection> {
     }
     return Column(
       children: [
-        if (nudges.isNotEmpty) ...[_NudgeStrip(nudges: nudges, onAction: _openPlanner), const SizedBox(height: 16)],
+        if (nudges.isNotEmpty) ...[
+          _NudgeStrip(nudges: nudges, onAction: _openPlanner),
+          const SizedBox(height: 16),
+        ],
         pulse,
         const SizedBox(height: 16),
         mix,
@@ -211,45 +232,88 @@ List<_Nudge> _nudges(BuildContext context, PlannerOverviewModel d) {
   final out = <_Nudge>[];
 
   if (w.tasks.isEmpty) {
-    out.add(_Nudge(Icons.edit_calendar_outlined, cs.primary, 'Plan this week',
-        'Nothing is planned yet — you have ${PlannerStyle.hours(w.capacityHours)} to work with.', 'Plan now'));
+    out.add(
+      _Nudge(
+        Icons.edit_calendar_outlined,
+        cs.primary,
+        'Plan this week',
+        'Nothing is planned yet — you have ${PlannerStyle.hours(w.capacityHours)} to work with.',
+        'Plan now',
+      ),
+    );
   }
   if (w.overCapacity) {
-    out.add(_Nudge(Icons.warning_amber_rounded, semantic.loss, 'Over capacity',
+    out.add(
+      _Nudge(
+        Icons.warning_amber_rounded,
+        semantic.loss,
+        'Over capacity',
         'You planned ${PlannerStyle.hours(w.plannedHours)} but have ${PlannerStyle.hours(w.capacityHours)}. '
-            'Trim tasks or add extra hours.', 'Rebalance'));
+            'Trim tasks or add extra hours.',
+        'Rebalance',
+      ),
+    );
   }
   final over = w.areas.where((a) => a.overLimit).toList();
   if (over.isNotEmpty) {
     final a = over.first;
-    out.add(_Nudge(Icons.donut_small_outlined, semantic.warning,
+    out.add(
+      _Nudge(
+        Icons.donut_small_outlined,
+        semantic.warning,
         '${a.focusArea.name} is over budget',
         '${PlannerStyle.hours(a.plannedHours)} planned vs ${PlannerStyle.hours(a.allowedHours)} allowed '
             '(max ${PlannerStyle.pct(a.maxPercent)})${over.length > 1 ? ' · +${over.length - 1} more area${over.length > 2 ? 's' : ''}' : ''}.',
-        'Review'));
+        'Review',
+      ),
+    );
   }
   final pending = w.evaluation.pendingCount;
   if (d.daysLeftInWeek <= 2 && pending > 0) {
-    out.add(_Nudge(Icons.rate_review_outlined, semantic.info, 'Close the week',
+    out.add(
+      _Nudge(
+        Icons.rate_review_outlined,
+        semantic.info,
+        'Close the week',
         '${d.daysLeftInWeek == 1 ? 'Last day' : '2 days left'} — $pending task${pending == 1 ? '' : 's'} still to evaluate.',
-        'Evaluate'));
+        'Evaluate',
+      ),
+    );
   }
   if (d.history.length >= 2) {
     final last = d.history[d.history.length - 2];
     final missing = last.taskCount - last.evaluatedCount;
     if (missing > 0) {
-      out.add(_Nudge(Icons.history_outlined, semantic.orange, 'Last week isn\'t closed',
+      out.add(
+        _Nudge(
+          Icons.history_outlined,
+          semantic.orange,
+          'Last week isn\'t closed',
           '$missing task${missing == 1 ? '' : 's'} from the week of ${DateFormat('MMM d').format(last.weekStart)} still need an outcome.',
-          'Evaluate'));
+          'Evaluate',
+        ),
+      );
     }
   }
   if (out.isEmpty) {
     if (d.evaluationStreak >= 2) {
-      out.add(_Nudge(Icons.local_fire_department_outlined, semantic.profit, '${d.evaluationStreak}-week review streak',
-          'Every task evaluated for ${d.evaluationStreak} weeks straight. Keep the loop going.'));
+      out.add(
+        _Nudge(
+          Icons.local_fire_department_outlined,
+          semantic.profit,
+          '${d.evaluationStreak}-week review streak',
+          'Every task evaluated for ${d.evaluationStreak} weeks straight. Keep the loop going.',
+        ),
+      );
     } else {
-      out.add(_Nudge(Icons.verified_outlined, semantic.profit, 'On track',
-          '${PlannerStyle.pct(w.evaluation.completionPct)} done so far · ${PlannerStyle.hours(w.remainingHours.clamp(0, double.infinity).toDouble())} free this week.'));
+      out.add(
+        _Nudge(
+          Icons.verified_outlined,
+          semantic.profit,
+          'On track',
+          '${PlannerStyle.pct(w.evaluation.completionPct)} done so far · ${PlannerStyle.hours(w.remainingHours.clamp(0, double.infinity).toDouble())} free this week.',
+        ),
+      );
     }
   }
   return out.take(2).toList();
@@ -263,7 +327,9 @@ class _NudgeStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cards = nudges.map((n) => _NudgeCard(nudge: n, onAction: onAction)).toList();
+    final cards = nudges
+        .map((n) => _NudgeCard(nudge: n, onAction: onAction))
+        .toList();
     return LayoutBuilder(
       builder: (context, c) {
         if (c.maxWidth < 700 || cards.length == 1) {
@@ -316,7 +382,10 @@ class _NudgeCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: c.withValues(alpha: 0.16), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: c.withValues(alpha: 0.16),
+              shape: BoxShape.circle,
+            ),
             child: Icon(nudge.icon, color: c, size: 20),
           ),
           const SizedBox(width: 14),
@@ -325,9 +394,15 @@ class _NudgeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(nudge.title, style: const TextStyle(fontWeight: FontWeight.w800)),
+                Text(
+                  nudge.title,
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
                 const SizedBox(height: 2),
-                Text(nudge.message, style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
+                Text(
+                  nudge.message,
+                  style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                ),
               ],
             ),
           ),
@@ -355,8 +430,9 @@ class _WeekPulseCard extends StatelessWidget {
     final w = data.currentWeek;
     final e = w.evaluation;
 
-    final upNext = w.tasks.where((t) => t.status == PlanItemStatusEnum.PLANNED).toList()
-      ..sort((a, b) => b.estimatedHours.compareTo(a.estimatedHours));
+    final upNext =
+        w.tasks.where((t) => t.status == PlanItemStatusEnum.PLANNED).toList()
+          ..sort((a, b) => b.estimatedHours.compareTo(a.estimatedHours));
 
     final stats = Wrap(
       spacing: 10,
@@ -368,10 +444,16 @@ class _WeekPulseCard extends StatelessWidget {
           icon: Icons.task_alt_outlined,
           color: e.completionPct >= 70 ? semantic.profit : null,
         ),
-        StatTile(label: 'Done', value: '${e.doneCount}/${e.totalCount}', icon: Icons.check_circle_outline),
+        StatTile(
+          label: 'Done',
+          value: '${e.doneCount}/${e.totalCount}',
+          icon: Icons.check_circle_outline,
+        ),
         StatTile(
           label: 'Avg score',
-          value: e.averageScore == null ? '—' : e.averageScore!.toStringAsFixed(1),
+          value: e.averageScore == null
+              ? '—'
+              : e.averageScore!.toStringAsFixed(1),
           icon: Icons.star_outline_rounded,
           color: e.averageScore == null ? null : semantic.warning,
         ),
@@ -400,14 +482,24 @@ class _WeekPulseCard extends StatelessWidget {
             trailing: Text(
               '${PlannerStyle.hours(w.plannedHours)} of ${PlannerStyle.hours(w.capacityHours)}'
               '${w.extraHours > 0 ? ' (+${PlannerStyle.hours(w.extraHours)} extra)' : ''}',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: w.overCapacity ? semantic.loss : cs.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: w.overCapacity ? semantic.loss : cs.onSurfaceVariant,
+              ),
             ),
           ),
           LayoutBuilder(
             builder: (context, c) {
-              final ring = CapacityRing(planned: w.plannedHours, capacity: w.capacityHours, size: 120);
+              final ring = CapacityRing(
+                planned: w.plannedHours,
+                capacity: w.capacityHours,
+                size: 120,
+              );
               if (c.maxWidth < 420) {
-                return Column(children: [ring, const SizedBox(height: 16), stats]);
+                return Column(
+                  children: [ring, const SizedBox(height: 16), stats],
+                );
               }
               return Row(
                 children: [
@@ -421,17 +513,27 @@ class _WeekPulseCard extends StatelessWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              Text('Up next', style: TextStyle(fontWeight: FontWeight.w800, color: cs.onSurface)),
+              Text(
+                'Up next',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(width: 8),
               if (upNext.isNotEmpty)
-                Text('${upNext.length} open · ${PlannerStyle.hours(upNext.fold<double>(0, (s, t) => s + t.estimatedHours))}',
-                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+                Text(
+                  '${upNext.length} open · ${PlannerStyle.hours(upNext.fold<double>(0, (s, t) => s + t.estimatedHours))}',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
             ],
           ),
           const SizedBox(height: 10),
           if (upNext.isEmpty)
             Text(
-              w.tasks.isEmpty ? 'No tasks planned for this week yet.' : 'Everything this week has an outcome. 🎉',
+              w.tasks.isEmpty
+                  ? 'No tasks planned for this week yet.'
+                  : 'Everything this week has an outcome. 🎉',
               style: TextStyle(color: cs.onSurfaceVariant),
             )
           else
@@ -439,7 +541,10 @@ class _WeekPulseCard extends StatelessWidget {
           if (upNext.length > 4)
             Align(
               alignment: Alignment.centerLeft,
-              child: TextButton(onPressed: onOpen, child: Text('+${upNext.length - 4} more')),
+              child: TextButton(
+                onPressed: onOpen,
+                child: Text('+${upNext.length - 4} more'),
+              ),
             ),
         ],
       ),
@@ -464,15 +569,29 @@ class _UpNextRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
         child: Row(
           children: [
-            Container(width: 4, height: 28, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))),
+            Container(
+              width: 4,
+              height: 28,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(task.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
                   Text(
-                    task.monthlyObjectiveTitle != null ? '${task.focusArea.name} · ${task.monthlyObjectiveTitle}' : task.focusArea.name,
+                    task.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    task.monthlyObjectiveTitle != null
+                        ? '${task.focusArea.name} · ${task.monthlyObjectiveTitle}'
+                        : task.focusArea.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
@@ -481,7 +600,10 @@ class _UpNextRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(PlannerStyle.hours(task.estimatedHours), style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              PlannerStyle.hours(task.estimatedHours),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           ],
         ),
       ),
@@ -510,8 +632,12 @@ class _FocusMixCardState extends State<_FocusMixCard> {
     final semantic = context.semanticColors;
     final areas = widget.week.areas.where((a) => a.plannedHours > 0).toList();
     final total = areas.fold<double>(0, (s, a) => s + a.plannedHours);
-    final free = (widget.week.capacityHours - total).clamp(0, double.infinity).toDouble();
-    final touched = _touched != null && _touched! < areas.length ? areas[_touched!] : null;
+    final free = (widget.week.capacityHours - total)
+        .clamp(0, double.infinity)
+        .toDouble();
+    final touched = _touched != null && _touched! < areas.length
+        ? areas[_touched!]
+        : null;
 
     final sections = <PieChartSectionData>[
       for (var i = 0; i < areas.length; i++)
@@ -534,11 +660,19 @@ class _FocusMixCardState extends State<_FocusMixCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const PanelTitle(title: 'Focus mix this week', icon: Icons.donut_large_outlined),
+          const PanelTitle(
+            title: 'Focus mix this week',
+            icon: Icons.donut_large_outlined,
+          ),
           if (areas.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: Text('No hours planned yet', style: TextStyle(color: cs.onSurfaceVariant))),
+              child: Center(
+                child: Text(
+                  'No hours planned yet',
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
+              ),
             )
           else ...[
             Center(
@@ -556,9 +690,18 @@ class _FocusMixCardState extends State<_FocusMixCard> {
                         startDegreeOffset: -90,
                         pieTouchData: PieTouchData(
                           touchCallback: (event, response) {
-                            final idx = response?.touchedSection?.touchedSectionIndex;
-                            final next = (event.isInterestedForInteractions && idx != null && idx >= 0 && idx < areas.length) ? idx : null;
-                            if (next != _touched) setState(() => _touched = next);
+                            final idx =
+                                response?.touchedSection?.touchedSectionIndex;
+                            final next =
+                                (event.isInterestedForInteractions &&
+                                    idx != null &&
+                                    idx >= 0 &&
+                                    idx < areas.length)
+                                ? idx
+                                : null;
+                            if (next != _touched) {
+                              setState(() => _touched = next);
+                            }
                           },
                         ),
                       ),
@@ -568,7 +711,10 @@ class _FocusMixCardState extends State<_FocusMixCard> {
                       children: [
                         Text(
                           PlannerStyle.hours(touched?.plannedHours ?? total),
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                         SizedBox(
                           width: 100,
@@ -577,7 +723,10 @@ class _FocusMixCardState extends State<_FocusMixCard> {
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ],
@@ -600,10 +749,28 @@ class _FocusMixCardState extends State<_FocusMixCard> {
                 padding: const EdgeInsets.only(top: 4),
                 child: Row(
                   children: [
-                    Container(width: 10, height: 10, decoration: BoxDecoration(color: cs.surfaceContainerHighest, shape: BoxShape.circle)),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Expanded(child: Text('Unplanned', style: TextStyle(color: cs.onSurfaceVariant))),
-                    Text(PlannerStyle.hours(free), style: TextStyle(color: cs.onSurfaceVariant, fontWeight: FontWeight.w600)),
+                    Expanded(
+                      child: Text(
+                        'Unplanned',
+                        style: TextStyle(color: cs.onSurfaceVariant),
+                      ),
+                    ),
+                    Text(
+                      PlannerStyle.hours(free),
+                      style: TextStyle(
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -627,7 +794,11 @@ class _MixLegendRow extends StatelessWidget {
   final bool highlighted;
   final ValueChanged<bool> onHover;
 
-  const _MixLegendRow({required this.allocation, required this.highlighted, required this.onHover});
+  const _MixLegendRow({
+    required this.allocation,
+    required this.highlighted,
+    required this.onHover,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -648,10 +819,19 @@ class _MixLegendRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(a.focusArea.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+              child: Text(
+                a.focusArea.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
             if (a.overLimit) ...[
               Icon(Icons.warning_amber_rounded, size: 14, color: semantic.loss),
@@ -659,12 +839,20 @@ class _MixLegendRow extends StatelessWidget {
             ],
             Text(
               '${PlannerStyle.pct(a.budgetUsedPct)} of budget',
-              style: TextStyle(fontSize: 12, color: a.overLimit ? semantic.loss : cs.onSurfaceVariant, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 12,
+                color: a.overLimit ? semantic.loss : cs.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(width: 10),
             SizedBox(
               width: 42,
-              child: Text(PlannerStyle.hours(a.plannedHours), textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.w700)),
+              child: Text(
+                PlannerStyle.hours(a.plannedHours),
+                textAlign: TextAlign.right,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ),
@@ -697,44 +885,73 @@ class _RhythmCard extends StatelessWidget {
     }
     maxY = (maxY * 1.15).ceilToDouble();
 
-    final past = history.length > 1 ? history.sublist(0, history.length - 1) : <WeekSnapshotModel>[];
+    final past = history.length > 1
+        ? history.sublist(0, history.length - 1)
+        : <WeekSnapshotModel>[];
     final measured = past.where((w) => w.taskCount > 0).toList();
-    final avgCompletion = measured.isEmpty ? null : measured.fold<double>(0, (s, w) => s + w.completionPct) / measured.length;
+    final avgCompletion = measured.isEmpty
+        ? null
+        : measured.fold<double>(0, (s, w) => s + w.completionPct) /
+              measured.length;
     final totalActual = history.fold<double>(0, (s, w) => s + w.actualHours);
     final totalPlanned = history.fold<double>(0, (s, w) => s + w.plannedHours);
     final fmt = DateFormat('MMM d');
 
     Widget legend(Color c, String label) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(width: 10, height: 10, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(3))),
-            const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-          ],
-        );
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: c,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(label, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+      ],
+    );
 
     return PlannerPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const PanelTitle(title: 'Rhythm · last 8 weeks', icon: Icons.stacked_bar_chart_outlined),
+          const PanelTitle(
+            title: 'Rhythm · last 8 weeks',
+            icon: Icons.stacked_bar_chart_outlined,
+          ),
           Wrap(
             spacing: 20,
             runSpacing: 8,
             children: [
               _BigNumber(
-                value: avgCompletion == null ? '—' : PlannerStyle.pct(avgCompletion),
+                value: avgCompletion == null
+                    ? '—'
+                    : PlannerStyle.pct(avgCompletion),
                 label: 'avg completion',
               ),
               _BigNumber(
-                value: totalPlanned == 0 ? '—' : PlannerStyle.pct(totalActual / totalPlanned * 100),
+                value: totalPlanned == 0
+                    ? '—'
+                    : PlannerStyle.pct(totalActual / totalPlanned * 100),
                 label: 'of planned hours logged',
               ),
-              _BigNumber(value: PlannerStyle.hours(totalActual), label: 'actual hours'),
+              _BigNumber(
+                value: PlannerStyle.hours(totalActual),
+                label: 'actual hours',
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(spacing: 16, children: [legend(trackColor, 'Capacity'), legend(plannedColor, 'Planned'), legend(actualColor, 'Actual')]),
+          Wrap(
+            spacing: 16,
+            children: [
+              legend(trackColor, 'Capacity'),
+              legend(plannedColor, 'Planned'),
+              legend(actualColor, 'Actual'),
+            ],
+          ),
           const SizedBox(height: 12),
           SizedBox(
             height: 190,
@@ -744,19 +961,32 @@ class _RhythmCard extends StatelessWidget {
                 alignment: BarChartAlignment.spaceAround,
                 gridData: FlGridData(
                   drawVerticalLine: false,
-                  getDrawingHorizontalLine: (_) => FlLine(color: semantic.chartGridLine.withValues(alpha: 0.4), strokeWidth: 1),
+                  getDrawingHorizontalLine: (_) => FlLine(
+                    color: semantic.chartGridLine.withValues(alpha: 0.4),
+                    strokeWidth: 1,
+                  ),
                 ),
                 borderData: FlBorderData(show: false),
                 titlesData: FlTitlesData(
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 34,
                       getTitlesWidget: (value, meta) {
                         if (value == meta.max) return const SizedBox();
-                        return Text('${value.toInt()}h', style: TextStyle(fontSize: 10, color: semantic.chartAxisLabel));
+                        return Text(
+                          '${value.toInt()}h',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: semantic.chartAxisLabel,
+                          ),
+                        );
                       },
                     ),
                   ),
@@ -766,7 +996,9 @@ class _RhythmCard extends StatelessWidget {
                       reservedSize: 28,
                       getTitlesWidget: (value, meta) {
                         final i = value.toInt();
-                        if (i < 0 || i >= history.length) return const SizedBox();
+                        if (i < 0 || i >= history.length) {
+                          return const SizedBox();
+                        }
                         final isNow = i == history.length - 1;
                         return Padding(
                           padding: const EdgeInsets.only(top: 6),
@@ -774,8 +1006,12 @@ class _RhythmCard extends StatelessWidget {
                             isNow ? 'Now' : fmt.format(history[i].weekStart),
                             style: TextStyle(
                               fontSize: 10,
-                              fontWeight: isNow ? FontWeight.w800 : FontWeight.w500,
-                              color: isNow ? cs.primary : semantic.chartAxisLabel,
+                              fontWeight: isNow
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                              color: isNow
+                                  ? cs.primary
+                                  : semantic.chartAxisLabel,
                             ),
                           ),
                         );
@@ -793,16 +1029,26 @@ class _RhythmCard extends StatelessWidget {
                       final w = history[group.x];
                       return BarTooltipItem(
                         'Week of ${fmt.format(w.weekStart)}\n',
-                        TextStyle(fontWeight: FontWeight.w800, color: cs.onSurface, fontSize: 12),
+                        TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: cs.onSurface,
+                          fontSize: 12,
+                        ),
                         textAlign: TextAlign.left,
                         children: [
                           TextSpan(
-                            text: 'Capacity ${PlannerStyle.hours(w.capacityHours)}'
+                            text:
+                                'Capacity ${PlannerStyle.hours(w.capacityHours)}'
                                 '${w.extraHours > 0 ? ' (+${PlannerStyle.hours(w.extraHours)} extra)' : ''}\n'
                                 'Planned ${PlannerStyle.hours(w.plannedHours)} · Actual ${PlannerStyle.hours(w.actualHours)}\n'
                                 '${w.taskCount == 0 ? 'No tasks' : '${w.doneCount}/${w.taskCount} done · ${PlannerStyle.pct(w.completionPct)}'}'
                                 '${w.averageScore != null ? ' · ★ ${w.averageScore!.toStringAsFixed(1)}' : ''}',
-                            style: TextStyle(fontWeight: FontWeight.w500, color: cs.onSurfaceVariant, fontSize: 11, height: 1.4),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: cs.onSurfaceVariant,
+                              fontSize: 11,
+                              height: 1.4,
+                            ),
                           ),
                         ],
                       );
@@ -819,7 +1065,9 @@ class _RhythmCard extends StatelessWidget {
                           toY: history[i].plannedHours,
                           width: 11,
                           color: plannedColor,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
                           backDrawRodData: BackgroundBarChartRodData(
                             show: true,
                             toY: history[i].capacityHours,
@@ -830,7 +1078,9 @@ class _RhythmCard extends StatelessWidget {
                           toY: history[i].actualHours,
                           width: 11,
                           color: actualColor,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(4),
+                          ),
                         ),
                       ],
                     ),
@@ -847,15 +1097,24 @@ class _RhythmCard extends StatelessWidget {
                 Expanded(
                   child: Center(
                     child: Tooltip(
-                      message: w.taskCount == 0 ? 'No tasks' : '${PlannerStyle.pct(w.completionPct)} complete',
-                      child: _CompletionDot(pct: w.taskCount == 0 ? null : w.completionPct),
+                      message: w.taskCount == 0
+                          ? 'No tasks'
+                          : '${PlannerStyle.pct(w.completionPct)} complete',
+                      child: _CompletionDot(
+                        pct: w.taskCount == 0 ? null : w.completionPct,
+                      ),
                     ),
                   ),
                 ),
             ],
           ),
           const SizedBox(height: 6),
-          Center(child: Text('weekly completion', style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant))),
+          Center(
+            child: Text(
+              'weekly completion',
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            ),
+          ),
         ],
       ),
     );
@@ -874,7 +1133,14 @@ class _BigNumber extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, height: 1.1)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            height: 1.1,
+          ),
+        ),
         Text(label, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
       ],
     );
@@ -895,10 +1161,10 @@ class _CompletionDot extends StatelessWidget {
     final color = p == null
         ? cs.outlineVariant
         : p >= 80
-            ? semantic.profit
-            : p >= 50
-                ? semantic.warning
-                : semantic.loss;
+        ? semantic.profit
+        : p >= 50
+        ? semantic.warning
+        : semantic.loss;
     return SizedBox(
       width: 26,
       height: 26,
@@ -913,7 +1179,11 @@ class _CompletionDot extends StatelessWidget {
           ),
           Text(
             p == null ? '·' : '${p.round()}',
-            style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: cs.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+              color: cs.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -934,11 +1204,17 @@ class _MonthObjectivesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final semantic = context.semanticColors;
-    final objectives = List.of(month.objectives)..sort((a, b) => a.progressPct.compareTo(b.progressPct));
-    final avg = objectives.isEmpty ? 0.0 : objectives.fold<double>(0, (s, o) => s + o.progressPct) / objectives.length;
+    final objectives = List.of(month.objectives)
+      ..sort((a, b) => a.progressPct.compareTo(b.progressPct));
+    final avg = objectives.isEmpty
+        ? 0.0
+        : objectives.fold<double>(0, (s, o) => s + o.progressPct) /
+              objectives.length;
     final now = DateTime.now();
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-    final timePct = (month.year == now.year && month.month == now.month) ? now.day / daysInMonth * 100 : 100.0;
+    final timePct = (month.year == now.year && month.month == now.month)
+        ? now.day / daysInMonth * 100
+        : 100.0;
     final behind = objectives.isNotEmpty && avg + 10 < timePct;
 
     return PlannerPanel(
@@ -946,20 +1222,32 @@ class _MonthObjectivesCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           PanelTitle(
-            title: '${DateFormat('MMMM').format(DateTime(month.year, month.month))} objectives',
+            title:
+                '${DateFormat('MMMM').format(DateTime(month.year, month.month))} objectives',
             icon: Icons.track_changes_outlined,
             trailing: Text(
               '${PlannerStyle.hours(month.plannedHours)} / ${PlannerStyle.hours(month.capacityHours)}',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: month.overCapacity ? semantic.loss : cs.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: month.overCapacity ? semantic.loss : cs.onSurfaceVariant,
+              ),
             ),
           ),
           if (objectives.isEmpty)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('No objectives set for this month.', style: TextStyle(color: cs.onSurfaceVariant)),
+                Text(
+                  'No objectives set for this month.',
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
                 const SizedBox(height: 8),
-                TextButton.icon(onPressed: onOpen, icon: const Icon(Icons.add, size: 18), label: const Text('Set objectives')),
+                TextButton.icon(
+                  onPressed: onOpen,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Set objectives'),
+                ),
               ],
             )
           else ...[
@@ -970,12 +1258,18 @@ class _MonthObjectivesCard extends StatelessWidget {
               behind
                   ? 'Behind pace — ${PlannerStyle.pct(avg)} done with ${PlannerStyle.pct(timePct)} of the month gone.'
                   : '${PlannerStyle.pct(avg)} average progress · ${PlannerStyle.pct(timePct)} of the month gone.',
-              style: TextStyle(fontSize: 12, color: behind ? semantic.warning : cs.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 12,
+                color: behind ? semantic.warning : cs.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 14),
             ...objectives.take(5).map((o) => _ObjectiveRow(objective: o)),
             if (objectives.length > 5)
-              TextButton(onPressed: onOpen, child: Text('+${objectives.length - 5} more')),
+              TextButton(
+                onPressed: onOpen,
+                child: Text('+${objectives.length - 5} more'),
+              ),
           ],
         ],
       ),
@@ -1041,7 +1335,9 @@ class _ObjectiveRow extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final semantic = context.semanticColors;
     final o = objective;
-    final color = o.progressPct >= 100 ? semantic.profit : PlannerStyle.colorFromHex(o.focusArea.color);
+    final color = o.progressPct >= 100
+        ? semantic.profit
+        : PlannerStyle.colorFromHex(o.focusArea.color);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -1055,10 +1351,21 @@ class _ObjectiveRow extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(o.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(
+                        o.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    Text(PlannerStyle.pct(o.progressPct), style: TextStyle(fontWeight: FontWeight.w800, color: color)),
+                    Text(
+                      PlannerStyle.pct(o.progressPct),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: color,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 5),
@@ -1093,21 +1400,44 @@ class _Skeleton extends StatelessWidget {
     final semantic = context.semanticColors;
     final surface = Theme.of(context).colorScheme.surface;
     Widget block(double h) => Container(
-          height: h,
-          decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(20)),
-        );
+      height: h,
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(20),
+      ),
+    );
     return Shimmer.fromColors(
       baseColor: semantic.shimmerBase,
       highlightColor: semantic.shimmerHighlight,
       child: wide
           ? Column(
               children: [
-                Row(children: [Expanded(flex: 3, child: block(260)), const SizedBox(width: 20), Expanded(flex: 2, child: block(260))]),
+                Row(
+                  children: [
+                    Expanded(flex: 3, child: block(260)),
+                    const SizedBox(width: 20),
+                    Expanded(flex: 2, child: block(260)),
+                  ],
+                ),
                 const SizedBox(height: 20),
-                Row(children: [Expanded(flex: 3, child: block(300)), const SizedBox(width: 20), Expanded(flex: 2, child: block(300))]),
+                Row(
+                  children: [
+                    Expanded(flex: 3, child: block(300)),
+                    const SizedBox(width: 20),
+                    Expanded(flex: 2, child: block(300)),
+                  ],
+                ),
               ],
             )
-          : Column(children: [block(260), const SizedBox(height: 16), block(260), const SizedBox(height: 16), block(300)]),
+          : Column(
+              children: [
+                block(260),
+                const SizedBox(height: 16),
+                block(260),
+                const SizedBox(height: 16),
+                block(300),
+              ],
+            ),
     );
   }
 }

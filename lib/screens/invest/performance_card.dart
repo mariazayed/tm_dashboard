@@ -14,6 +14,7 @@ class PerformanceCard extends StatelessWidget {
     required this.onRefresh,
     this.refreshing = false,
     this.currentStreak,
+    this.cashBalanceCents = 0,
   });
 
   final PerformanceModel performance;
@@ -23,10 +24,16 @@ class PerformanceCard extends StatelessWidget {
   /// Months in a row with a contribution; hidden when null.
   final int? currentStreak;
 
-  static String gainText(PerformanceModel p) {
-    final sign = p.gainCents > 0 ? '+' : '';
-    final money = '$sign${Money.format(p.gainCents, p.currency)}';
-    final pct = p.gainPercent;
+  /// Unspent contribution cash, which remains part of the portfolio but has
+  /// not been invested in shares.
+  final int cashBalanceCents;
+
+  static String gainText(PerformanceModel p, {int cashBalanceCents = 0}) {
+    final gainCents = p.gainCents + cashBalanceCents + p.feesCents;
+    final sign = gainCents > 0 ? '+' : '';
+    final money = '$sign${Money.format(gainCents, p.currency)}';
+    final shareCostCents = p.investedCents - cashBalanceCents - p.feesCents;
+    final pct = shareCostCents <= 0 ? null : gainCents / shareCostCents * 100;
     return pct == null ? money : '$money ($sign${pct.toStringAsFixed(2)}%)';
   }
 
@@ -56,40 +63,96 @@ class PerformanceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.semanticColors;
-    final gainColor = performance.gainCents > 0
+    final gainCents =
+        performance.gainCents + cashBalanceCents + performance.feesCents;
+    final gainText = PerformanceCard.gainText(
+      performance,
+      cashBalanceCents: cashBalanceCents,
+    );
+    final gainColor = gainCents > 0
         ? colors.profit
-        : performance.gainCents < 0
+        : gainCents < 0
         ? colors.loss
         : null;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Portfolio value',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        Money.format(
+                          performance.valueCents + cashBalanceCents,
+                          performance.currency,
+                        ),
+                        key: const Key('portfolio-value'),
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _GainBadge(text: gainText, color: gainColor),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              priceNote(performance),
+              key: const Key('price-note'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: performance.stale
+                    ? colors.warning
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: refreshing ? null : onRefresh,
+              icon: refreshing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh, size: 18),
+              label: Text(refreshing ? 'Refreshing…' : 'Refresh prices'),
+            ),
+            const Divider(height: 28),
             Wrap(
-              spacing: 24,
-              runSpacing: 8,
+              spacing: 32,
+              runSpacing: 14,
               children: [
                 _Figure(
                   'Invested',
                   Money.format(performance.investedCents, performance.currency),
                 ),
                 _Figure(
-                  'Value',
-                  Money.format(performance.valueCents, performance.currency),
+                  'Fees',
+                  Money.format(performance.feesCents, performance.currency),
                 ),
                 _Figure(
                   'Gain',
-                  gainText(performance),
+                  gainText,
                   color: gainColor,
                   key: const Key('gain-figure'),
                 ),
                 if (performance.averageCost != null)
-                  _Figure(
-                    'Avg cost',
-                    '\$${performance.averageCost!.toStringAsFixed(2)}',
-                  ),
+                  _Figure('Avg cost', '\$${_averageCost.toStringAsFixed(2)}'),
                 // Shares of different funds cannot be added into one meaningful number.
                 if (!performance.isMixed)
                   _Figure(
@@ -112,18 +175,56 @@ class PerformanceCard extends StatelessWidget {
                 currency: performance.currency,
               ),
             ],
-            const SizedBox(height: 12),
-            Text(
-              priceNote(performance),
-              key: const Key('price-note'),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: performance.stale ? colors.warning : null,
-              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  double get _averageCost {
+    if (performance.shares <= 0) return performance.averageCost ?? 0;
+    final investedInSharesCents =
+        performance.investedCents - cashBalanceCents - performance.feesCents;
+    return investedInSharesCents / 100 / performance.shares;
+  }
+}
+
+class _GainBadge extends StatelessWidget {
+  const _GainBadge({required this.text, required this.color});
+
+  final String text;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tint = color ?? scheme.onSurfaceVariant;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: tint.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              color == null
+                  ? Icons.remove_rounded
+                  : color == context.semanticColors.profit
+                  ? Icons.trending_up_rounded
+                  : Icons.trending_down_rounded,
+              size: 17,
+              color: tint,
             ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: refreshing ? null : onRefresh,
-              child: Text(refreshing ? 'Refreshing…' : 'Refresh prices'),
+            const SizedBox(width: 6),
+            Text(
+              text,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: tint,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),

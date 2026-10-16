@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -205,6 +206,7 @@ class _JournalScreenState extends State<JournalScreen> {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              const PageBackButton(),
               Text('Journal', style: theme.textTheme.headlineSmall),
               FilledButton.icon(
                 onPressed: () => _openSheet(),

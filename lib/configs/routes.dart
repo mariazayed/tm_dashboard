@@ -9,7 +9,6 @@ import '../screens/assets/assets_screen.dart';
 import '../screens/invest/ai_chat_screen.dart';
 import '../screens/invest/ai_review_screen.dart';
 import '../screens/invest/contributions_screen.dart';
-import '../screens/invest/insights/insights_screen.dart';
 import '../screens/invest/invest_home_screen.dart';
 import '../screens/invest/journal_screen.dart';
 import '../screens/invest/learning_screen.dart';
@@ -32,10 +31,8 @@ import '../widgets/menu_bar.dart';
 
 final GoRouter routes = GoRouter(
   refreshListenable: Features.notifier,
-  redirect: (context, state) => tradingRedirect(
-    state.uri.path,
-    tradingEnabled: Features.tradingEnabled,
-  ),
+  redirect: (context, state) =>
+      tradingRedirect(state.uri.path, tradingEnabled: Features.tradingEnabled),
   routes: [
     ShellRoute(
       builder: (context, state, child) {
@@ -85,7 +82,7 @@ final GoRouter routes = GoRouter(
                 GoRoute(
                   name: RouteNames.investInsights,
                   path: 'insights',
-                  builder: (context, state) => const InsightsScreen(),
+                  redirect: (context, state) => '/invest',
                 ),
                 GoRoute(
                   name: RouteNames.investContributions,

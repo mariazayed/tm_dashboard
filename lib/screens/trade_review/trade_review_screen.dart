@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:intl/intl.dart';
 
 import '../../enums/entry_confirmation_enum.dart';
@@ -114,8 +116,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
     if (_isFillingQueue) return;
     _isFillingQueue = true;
     try {
-      while (_hasMorePages &&
-          (_queue.length - _currentIndex) < _minBuffered) {
+      while (_hasMorePages && (_queue.length - _currentIndex) < _minBuffered) {
         final result = await TradeService.searchPage(
           page: _nextPage,
           size: _pageSize,
@@ -143,8 +144,7 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
     });
   }
 
-  Trade? get _current =>
-      _queue.isEmpty || _currentIndex >= _queue.length
+  Trade? get _current => _queue.isEmpty || _currentIndex >= _queue.length
       ? null
       : _queue[_currentIndex];
 
@@ -185,21 +185,73 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
           }
         }
 
-        apply(_entryReason, updated.entryReason, 'entryReason', (v) => _entryReason = v);
-        apply(_entryConfirmation, updated.entryConfirmation, 'entryConfirmation', (v) => _entryConfirmation = v);
-        apply(_entryZoneType, updated.entryZoneType, 'entryZoneType', (v) => _entryZoneType = v);
-        apply(_marketBias, updated.marketBias, 'marketBias', (v) => _marketBias = v);
-        apply(_marketState, updated.marketState, 'marketState', (v) => _marketState = v);
-        apply(_probability, updated.probability, 'probability', (v) => _probability = v);
-        apply(_invalidationCondition, updated.invalidationCondition, 'invalidationCondition', (v) => _invalidationCondition = v);
-        apply(_slPlacementReason, updated.slPlacementReason, 'slPlacementReason', (v) => _slPlacementReason = v);
-        apply(_tpPlacementReason, updated.tpPlacementReason, 'tpPlacementReason', (v) => _tpPlacementReason = v);
-        apply(_exitReason, updated.exitReason, 'exitReason', (v) => _exitReason = v);
+        apply(
+          _entryReason,
+          updated.entryReason,
+          'entryReason',
+          (v) => _entryReason = v,
+        );
+        apply(
+          _entryConfirmation,
+          updated.entryConfirmation,
+          'entryConfirmation',
+          (v) => _entryConfirmation = v,
+        );
+        apply(
+          _entryZoneType,
+          updated.entryZoneType,
+          'entryZoneType',
+          (v) => _entryZoneType = v,
+        );
+        apply(
+          _marketBias,
+          updated.marketBias,
+          'marketBias',
+          (v) => _marketBias = v,
+        );
+        apply(
+          _marketState,
+          updated.marketState,
+          'marketState',
+          (v) => _marketState = v,
+        );
+        apply(
+          _probability,
+          updated.probability,
+          'probability',
+          (v) => _probability = v,
+        );
+        apply(
+          _invalidationCondition,
+          updated.invalidationCondition,
+          'invalidationCondition',
+          (v) => _invalidationCondition = v,
+        );
+        apply(
+          _slPlacementReason,
+          updated.slPlacementReason,
+          'slPlacementReason',
+          (v) => _slPlacementReason = v,
+        );
+        apply(
+          _tpPlacementReason,
+          updated.tpPlacementReason,
+          'tpPlacementReason',
+          (v) => _tpPlacementReason = v,
+        );
+        apply(
+          _exitReason,
+          updated.exitReason,
+          'exitReason',
+          (v) => _exitReason = v,
+        );
       });
 
       if (_aiSuggestedFields.isEmpty && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('AI had nothing new to suggest for this trade.')),
+          const SnackBar(
+            content: Text('AI had nothing new to suggest for this trade.'),
+          ),
         );
       }
     } catch (e) {
@@ -224,18 +276,25 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
       'mistakeTags': _mistakeTags.map((e) => e.value).toList(),
     };
     if (_entryReason != null) payload['entryReason'] = _entryReason!.value;
-    if (_entryConfirmation != null) payload['entryConfirmation'] = _entryConfirmation!.value;
-    if (_entryZoneType != null) payload['entryZoneType'] = _entryZoneType!.value;
+    if (_entryConfirmation != null)
+      payload['entryConfirmation'] = _entryConfirmation!.value;
+    if (_entryZoneType != null)
+      payload['entryZoneType'] = _entryZoneType!.value;
     if (_marketBias != null) payload['marketBias'] = _marketBias!.value;
     if (_marketState != null) payload['marketState'] = _marketState!.value;
     if (_probability != null) payload['probability'] = _probability!.value;
-    if (_invalidationCondition != null) payload['invalidationCondition'] = _invalidationCondition!.value;
-    if (_slPlacementReason != null) payload['slPlacementReason'] = _slPlacementReason!.value;
-    if (_tpPlacementReason != null) payload['tpPlacementReason'] = _tpPlacementReason!.value;
+    if (_invalidationCondition != null)
+      payload['invalidationCondition'] = _invalidationCondition!.value;
+    if (_slPlacementReason != null)
+      payload['slPlacementReason'] = _slPlacementReason!.value;
+    if (_tpPlacementReason != null)
+      payload['tpPlacementReason'] = _tpPlacementReason!.value;
     if (_exitReason != null) payload['exitReason'] = _exitReason!.value;
     if (_followedPlanTouched) payload['followedPlan'] = _followedPlan;
     if (_disciplineTouched) {
-      payload['disciplineScore'] = ScoreEnum.fromValue(_disciplineValue.round()).value;
+      payload['disciplineScore'] = ScoreEnum.fromValue(
+        _disciplineValue.round(),
+      ).value;
     }
 
     setState(() => _submitting = true);
@@ -248,9 +307,9 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
       });
       _topUpQueueInBackground();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Review saved.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Review saved.')));
       }
     } catch (e) {
       if (mounted) {
@@ -275,7 +334,11 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Trade Review')),
+      appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
+        title: const Text('Trade Review'),
+      ),
       body: FutureBuilder<void>(
         future: _loadFuture,
         builder: (context, snapshot) {
@@ -301,7 +364,10 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
                 child: Text(
                   "You're all caught up -- no trades waiting for review.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             );
@@ -416,11 +482,17 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
             children: [
               Text(
                 t.asset.symbol,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(width: 10),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: isLong
                       ? semantic.profit.withValues(alpha: 0.1)
@@ -439,13 +511,18 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
               if (t.source != null) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    t.source == TradeSourceEnum.AUTO_IMPORTED ? 'MT5 IMPORT' : 'MANUAL',
+                    t.source == TradeSourceEnum.AUTO_IMPORTED
+                        ? 'MT5 IMPORT'
+                        : 'MANUAL',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -457,7 +534,11 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
               const Spacer(),
               Text(
                 '${t.profit.toStringAsFixed(2)} \$',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: profitColor),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: profitColor,
+                ),
               ),
             ],
           ),
@@ -482,7 +563,11 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
               ),
               child: Text(
                 t.strategy!.name,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: semantic.info),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: semantic.info,
+                ),
               ),
             ),
           ],
@@ -497,16 +582,76 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _chip('Entry Reason', sd.entryReasons, _entryReason, 'entryReason', (v) => setState(() => _entryReason = v)),
-        _chip('Entry Confirmation', sd.entryConfirmations, _entryConfirmation, 'entryConfirmation', (v) => setState(() => _entryConfirmation = v)),
-        _chip('Entry Zone Type', sd.entryZoneTypes, _entryZoneType, 'entryZoneType', (v) => setState(() => _entryZoneType = v)),
-        _chip('Market Bias', sd.marketBiases, _marketBias, 'marketBias', (v) => setState(() => _marketBias = v)),
-        _chip('Market State', sd.marketStates, _marketState, 'marketState', (v) => setState(() => _marketState = v)),
-        _chip('Probability', sd.probabilities, _probability, 'probability', (v) => setState(() => _probability = v)),
-        _chip('Invalidation Condition', sd.invalidationConditions, _invalidationCondition, 'invalidationCondition', (v) => setState(() => _invalidationCondition = v)),
-        _chip('SL Placement Reason', sd.stopLossPlacementReasons, _slPlacementReason, 'slPlacementReason', (v) => setState(() => _slPlacementReason = v)),
-        _chip('TP Placement Reason', sd.takeProfitPlacementReasons, _tpPlacementReason, 'tpPlacementReason', (v) => setState(() => _tpPlacementReason = v)),
-        _chip('Exit Reason', sd.exitReasons, _exitReason, 'exitReason', (v) => setState(() => _exitReason = v)),
+        _chip(
+          'Entry Reason',
+          sd.entryReasons,
+          _entryReason,
+          'entryReason',
+          (v) => setState(() => _entryReason = v),
+        ),
+        _chip(
+          'Entry Confirmation',
+          sd.entryConfirmations,
+          _entryConfirmation,
+          'entryConfirmation',
+          (v) => setState(() => _entryConfirmation = v),
+        ),
+        _chip(
+          'Entry Zone Type',
+          sd.entryZoneTypes,
+          _entryZoneType,
+          'entryZoneType',
+          (v) => setState(() => _entryZoneType = v),
+        ),
+        _chip(
+          'Market Bias',
+          sd.marketBiases,
+          _marketBias,
+          'marketBias',
+          (v) => setState(() => _marketBias = v),
+        ),
+        _chip(
+          'Market State',
+          sd.marketStates,
+          _marketState,
+          'marketState',
+          (v) => setState(() => _marketState = v),
+        ),
+        _chip(
+          'Probability',
+          sd.probabilities,
+          _probability,
+          'probability',
+          (v) => setState(() => _probability = v),
+        ),
+        _chip(
+          'Invalidation Condition',
+          sd.invalidationConditions,
+          _invalidationCondition,
+          'invalidationCondition',
+          (v) => setState(() => _invalidationCondition = v),
+        ),
+        _chip(
+          'SL Placement Reason',
+          sd.stopLossPlacementReasons,
+          _slPlacementReason,
+          'slPlacementReason',
+          (v) => setState(() => _slPlacementReason = v),
+        ),
+        _chip(
+          'TP Placement Reason',
+          sd.takeProfitPlacementReasons,
+          _tpPlacementReason,
+          'tpPlacementReason',
+          (v) => setState(() => _tpPlacementReason = v),
+        ),
+        _chip(
+          'Exit Reason',
+          sd.exitReasons,
+          _exitReason,
+          'exitReason',
+          (v) => setState(() => _exitReason = v),
+        ),
       ],
     );
   }
@@ -522,7 +667,8 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
     String fieldName,
     void Function(E?) onChanged,
   ) {
-    final sorted = List<M>.of(models)..sort((a, b) => a.order.compareTo(b.order));
+    final sorted = List<M>.of(models)
+      ..sort((a, b) => a.order.compareTo(b.order));
     final ids = sorted.map((m) => (m as dynamic).id as E).toList();
     final labels = {for (final m in sorted) (m as dynamic).id as E: m.enName};
 
@@ -552,7 +698,11 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
         children: [
           Text(
             'Discipline Score${_disciplineTouched ? ' — ${scoreLabel.enName}' : ''}',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           Slider(
             value: _disciplineValue,
@@ -580,7 +730,11 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
         children: [
           Text(
             'Followed Plan?',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 12),
           SegmentedButton<bool>(
@@ -601,7 +755,8 @@ class _TradeReviewScreenState extends State<TradeReviewScreen> {
   }
 
   Widget _buildMistakeTagsSection() {
-    final sorted = List.of(_staticData!.mistakeTags)..sort((a, b) => a.order.compareTo(b.order));
+    final sorted = List.of(_staticData!.mistakeTags)
+      ..sort((a, b) => a.order.compareTo(b.order));
 
     return FormMultiSelect<MistakeTagEnum>(
       title: 'Mistake Tags',

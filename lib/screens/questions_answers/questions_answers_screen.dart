@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../models/question_category_model.dart';
 import '../../models/question_answer_model.dart';
 import '../../services/api_client.dart';
@@ -114,6 +116,8 @@ class _QuestionsAnswersScreenState extends State<QuestionsAnswersScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         surfaceTintColor: Colors.transparent,
         title: const Text('Questions & Answers'),
         actions: [

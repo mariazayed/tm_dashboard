@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../models/planner_models.dart';
 import 'month_view.dart';
 import 'setup_view.dart';
@@ -63,6 +65,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         title: const Text('Planner'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),

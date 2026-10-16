@@ -16,6 +16,7 @@ class AddContributionSheet extends StatefulWidget {
     required this.settings,
     this.existing,
     this.holdings = const [],
+    this.contributions = const [],
     this.defaultHoldingId,
     ContributionService? service,
   }) : _service = service;
@@ -26,6 +27,7 @@ class AddContributionSheet extends StatefulWidget {
   /// The funds to choose from. Empty from a server that predates funds: the
   /// plan's own ticker is used and no choice is shown.
   final List<HoldingModel> holdings;
+  final List<ContributionModel> contributions;
 
   /// The fund to start on for a new buy, such as the one bought last time.
   final int? defaultHoldingId;
@@ -43,19 +45,23 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
   late final TextEditingController _notes;
   late DateTime _date;
   bool _sharesEdited = false;
-  bool _updatingShares = false;
+  bool _updatingValues = false;
   bool _saving = false;
   String? _error;
   int? _holdingId;
 
   bool get _isEdit => widget.existing != null;
 
-  /// The ticker of the chosen fund, else the plan's.
-  String get _ticker {
-    for (final h in widget.holdings) {
-      if (h.id == _holdingId) return h.ticker;
+  int get _availableCashCents {
+    var balance = 0;
+    for (final contribution in widget.contributions) {
+      if (contribution.id == widget.existing?.id ||
+          contribution.contributedOn.isAfter(_date)) {
+        continue;
+      }
+      balance += contribution.cashDeltaCents;
     }
-    return widget.settings.ticker;
+    return balance > 0 ? balance : 0;
   }
 
   ContributionService get _service =>
@@ -68,7 +74,7 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
     final now = DateTime.now();
     _date = e?.contributedOn ?? DateTime(now.year, now.month, now.day);
     _amount = TextEditingController(
-      text: Money.plain(e?.amountCents ?? widget.settings.monthlyAmountCents),
+      text: e == null ? '' : Money.plain(e.amountCents + e.feeCents),
     );
     _price = TextEditingController(text: e == null ? '' : '${e.price}');
     _shares = TextEditingController(text: e == null ? '' : '${e.shares}');
@@ -83,8 +89,9 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
     _sharesEdited = e != null;
     _amount.addListener(_recalculate);
     _price.addListener(_recalculate);
+    _fee.addListener(_recalculate);
     _shares.addListener(() {
-      if (!_updatingShares) _sharesEdited = true;
+      if (!_updatingValues) _sharesEdited = true;
     });
   }
 
@@ -99,15 +106,30 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
   }
 
   void _recalculate() {
-    if (_sharesEdited) return;
-    final cents = Money.parseCents(_amount.text);
+    if (_sharesEdited || _updatingValues) return;
+    final totalCents = Money.parseCents(_amount.text);
+    final feeCents = _fee.text.trim().isEmpty ? 0 : Money.parseCents(_fee.text);
     final price = double.tryParse(_price.text);
-    if (cents == null || price == null) return;
-    final shares = ContributionMath.sharesFor(cents, price);
-    if (shares == null) return;
-    _updatingShares = true;
-    _shares.text = shares.toStringAsFixed(8);
-    _updatingShares = false;
+    if (totalCents == null ||
+        feeCents == null ||
+        totalCents <= feeCents ||
+        price == null ||
+        !price.isFinite ||
+        price <= 0) {
+      _updatingValues = true;
+      _shares.clear();
+      _updatingValues = false;
+      return;
+    }
+
+    // This form records whole-share purchases while preserving the full cash
+    // amount entered, including any remainder that could not buy a whole share.
+    final purchaseCents = totalCents - feeCents;
+    final availableCents = _availableCashCents + purchaseCents;
+    final shares = ((availableCents / 100) / price).floor();
+    _updatingValues = true;
+    _shares.text = '$shares';
+    _updatingValues = false;
   }
 
   Future<void> _pickDate() async {
@@ -118,34 +140,46 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
       lastDate: DateTime(now.year, now.month, now.day),
       initialDate: _date,
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null) {
+      setState(() => _date = picked);
+      _recalculate();
+    }
   }
 
   Map<String, dynamic>? _buildPayload() {
-    final cents = Money.parseCents(_amount.text);
+    final totalCents = Money.parseCents(_amount.text);
     final price = double.tryParse(_price.text);
     final shares = double.tryParse(_shares.text);
     final feeText = _fee.text.trim();
     final fee = feeText.isEmpty ? 0 : Money.parseCents(feeText);
-    if (cents == null || cents <= 0) {
+    if (totalCents == null || totalCents <= 0) {
       setState(() => _error = 'Enter an amount like 300 or 300.00');
       return null;
     }
-    if (price == null || price <= 0) {
+    if (price == null || !price.isFinite || price <= 0) {
       setState(() => _error = 'Enter the price per share');
       return null;
     }
-    if (shares == null || shares <= 0) {
+    if (shares == null || !shares.isFinite || shares <= 0) {
       setState(() => _error = 'Enter the number of shares');
+      return null;
+    }
+    if (!_isEdit && shares != shares.truncateToDouble()) {
+      setState(() => _error = 'Shares are calculated as whole numbers');
       return null;
     }
     if (fee == null) {
       setState(() => _error = 'Fee must be an amount like 0 or 1.50');
       return null;
     }
+    if (fee >= totalCents) {
+      setState(() => _error = 'Fee must be less than the total amount');
+      return null;
+    }
+    final purchaseCents = totalCents - fee;
     return {
       'contributedOn': ContributionModel.dateString(_date),
-      'amountCents': cents,
+      'amountCents': purchaseCents,
       'shares': shares,
       'price': price,
       'feeCents': fee,
@@ -192,15 +226,21 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            OutlinedButton(
+            OutlinedButton.icon(
               key: const Key('date-button'),
               onPressed: _pickDate,
-              child: Text(ContributionModel.dateString(_date)),
+              icon: const Icon(Icons.calendar_today_outlined),
+              label: Text(
+                'Purchased on · ${ContributionModel.dateString(_date)}',
+              ),
             ),
             const SizedBox(height: 12),
             FormNumberField(
               label: 'Amount (${widget.settings.currency})',
               controller: _amount,
+              hintText: 'e.g. 300.00',
+              helperText:
+                  'Includes the fee. Previous leftover cash is added when calculating whole shares.',
             ),
             if (widget.holdings.length > 1) ...[
               DropdownButtonFormField<int>(
@@ -211,17 +251,45 @@ class _AddContributionSheetState extends State<AddContributionSheet> {
                   for (final h in widget.holdings)
                     DropdownMenuItem(value: h.id, child: Text(h.title)),
                 ],
-                onChanged: (v) => setState(() => _holdingId = v),
+                onChanged: (v) {
+                  setState(() => _holdingId = v);
+                  _recalculate();
+                },
               ),
               const SizedBox(height: 12),
             ],
             FormNumberField(
-              label: 'Price per $_ticker share',
+              label: 'Price per share',
               controller: _price,
+              hintText: 'e.g. 120.50',
             ),
-            FormNumberField(label: 'Shares', controller: _shares),
-            FormNumberField(label: 'Fee (optional)', controller: _fee),
-            FormTextAreaField(label: 'Notes (optional)', controller: _notes),
+            FormNumberField(
+              label: 'Shares',
+              controller: _shares,
+              readOnly: !_isEdit,
+              hintText: _isEdit
+                  ? 'Recorded share count'
+                  : 'Whole shares only · calculated automatically',
+            ),
+            if (_availableCashCents > 0)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 10),
+                child: Text(
+                  'Available cash from previous buys: '
+                  '${Money.format(_availableCashCents, widget.settings.currency)}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            FormNumberField(
+              label: 'Fee (optional)',
+              controller: _fee,
+              hintText: 'e.g. 1.50, or leave blank for no fee',
+            ),
+            FormTextAreaField(
+              label: 'Notes (optional)',
+              controller: _notes,
+              hintText: 'Add a detail to remember about this purchase',
+            ),
             if (_error != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 12),

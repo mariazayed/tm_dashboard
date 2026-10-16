@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 import 'package:intl/intl.dart';
 import 'package:tm_dashboard/models/strategy_model.dart';
 import 'package:tm_dashboard/services/strategy_service.dart';
@@ -274,6 +276,8 @@ class _TradesScreenState extends State<TradesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         title: const Text('Trades'),
         actions: [
           IconButton(

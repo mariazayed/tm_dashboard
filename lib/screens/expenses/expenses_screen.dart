@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../models/expense_model.dart';
 import '../../services/api_client.dart';
 import '../../services/expense_service.dart';
@@ -111,9 +113,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       _removeLocal(expense.id);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete expense: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete expense: $e')));
       }
       return;
     } finally {
@@ -125,6 +127,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         title: const Text('Expenses'),
         actions: [
           IconButton(icon: const Icon(Icons.add), onPressed: () => _openAdd()),
@@ -172,22 +176,33 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Total (${filtered.length} expense${filtered.length == 1 ? '' : 's'})',
-                            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '\$${total.toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total (${filtered.length} expense${filtered.length == 1 ? '' : 's'})',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '\$${total.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      Icon(
+                        Icons.receipt_long,
+                        color: colorScheme.primary,
+                        size: 32,
                       ),
-                      Icon(Icons.receipt_long, color: colorScheme.primary, size: 32),
                     ],
                   ),
                 ),
@@ -206,13 +221,19 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, size: 48, color: colorScheme.outlineVariant),
+                          Icon(
+                            Icons.receipt_long_outlined,
+                            size: 48,
+                            color: colorScheme.outlineVariant,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             expenses.isEmpty
                                 ? 'No expenses yet — add your first one'
                                 : 'No expenses match your search',
-                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),

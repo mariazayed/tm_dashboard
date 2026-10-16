@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../models/asset_model.dart';
 import '../../services/api_client.dart';
 import '../../services/asset_service.dart';
@@ -83,9 +85,9 @@ class _AssetScreenState extends State<AssetScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _pendingAssetIds.remove(asset.id));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete asset: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete asset: $e')));
       }
       return;
     }
@@ -99,6 +101,8 @@ class _AssetScreenState extends State<AssetScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
         title: const Text('Assets'),
         actions: [
           IconButton(
@@ -161,13 +165,19 @@ class _AssetScreenState extends State<AssetScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.inventory_2_outlined, size: 48, color: colorScheme.outlineVariant),
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 48,
+                            color: colorScheme.outlineVariant,
+                          ),
                           const SizedBox(height: 12),
                           Text(
                             assets.isEmpty
                                 ? 'No assets yet — add your first symbol'
                                 : 'No assets match your search',
-                            style: TextStyle(color: colorScheme.onSurfaceVariant),
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -186,12 +196,25 @@ class _AssetScreenState extends State<AssetScreen> {
   Widget _buildGrid(List<Asset> assets) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = (constraints.maxWidth / 320).floor().clamp(1, 3).toInt();
+        final columns = (constraints.maxWidth / 320)
+            .floor()
+            .clamp(1, 3)
+            .toInt();
         if (columns == 1) {
-          return Column(children: [
-            for (var i = 0; i < assets.length; i++)
-              Padding(padding: const EdgeInsets.only(bottom: 16), child: AssetCard(asset: assets[i], busy: _pendingAssetIds.contains(assets[i].id), onEdit: () => _openAddAsset(existing: assets[i]), onDelete: () => _confirmDelete(assets[i]))),
-          ]);
+          return Column(
+            children: [
+              for (var i = 0; i < assets.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: AssetCard(
+                    asset: assets[i],
+                    busy: _pendingAssetIds.contains(assets[i].id),
+                    onEdit: () => _openAddAsset(existing: assets[i]),
+                    onDelete: () => _confirmDelete(assets[i]),
+                  ),
+                ),
+            ],
+          );
         }
         return GridView.builder(
           shrinkWrap: true,

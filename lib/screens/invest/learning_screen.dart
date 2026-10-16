@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 
 import '../../services/learning_service.dart';
 import 'flashcard_review_tab.dart';
@@ -21,7 +22,15 @@ class LearningScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Learning', style: Theme.of(context).textTheme.headlineSmall),
+            Row(
+              children: [
+                const PageBackButton(),
+                Text(
+                  'Learning',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ],
+            ),
             const TabBar(
               tabs: [
                 Tab(text: 'Reading list'),

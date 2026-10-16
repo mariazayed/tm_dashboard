@@ -23,6 +23,12 @@ class ContributionModel {
   final int? holdingId;
   final String? ticker;
 
+  /// Cash added to the available balance by this contribution, excluding fee.
+  int get cashDeltaCents => amountCents - (shares * price * 100).round();
+
+  /// The unspent portion of this contribution when considered on its own.
+  int get cashLeftCents => cashDeltaCents > 0 ? cashDeltaCents : 0;
+
   factory ContributionModel.fromJson(Map<String, dynamic> json) =>
       ContributionModel(
         id: json['id'] as int,

@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'package:tm_dashboard/widgets/page_back_button.dart';
+
 import '../../enums/capital_reason_enum.dart';
 import '../../models/capital_model.dart';
 import '../../models/expense_model.dart';
@@ -453,7 +455,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final weeks = helper.weeklyBreakdown();
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
+      appBar: AppBar(
+        leading: const PageBackButton(),
+        automaticallyImplyLeading: false,
+        title: const Text('Dashboard'),
+      ),
       body: Column(
         children: [
           Material(

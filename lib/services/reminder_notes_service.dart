@@ -1,11 +1,10 @@
 import 'dart:convert';
 
 import 'api_client.dart';
-import 'package:tm_dashboard/models/trade_model.dart';
-
 import '../constants/api_constants.dart';
 import '../models/paginated_response.dart';
 import '../models/reminder_note_model.dart';
+import '../models/reminder_note_category_model.dart';
 
 class ReminderNotesService {
   static Future<void> create(List<dynamic> data) async {
@@ -21,7 +20,9 @@ class ReminderNotesService {
   }
 
   static Future<List<ReminderNoteModel>> getAll() async {
-    final response = await ApiClient.shared.get(Uri.parse(ApiConstants.reminderNotesURL));
+    final response = await ApiClient.shared.get(
+      Uri.parse(ApiConstants.reminderNotesURL),
+    );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch reminder notes');
@@ -32,13 +33,62 @@ class ReminderNotesService {
   }
 
   static Future<void> delete(int id) async {
-    final response = await ApiClient.shared.delete(Uri.parse("${ApiConstants.reminderNotesURL}/$id"));
+    final response = await ApiClient.shared.delete(
+      Uri.parse("${ApiConstants.reminderNotesURL}/$id"),
+    );
 
     if (response.statusCode != 204) {
       throw Exception('Failed to delete reminder notes');
     }
 
     return;
+  }
+
+  static Future<List<ReminderNoteCategoryModel>> getCategories() async {
+    final response = await ApiClient.shared.get(
+      Uri.parse(ApiConstants.reminderNoteCategoriesURL),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load note categories');
+    }
+    final List data = jsonDecode(response.body);
+    return data.map((e) => ReminderNoteCategoryModel.fromJson(e)).toList();
+  }
+
+  static Future<ReminderNoteCategoryModel> createCategory(String name) async {
+    final response = await ApiClient.shared.post(
+      Uri.parse(ApiConstants.reminderNoteCategoriesURL),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'name': name}),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception('Failed to create category');
+    }
+    return ReminderNoteCategoryModel.fromJson(jsonDecode(response.body));
+  }
+
+  static Future<ReminderNoteCategoryModel> updateCategory(
+    int id,
+    String name,
+  ) async {
+    final response = await ApiClient.shared.put(
+      Uri.parse('${ApiConstants.reminderNoteCategoriesURL}/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'name': name}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update category');
+    }
+    return ReminderNoteCategoryModel.fromJson(jsonDecode(response.body));
+  }
+
+  static Future<void> deleteCategory(int id) async {
+    final response = await ApiClient.shared.delete(
+      Uri.parse('${ApiConstants.reminderNoteCategoriesURL}/$id'),
+    );
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete category');
+    }
   }
 
   /// Paginated fetch, added mainly for consistency with the other list

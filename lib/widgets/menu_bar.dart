@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../configs/feature_gate.dart';
 import '../constants/route_names.dart';
 import '../services/feature_service.dart';
 import '../theme/app_theme.dart';
@@ -488,82 +487,81 @@ class _MenuItem {
   _MenuItem({required this.label, this.routeName, this.icon, this.children});
 }
 
-/// The menu for the current feature flags: trading entries are dropped, and a
-/// group left with no children disappears with them.
+/// The investing-only menu follows the agreed flat workflow order. With
+/// trading enabled, the original menu remains unchanged.
 List<_MenuItem> _menus(BuildContext context) {
   final all = _allMenus(context);
   if (Features.tradingEnabled) return all;
-  return [
-    for (final item in all)
-      if (item.routeName == RouteNames.invest)
-        _investGroup(item)
-      else if (!isTradingRouteName(item.routeName))
-        if (item.hasChildren)
-          _MenuItem(
-            label: item.label,
-            icon: item.icon,
-            children: item.children!
-                .where((c) => !isTradingRouteName(c.routeName))
-                .toList(),
-          )
-        else
-          item,
-  ].where((i) => i.routeName != null || i.hasChildren).toList();
+  return _investingOnlyMenus();
 }
 
-/// Without trading, investing is the whole product, so its pages get their own
-/// menu group instead of being reachable only through buttons on the overview.
-_MenuItem _investGroup(_MenuItem invest) => _MenuItem(
-  label: invest.label,
-  icon: invest.icon,
-  children: [
-    _MenuItem(
-      label: 'Overview',
-      routeName: RouteNames.invest,
-      icon: Icons.dashboard_outlined,
-    ),
-    _MenuItem(
-      label: 'Charts',
-      routeName: RouteNames.investInsights,
-      icon: Icons.bar_chart_outlined,
-    ),
-    _MenuItem(
-      label: 'Contributions',
-      routeName: RouteNames.investContributions,
-      icon: Icons.add_card_outlined,
-    ),
-    _MenuItem(
-      label: 'Journal',
-      routeName: RouteNames.investJournal,
-      icon: Icons.edit_note_outlined,
-    ),
-    _MenuItem(
-      label: 'Learning',
-      routeName: RouteNames.investLearning,
-      icon: Icons.school_outlined,
-    ),
-    _MenuItem(
-      label: 'Rules',
-      routeName: RouteNames.investRules,
-      icon: Icons.gavel_outlined,
-    ),
-    _MenuItem(
-      label: 'Ask your journal',
-      routeName: RouteNames.investAsk,
-      icon: Icons.chat_bubble_outline,
-    ),
-    _MenuItem(
-      label: 'Review',
-      routeName: RouteNames.investReview,
-      icon: Icons.insights_outlined,
-    ),
-    _MenuItem(
-      label: 'Settings',
-      routeName: RouteNames.investSettings,
-      icon: Icons.tune_outlined,
-    ),
-  ],
-);
+List<_MenuItem> _investingOnlyMenus() => [
+  _MenuItem(
+    label: 'Overview',
+    routeName: RouteNames.invest,
+    icon: Icons.dashboard_outlined,
+  ),
+  _MenuItem(
+    label: 'Contributions',
+    routeName: RouteNames.investContributions,
+    icon: Icons.add_card_outlined,
+  ),
+  _MenuItem(
+    label: 'Journal',
+    routeName: RouteNames.investJournal,
+    icon: Icons.edit_note_outlined,
+  ),
+  _MenuItem(
+    label: 'Goals',
+    routeName: RouteNames.goals,
+    icon: Icons.flag_outlined,
+  ),
+  _MenuItem(
+    label: 'Planner',
+    routeName: RouteNames.planner,
+    icon: Icons.checklist_rtl_outlined,
+  ),
+  _MenuItem(
+    label: 'Learning',
+    routeName: RouteNames.investLearning,
+    icon: Icons.school_outlined,
+  ),
+  _MenuItem(
+    label: 'Rules',
+    routeName: RouteNames.investRules,
+    icon: Icons.gavel_outlined,
+  ),
+  _MenuItem(
+    label: 'Review',
+    routeName: RouteNames.investReview,
+    icon: Icons.insights_outlined,
+  ),
+  _MenuItem(
+    label: 'Ask Your Journal',
+    routeName: RouteNames.investAsk,
+    icon: Icons.chat_bubble_outline,
+  ),
+  _MenuItem(
+    label: 'Decisions',
+    routeName: RouteNames.decisions,
+    icon: Icons.fact_check_outlined,
+  ),
+  _MenuItem(
+    label: 'Questions & Answers',
+    routeName: RouteNames.questionsAnswers,
+    icon: Icons.quiz_outlined,
+  ),
+  _MenuItem(
+    label: 'Reminder Notes',
+    routeName: RouteNames.reminderNotes,
+    icon: Icons.push_pin_outlined,
+  ),
+  _MenuItem(
+    label: 'Settings',
+    routeName: RouteNames.investSettings,
+    icon: Icons.tune_outlined,
+  ),
+];
 
 List<_MenuItem> _allMenus(BuildContext context) {
   return [

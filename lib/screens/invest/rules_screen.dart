@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tm_dashboard/widgets/page_back_button.dart';
 
 import '../../models/invest/plan_model.dart';
 import '../../services/plan_service.dart';
@@ -124,7 +125,12 @@ class _RulesScreenState extends State<RulesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Your rules', style: theme.textTheme.headlineSmall),
+          Row(
+            children: [
+              const PageBackButton(),
+              Text('Your Rules', style: theme.textTheme.headlineSmall),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             'Written while you are calm, read when you are not. Drag to reorder.',
